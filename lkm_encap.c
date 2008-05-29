@@ -11,24 +11,92 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 
+/** The number of bytes to put between the inner and outer IP headers. */
+#define PADDING_BETWEEN_IP_HEADERS 4
+
+/**
+ * The IP protocol for the outer IP header.  It is 0xF4 for Bolouki encap, or
+ * 0x04 for IP-in-IP (e.g. PADDING_BETWEEN_IP_HEADERS == 0).
+ */
+#define ENCAP_PROTO 0xF4
+
+/* IP addresses of destinations to do the encapsulation for */
+#define IP_ADDR_HBO_HOUSTON_1  0x4039174A /* 64.57.23.74 */
+#define IP_ADDR_HBO_HOUSTON_2  0x4039174B /* 64.57.23.75 */
+#define IP_ADDR_HBO_LA_1       0x40391742 /* 64.57.23.66 */
+#define IP_ADDR_HBO_LA_2       0x40391743 /* 64.57.23.67 */
+#define IP_ADDR_HBO_NF_POWER_1 0xAB184A69 /* 172.24.74.105 */
+#define IP_ADDR_HBO_NF_POWER_2 0xAB184A6A /* 172.24.74.106 */
+
+/** who we want to address the encapsulation packet to (outer header) */
+#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_HOUSTON_1
+
 static struct nf_hook_ops netfilter_ops;
 
 unsigned int encap_hook( unsigned int hooknum,
-                        struct sk_buff **skb,
+                        struct sk_buff **pp_skb,
                         const struct net_device *in,
                         const struct net_device *out,
                         int (*okfn)(struct sk_buff*) ) {
-    static struct sk_buff *sock_buff;
-
-    /* drop packets from the loopback interface */
-    if( strcmp(in->name,"lo") == 0 )
-        return NF_DROP;
+    struct sk_buff* skb;
+    struct iphdr* outer_ip_hdr;
+    struct iphdr* inner_ip_hdr;
+    unsigned i;
 
     /* ignore packets with no data or IP header */
-    sock_buff = *skb;
-    if( !sock_buff || !sock_buff->nh.iph )
+    skb = *pp_skb;
+    if( !skb || !skb->nh.iph )
         return NF_ACCEPT;
 
+    /* determine if we need to do encapsulation for this target */
+    switch( ntohl(skb->nh.iph->saddr) ) {
+    case IP_ADDR_HBO_HOUSTON_1:
+    case IP_ADDR_HBO_HOUSTON_2:
+    case IP_ADDR_HBO_LA_1:
+    case IP_ADDR_HBO_LA_2:
+    case IP_ADDR_HBO_NF_POWER_1:
+    case IP_ADDR_HBO_NF_POWER_2:
+        /* encapsulate the target ... I hope there's room in the SKB ... */
+        break;
+
+    default:
+        /* no ecapsulation needed */
+        return NF_ACCEPT;
+    }
+
+    /* push the padding bytes into the header */
+    skb->nh.raw = skb_push( skb, PADDING_BETWEEN_IP_HEADERS );
+
+    /* zero the padding bytes */
+    for( i=0; i<PADDING_BETWEEN_IP_HEADERS; i++ )
+        skb->nh.raw[i] = 0;
+
+    /* push another header onto the packet */
+    skb->nh.raw = skb_push( skb, sizeof(struct iphdr) );
+    outer_ip_hdr = skb->nh.iph;
+
+    /* get a pointer to the original IP header */
+    inner_ip_hdr = (struct iphdr*)(((char*)(outer_ip_hdr + 1))
+                                   + PADDING_BETWEEN_IP_HEADERS);
+
+    /* fill in the external IP header ...  */
+    outer_ip_hdr->version = 4;
+    outer_ip_hdr->ihl = 5;
+    outer_ip_hdr->tos = inner_ip_hdr->tos;
+    outer_ip_hdr->tot_len = htons( skb->len );
+    outer_ip_hdr->frag_off = 0;
+    outer_ip_hdr->id = inner_ip_hdr->id;
+    outer_ip_hdr->ttl = inner_ip_hdr->ttl;
+    outer_ip_hdr->protocol = ENCAP_PROTO;
+    outer_ip_hdr->saddr = inner_ip_hdr->saddr;
+    outer_ip_hdr->daddr = htonl( IP_ADDR_HBO_DECAP_TARGET );
+
+    /* update the checksum */
+    skb->csum = csum_partial( (char *)outer_ip_hdr,
+                              sizeof(struct iphdr) + PADDING_BETWEEN_IP_HEADERS,
+                              skb->csum);
+
+    /* ok, give the kernel back its back and hope it's ok with our changes */
     return NF_ACCEPT;
 }
 
