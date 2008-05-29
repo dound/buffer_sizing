@@ -12,13 +12,17 @@
 #include <linux/skbuff.h>
 
 /** The number of bytes to put between the inner and outer IP headers. */
-#define PADDING_BW_IP_HEADERS 4
+#define PADDING_BW_IP_HEADERS 0
 
 /**
  * The IP protocol for the outer IP header.  It is 0xF4 for Bolouki encap, or
  * 0x04 for IP-in-IP (e.g. PADDING_BW_IP_HEADERS == 0).
  */
-#define ENCAP_PROTO 0xF4
+#if PADDING_BW_IP_HEADERS
+#define ENCAP_PROTO 0xF4 /* Bolouki IP-in-IP when padding separates headers */
+#else
+#define ENCAP_PROTO 0x04 /* normal IP-in-IP when there is no padding */
+#endif
 
 /* IP addresses of destinations to do the encapsulation for */
 #define IP_ADDR_HBO_HOUSTON_1  0x4039174A /* 64.57.23.74 */
