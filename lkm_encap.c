@@ -34,6 +34,39 @@
 
 static struct nf_hook_ops netfilter_ops;
 
+/**
+ * The implementation of this function is based on code in the following book:
+ *  W. Richard Stevens, Bill Fenner, and Andrew M. Rudoff. UNIX Network
+ *  Programming. Addison-Wesley. Volume 1, Edition 3, 2007. 753.
+ */
+static __u16 checksum( __u16* buf, unsigned len ) {
+    __u16 answer;
+    __u32 sum;
+
+    /* add all 16 bit pairs into the total */
+    answer = sum = 0;
+    while( len > 1 ) {
+        sum += *buf++;
+        len -= 2;
+    }
+
+    /* take care of the last lone byte, if present */
+    if( len == 1 ) {
+        *(unsigned char *)(&answer) = *(unsigned char *)buf;
+        sum += answer;
+    }
+
+    /* fold any carries back into the lower 16 bits */
+    sum = (sum >> 16) + (sum & 0xFFFF);    /* add hi 16 to low 16 */
+    sum += (sum >> 16);                    /* add carry           */
+    answer = ~sum;                         /* truncate to 16 bits */
+
+    return answer;
+}
+
+/**
+ * Prints an IP address in dotted-decimal format with printk.
+ */
 static void printk_ip( __u32 ip_nbo ) {
     unsigned char* bytes;
 
@@ -154,7 +187,11 @@ unsigned int encap_hook( unsigned int hooknum,
     outer_ip_hdr->saddr = inner_ip_hdr->saddr;
     outer_ip_hdr->daddr = htonl( IP_ADDR_HBO_DECAP_TARGET );
 
-    /* update the checksum */
+    /* compute the checksum for the new IP header */
+    outer_ip_hdr->check = 0;
+    outer_ip_hdr->check = checksum( (__u16*)outer_ip_hdr, sizeof(struct iphdr) );
+
+    /* update the skb checksum */
     skb->csum = csum_partial( (char *)outer_ip_hdr,
                               sizeof(struct iphdr) + PADDING_BW_IP_HEADERS,
                               skb->csum);
