@@ -3,7 +3,7 @@
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
 
-obj-m := lkm_encap.o
+obj-m := lkm_ipip_dgu.o
 module = $(patsubst %.o,%.ko,$(obj-m))
 
 .PHONY: clean cycle install im module mod uninstall um
