@@ -1,5 +1,5 @@
 /**
- * Filename: lkm_encap.c
+ * Filename: lkm_ipip_dgu.c
  * Purpose:  encapsulate outgoing packets in the special Bolouki IP-in-IP format
  * Author:   David Underhill (dgu@cs.stanford.edu) (May 2008)
  */
@@ -38,7 +38,7 @@
 #define IP_ADDR_HBO_LOOPBACK   0x7F000001 /* 127.0.0.1 */
 
 /** who we want to address the encapsulation packet to (outer header) */
-#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_LOOPBACK
+#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_HOUSTON_1
 
 static struct nf_hook_ops netfilter_encap;
 #ifdef _LKM_IPIP_DO_DECAP_
