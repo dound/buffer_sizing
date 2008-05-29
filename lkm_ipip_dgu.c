@@ -12,7 +12,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 
-#define _LKM_IPIP_DEBUG_ /* debug prints on and encap loopback traffic too */
+/* #define _LKM_IPIP_DEBUG_ */ /* debug prints on and encap loopback traffic too */
 /* #define _LKM_IPIP_DO_DECAP_ */ /* decap IP-IP and Bolouki IP-IP packets */
 
 /** The number of bytes to put between the inner and outer IP headers. */
