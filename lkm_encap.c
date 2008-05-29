@@ -27,11 +27,19 @@
 #define IP_ADDR_HBO_LA_2       0x40391743 /* 64.57.23.67 */
 #define IP_ADDR_HBO_NF_POWER_1 0xAB184A69 /* 172.24.74.105 */
 #define IP_ADDR_HBO_NF_POWER_2 0xAB184A6A /* 172.24.74.106 */
+#define IP_ADDR_HBO_LOOPBACK   0x7F000001 /* 127.0.0.1 */
 
 /** who we want to address the encapsulation packet to (outer header) */
 #define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_HOUSTON_1
 
 static struct nf_hook_ops netfilter_ops;
+
+static void printk_ip( __u32 ip_nbo ) {
+    unsigned char* bytes;
+
+    bytes = (unsigned char*)&ip_nbo;
+    printk( "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3] );
+}
 
 unsigned int encap_hook( unsigned int hooknum,
                         struct sk_buff **pp_skb,
@@ -49,20 +57,39 @@ unsigned int encap_hook( unsigned int hooknum,
         return NF_ACCEPT;
 
     /* determine if we need to do encapsulation for this target */
-    switch( ntohl(skb->nh.iph->saddr) ) {
+    switch( ntohl(skb->nh.iph->daddr) ) {
     case IP_ADDR_HBO_HOUSTON_1:
     case IP_ADDR_HBO_HOUSTON_2:
     case IP_ADDR_HBO_LA_1:
     case IP_ADDR_HBO_LA_2:
     case IP_ADDR_HBO_NF_POWER_1:
     case IP_ADDR_HBO_NF_POWER_2:
+    case IP_ADDR_HBO_LOOPBACK:
         /* encapsulate the target ... I hope there's room in the SKB ... */
+        printk( "LKM ENCAP: will encap this packet to " );
+        printk_ip( skb->nh.iph->daddr );
+        printk( "\n" );
         break;
 
     default:
         /* no ecapsulation needed */
+        printk( "LKM ENCAP: will NOT encap this packet to " );
+        printk_ip( skb->nh.iph->daddr );
+        printk( "\n" );
         return NF_ACCEPT;
     }
+
+    /* Tell the netfilter framework that this packet is not the
+       same as the one before! */
+#ifdef CONFIG_NETFILTER
+        nf_conntrack_put( skb->nfct );
+        skb->nfct = NULL;
+#ifdef CONFIG_NETFILTER_DEBUG
+        skb->nf_debug = 0;
+#endif
+#endif
+
+        return NF_DROP;
 
     /* push the padding bytes into the header */
     skb->nh.raw = skb_push( skb, PADDING_BETWEEN_IP_HEADERS );
@@ -101,7 +128,7 @@ unsigned int encap_hook( unsigned int hooknum,
 }
 
 int init_module() {
-    printk( "dgu: Starting the Bolouki encapsulation LKM hook\n" );
+    printk( "LKM ENCAP: Starting the Bolouki encapsulation LKM hook\n" );
 
     /* tell netfilter where to give us a callback */
     netfilter_ops.hook = encap_hook;
@@ -110,7 +137,7 @@ int init_module() {
     netfilter_ops.pf = PF_INET;
 
     /* call our hook before routing the packet */
-    netfilter_ops.hooknum = NF_IP_PRE_ROUTING;
+    netfilter_ops.hooknum = NF_IP_LOCAL_OUT;
 
     /* call our hook before any other hook */
     netfilter_ops.priority = NF_IP_PRI_FIRST;
@@ -123,5 +150,5 @@ int init_module() {
 
 void cleanup_module() {
     nf_unregister_hook(&netfilter_ops);
-    printk( "dgu: Terminating the Bolouki encapsulation LKM hook\n" );
+    printk( "LKM ENCAP: Terminating the Bolouki encapsulation LKM hook\n" );
 }
