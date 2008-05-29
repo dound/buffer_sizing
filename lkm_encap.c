@@ -12,11 +12,11 @@
 #include <linux/skbuff.h>
 
 /** The number of bytes to put between the inner and outer IP headers. */
-#define PADDING_BETWEEN_IP_HEADERS 4
+#define PADDING_BW_IP_HEADERS 4
 
 /**
  * The IP protocol for the outer IP header.  It is 0xF4 for Bolouki encap, or
- * 0x04 for IP-in-IP (e.g. PADDING_BETWEEN_IP_HEADERS == 0).
+ * 0x04 for IP-in-IP (e.g. PADDING_BW_IP_HEADERS == 0).
  */
 #define ENCAP_PROTO 0xF4
 
@@ -41,6 +41,36 @@ static void printk_ip( __u32 ip_nbo ) {
     printk( "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3] );
 }
 
+/**
+ * Adjust headroom after the data is already in place.  This means the data from
+ * skb->data (inclusive) to skb->tail (exclusive) will be shifted back towards
+ * skb->end.
+ *
+ * @return If skb->tail + len > skb->end, then there is not enough space left
+ * and the method will do nothing and return -1.  Otherwise, 0 will be returned.
+ */
+static int skb_late_reserve( struct sk_buff* skb, unsigned len ) {
+    unsigned i, real_data_len;
+    char* from, *to;
+
+    /* make sure we have enough space */
+    if( unlikely(skb->tail + len > skb->end) )
+        return -1;
+
+    /* move the data bytes (from the last byte to the first byte) */
+    real_data_len = (unsigned)(skb->tail - skb->data);
+    from = skb->tail;
+    to = from + len;
+    for( i=0; i<real_data_len; i++ )
+        *(--to) = *(--from);
+
+    /* update the length of used bytes in the skb */
+    skb->len += len;
+
+    /* success */
+    return 0;
+}
+
 unsigned int encap_hook( unsigned int hooknum,
                         struct sk_buff **pp_skb,
                         const struct net_device *in,
@@ -49,7 +79,7 @@ unsigned int encap_hook( unsigned int hooknum,
     struct sk_buff* skb;
     struct iphdr* outer_ip_hdr;
     struct iphdr* inner_ip_hdr;
-    unsigned i;
+    unsigned i, extra_len;
 
     /* ignore packets with no data or IP header */
     skb = *pp_skb;
@@ -82,29 +112,35 @@ unsigned int encap_hook( unsigned int hooknum,
     /* Tell the netfilter framework that this packet is not the
        same as the one before! */
 #ifdef CONFIG_NETFILTER
-        nf_conntrack_put( skb->nfct );
-        skb->nfct = NULL;
+    nf_conntrack_put( skb->nfct );
+    skb->nfct = NULL;
 #ifdef CONFIG_NETFILTER_DEBUG
-        skb->nf_debug = 0;
+    skb->nf_debug = 0;
 #endif
 #endif
 
+    /* Unfortunately, we cannot call skb_reserve once data is in place ... so we
+     * have to manually push the data back to make room for the header.  We will
+     * reserve enough space for the header and padding all at once at least. */
+    extra_len = sizeof(struct iphdr) + PADDING_BW_IP_HEADERS;
+    if( skb_late_reserve( skb, extra_len ) ) {
+        /* ouch, the buffer isn't big enough so just drop the packet :( */
+        printk( "LKM ENCAP: Ran out of buffer space (used=%u, have=%u, need %u more)\n",
+                skb->len, (unsigned)(skb->end-skb->data),
+                sizeof(struct iphdr) + PADDING_BW_IP_HEADERS );
         return NF_DROP;
-
-    /* push the padding bytes into the header */
-    skb->nh.raw = skb_push( skb, PADDING_BETWEEN_IP_HEADERS );
+    }
 
     /* zero the padding bytes */
-    for( i=0; i<PADDING_BETWEEN_IP_HEADERS; i++ )
+    for( i=sizeof(struct iphdr); i<extra_len; i++ )
         skb->nh.raw[i] = 0;
 
     /* push another header onto the packet */
-    skb->nh.raw = skb_push( skb, sizeof(struct iphdr) );
     outer_ip_hdr = skb->nh.iph;
 
     /* get a pointer to the original IP header */
     inner_ip_hdr = (struct iphdr*)(((char*)(outer_ip_hdr + 1))
-                                   + PADDING_BETWEEN_IP_HEADERS);
+                                   + PADDING_BW_IP_HEADERS);
 
     /* fill in the external IP header ...  */
     outer_ip_hdr->version = 4;
@@ -120,7 +156,7 @@ unsigned int encap_hook( unsigned int hooknum,
 
     /* update the checksum */
     skb->csum = csum_partial( (char *)outer_ip_hdr,
-                              sizeof(struct iphdr) + PADDING_BETWEEN_IP_HEADERS,
+                              sizeof(struct iphdr) + PADDING_BW_IP_HEADERS,
                               skb->csum);
 
     /* ok, give the kernel back its back and hope it's ok with our changes */
