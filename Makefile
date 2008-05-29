@@ -6,10 +6,10 @@ PWD  := $(shell pwd)
 obj-m := lkm_encap.o
 module = $(patsubst %.o,%.ko,$(obj-m))
 
-.PHONY: clean default install im uninstall um
+.PHONY: clean cycle install im module mod uninstall um
 
 # build the kernel module
-default:
+module mod:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 
 # install the kernel module
@@ -19,6 +19,9 @@ install im:
 # uninstall the kernel module
 uninstall um:
 	sudo /sbin/rmmod $(module)
+
+# uninstall, build, and install
+cycle: um mod im
 
 # clean up byproducts
 clean:
