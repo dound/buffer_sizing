@@ -362,14 +362,19 @@ static void client_report_stats_and_exit( int code ) {
     /* compute some stats before exiting */
     gettimeofday( &now, NULL );
     time_passed_sec = now.tv_sec - time_init.tv_sec;
-    avg_bps = (total_bytes * 8) / time_passed_sec;
+
+    if( time_passed_sec )
+        avg_bps = (total_bytes * 8) / time_passed_sec;
+    else
+        avg_bps = 0;
 
     /* report the stats */
     fprintf( stderr, "\
 Client exiting (%d) ...\n\
-  Total Data Sent:   %lluB\n\
-  Total Uptime:      %usec\n\
-  Average Bandwidth: %ubps\n", code, total_bytes, time_passed_sec, avg_bps );
+  Total Data Sent:   %10llu bytes\n\
+  Total Uptime:      %10u seconds\n\
+  Average Bandwidth: %10u bits per second\n",
+             code, total_bytes, time_passed_sec, avg_bps );
 
     /* goodbye! */
     exit( code );
@@ -427,7 +432,7 @@ void client_main( client_t* c ) {
                            actual_flows, req_num_flows );
 
             /* make a TCP socket for the new flow */
-            if( (fd[actual_flows] = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) != 0 ) {
+            if( (fd[actual_flows] = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
                 perror( "Error: unable to create TCP socket for flow" );
                 client_report_stats_and_exit( 1 );
             }
