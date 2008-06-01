@@ -40,6 +40,22 @@ public class MasterGUI extends javax.swing.JFrame {
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     private static int tic = 0;
     
+    private int getIntFromUser( String msg, int min, int max ) {
+        int v;
+        while( true ) {
+            try {
+                v = Integer.valueOf( GUIHelper.getInput(msg) );
+                if( v < min || v > max )
+                    GUIHelper.displayError( "Error: must be between " + min + " and " + max + "." );
+                else
+                    return v;
+            }
+            catch( NumberFormatException e ) {
+                GUIHelper.displayError(e);
+            }
+        }
+    }
+    
     /** Creates new form MasterGUI */
     public MasterGUI() {
         me = this;
@@ -54,15 +70,14 @@ public class MasterGUI extends javax.swing.JFrame {
         chartPanel.setBounds(10, 180, 1005, 545);
         getContentPane().add(chartPanel);
        
-        prepareBindings();
         ctl.recomputeBufferSize();
         
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
-    }
-    
-    private void prepareBindings() {
         
+        // start the server
+        ctl.waitForClients( getIntFromUser("What port do you want to run on?",1,65535),
+                            getIntFromUser("How many traffic generators will there be?",0,100) );
     }
     
     static private void initializeData() {
