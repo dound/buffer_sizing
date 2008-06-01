@@ -354,6 +354,7 @@ void client_main( client_t* c ) {
     uint32_t req_num_flows;
     bool pause_ok = FALSE;
     uint32_t interval_ms;
+    uint64_t total_bytes;
     uint32_t num_bytes, extra_bytes = 0;
     uint32_t time_ms, sleep_ms;
     uint32_t i;
@@ -428,8 +429,9 @@ void client_main( client_t* c ) {
         /* send garbage with each client */
         for( i=0; i<actual_flows; i++ ) {
             /* ignore whether write works or not */
-            write( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
+            writen_or_die( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
         }
+        total_bytes += (num_bytes * actual_flows);
 
         /* pause for the remainder of the interval */
         gettimeofday( &end, NULL );

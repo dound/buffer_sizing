@@ -1,6 +1,7 @@
 /* Filename: io_wrapper.c */
 
 #include <errno.h>            /* errno */
+#include <stdlib.h>
 #include <unistd.h>
 #include "common.h"
 #include "io_wrapper.h"
@@ -51,4 +52,12 @@ int writen( int fd, const void* buf, unsigned n ) {
     }
 
     return 0; /* indicates success */
+}
+
+inline void writen_or_die( int fd, const void* buf, unsigned n ) {
+    int ret = writen( fd, buf, n );
+    if( ret == -1 ) {
+        fprintf( stderr, "Error: write of %uB failed for fd=%d\n", n, fd );
+        exit( 1 );
+    }
 }
