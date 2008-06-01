@@ -11,7 +11,7 @@ public class ControlParams {
     private int delay = 100; /* ms */
     private int numGen = 0;
     private int payloadBW = 1000; /* bps */
-    private int numFlows = 1;
+    private short numFlows = 1;
     private boolean useNumFlows = false;
 
     public static class StringPair {
@@ -111,7 +111,10 @@ public class ControlParams {
     }
 
     public void setNumFlows(int num_flows) throws IllegalArgValException {
-        this.numFlows = num_flows;
+        if( num_flows <= 0 || num_flows > 65535 )
+            throw( new IllegalArgValException("Number of flows must be between 1 and 65535") );
+        
+        this.numFlows = (short)num_flows;
         recomputeBufferSize();
     }
 
