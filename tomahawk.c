@@ -20,12 +20,15 @@
 #include "debug.h"
 #include "io_wrapper.h"
 
+#define STR_VERSION "0.01b"
+
 #define STR_USAGE "\
-%s: [-?] {CLIENT OPTIONS|SERVER_OPTIONS}\n\
+Tomahawk Flow Generator v%s\n\
+%s: [-?]\n\
   -?, -help:       displays this help\n\
 \n\
-Client: -client -ip DST_IP -port PORT_NUMBER -nflow NUM_FLOWS -bw BANDWIDTH_TO_USE -i INTERVAL -l CONTROL_PORT\n\
-  -c, --client:    run tomahawk in client mode\n\
+Client: -client CLIENT_PARAMETERS\n\
+  -c, -client:     run tomahawk in client mode\n\
   -d, -dst, -ip:   sets the server IP address to connect to\n\
   -p, -port:       sets the server port to connect to\n\
   -n, -nflow:      the number of flows to establish\n\
@@ -33,10 +36,10 @@ Client: -client -ip DST_IP -port PORT_NUMBER -nflow NUM_FLOWS -bw BANDWIDTH_TO_U
   -i, -interval:   interval in milliseconds at which a client will write\n\
   -l, -listen:     the port to listen on for updates to parameters\n\
 \n\
-Server: -server -port PORT_NUMBER [-nap SLEEP_BW_EMPTIES=50ms]\n\
+Server: -server SERVER_PARAMETERS\n\
   -s, -server:    run tomahawk in server mode\n\
   -p, -port:      sets the port number to listen on\n\
-  -n, -nap:       milliseconds to sleep between emptying buffers (defaul=50ms)\n"
+  -n, -nap:       milliseconds to sleep between emptying buffers (default=50ms)\n"
 
 #define MAX_FLOWS 65535
 #define MAX_PAYLOAD (MAX_FLOWS * sizeof(int))
@@ -88,19 +91,19 @@ int main( int argc, char** argv ) {
     uint16_t port = 0;
     client_t client;
     uint32_t nap_usec = 50;
-    memset( &client, 0, sizeof(client) );
 
+    /* initialize */
     debug_pthread_init_init();
-    debug_pthread_init( "Main", "Main" );
+    memset( &client, 0, sizeof(client) );
 
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
 
     /* parse command-line arguments */
     unsigned i;
-    for( i=1; i<argc; i++ ) {
-        if( str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
-            printf( STR_USAGE, (argc>0) ? argv[0] : "tomahawk" );
+    for( i=1; i<argc || argc<=1; i++ ) {
+        if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
+            printf( STR_USAGE, STR_VERSION, (argc>0) ? argv[0] : "tomahawk" );
             return 0;
         }
         else if( str_matches(argv[i], 3, "-c", "-client", "--client") ) {
@@ -263,6 +266,7 @@ void* controller_main( void* pclient ) {
     int len;
     struct sockaddr* p_ca = (struct sockaddr*)&client_addr;
 
+    debug_pthread_init( "Controller", "Controller" );
     pthread_detach( pthread_self() );
 
     /* create a socket to listen for connections on */
@@ -398,6 +402,7 @@ void client_main( client_t* c ) {
     uint32_t i;
     int fd[MAX_FLOWS];
 
+    debug_pthread_init( "Client", "Client" );
     gettimeofday( &time_init, NULL );
     signal( SIGINT, client_sig_int_handler );
 
@@ -511,6 +516,8 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
     byte junk;
     int fd[MAX_FLOWS+1];
 
+    debug_pthread_init( "Server", "Server" );
+
     /* create a socket to listen for connections on */
     sockfd = socket( AF_INET, SOCK_STREAM, 0 );
     if( sockfd == -1 ) {
@@ -537,7 +544,7 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
     listen( sockfd, SOMAXCONN );
 
     while( 1 ) {
-        debug_println( "controller waiting for new connection on port %u", port );
+        debug_println( "server waiting for new connection on port %u", port );
 
         /* accept new clients */
         while( (fd[fd_num]=accept(sockfd, p_ca, &sock_len )) != -1 ) {
