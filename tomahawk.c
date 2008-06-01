@@ -346,6 +346,43 @@ void* controller_main( void* pclient ) {
     return NULL;
 }
 
+struct timeval time_init;
+static uint64_t total_bytes = 0;
+void client_report_stats_and_exit( int code ) {
+    struct timeval now;
+    uint32_t time_passed_sec;
+    uint32_t avg_bps;
+
+    /* compute some stats before exiting */
+    gettimeofday( &now, NULL );
+    time_passed_sec = now.tv_sec - time_init.tv_sec;
+    avg_bps = (total_bytes * 8) / time_passed_sec;
+
+    /* report the stats */
+    fprintf( stderr, "\
+Client exiting (%d) ...\n\
+  Total Data Sent:   %lluB\n\
+  Total Uptime:      %usec\n\
+  Average Bandwidth: %ubps\n", code, total_bytes, time_passed_sec, avg_bps );
+
+    /* goodbye! */
+    exit( code );
+}
+
+void client_sig_int_handler( int sig ) {
+    client_report_stats_and_exit( 0 );
+}
+
+/** Same as writen but calls exit if it is unable to write the bytes. */
+inline void writen_or_die( int fd, const void* buf, unsigned n ) {
+    int ret = writen( fd, buf, n );
+    if( ret == -1 ) {
+        fprintf( stderr, "Error: write of %uB failed for fd=%d: ", n, fd );
+        perror( "" );
+        client_report_stats_and_exit( 1 );
+    }
+}
+
 void client_main( client_t* c ) {
     struct sockaddr_in servaddr;
     struct timeval start, end;
@@ -354,11 +391,13 @@ void client_main( client_t* c ) {
     uint32_t req_num_flows;
     bool pause_ok = FALSE;
     uint32_t interval_ms;
-    uint64_t total_bytes;
     uint32_t num_bytes, extra_bytes = 0;
     uint32_t time_ms, sleep_ms;
     uint32_t i;
     int fd[MAX_FLOWS];
+
+    gettimeofday( &time_init, NULL );
+    signal( SIGINT, client_sig_int_handler );
 
     /* initialize the server's info */
     servaddr.sin_family = AF_INET;
@@ -429,6 +468,9 @@ void client_main( client_t* c ) {
         /* send garbage with each client */
         for( i=0; i<actual_flows; i++ ) {
             /* ignore whether write works or not */
+/** Same as writen but calls exit if it is unable to write the bytes. */
+inline void writen_or_die( int fd, const void* buf, unsigned n );
+
             writen_or_die( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
         }
         total_bytes += (num_bytes * actual_flows);
@@ -504,19 +546,19 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
             debug_println( "server has accepted a new client" );
             if( fd_num == MAX_FLOWS + 1 ) {
                 fprintf( stderr, "Error: too many connection requests (%u)\n", fd_num );
-                exit( 1 );
+                client_report_stats_and_exit( 1 );
             }
 
             /* just discard all received data */
             if( ioctl( fd[fd_num], I_SRDOPT, RMSGD ) == -1 ) {
                 perror( "Error: unable to put socket into read message discard mode" );
-                exit( 1 );
+                client_report_stats_and_exit( 1 );
             }
         }
 #ifdef _DEBUG_
         if( errno!=EINTR && errno!=EWOULDBLOCK ) {
             perror( "accept failed" );
-            exit( 1 );
+            client_report_stats_and_exit( 1 );
         }
 #endif
 

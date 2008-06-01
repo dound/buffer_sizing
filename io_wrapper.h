@@ -48,7 +48,4 @@ ssize_t readn( int fd, void* buf, unsigned n );
  */
 int writen( int fd, const void* buf, unsigned n );
 
-/** Same as writen but calls exit if it is unable to write the bytes. */
-inline void writen_or_die( int fd, const void* buf, unsigned n );
-
 #endif /* IO_WRAPPER_H */

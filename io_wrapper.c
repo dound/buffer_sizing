@@ -53,11 +53,3 @@ int writen( int fd, const void* buf, unsigned n ) {
 
     return 0; /* indicates success */
 }
-
-inline void writen_or_die( int fd, const void* buf, unsigned n ) {
-    int ret = writen( fd, buf, n );
-    if( ret == -1 ) {
-        fprintf( stderr, "Error: write of %uB failed for fd=%d\n", n, fd );
-        exit( 1 );
-    }
-}
