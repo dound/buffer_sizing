@@ -43,6 +43,8 @@ int writen( int fd, const void* buf, unsigned n ) {
         if( (nwritten = write(fd, chbuf, nleft)) <= 0 ) {
             if( nwritten < 0 && errno == EINTR )
                 continue;  /* interrupt: no bytes written: try again */
+            else if( errno == EWOULDBLOCK )
+                return nwritten;
             else
                 return -1; /* problem with write: error! */
         }
@@ -51,5 +53,5 @@ int writen( int fd, const void* buf, unsigned n ) {
         chbuf += nwritten;
     }
 
-    return 0; /* indicates success */
+    return (n - nleft); /* indicates success */
 }

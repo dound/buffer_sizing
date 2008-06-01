@@ -1,3 +1,10 @@
+/* Filename: io_wrapper.c */
+
+#include <errno.h>            /* errno */
+#include <stdlib.h>
+#include <unistd.h>
+#include "common.h"
+
 /*
  * Filename: io_wrapper.h
  *
@@ -44,7 +51,8 @@ ssize_t readn( int fd, void* buf, unsigned n );
  * @param buf  buffer to read from; must be at least size n
  * @param n    number of bytes to write from buf into fd
  *
- * @return 0 on success or -1 if an error occurs.
+ * @return n on success or -1 if an error occurs.  Other return indicates socket
+ *         was going to block but we wrote as much as we could.
  */
 int writen( int fd, const void* buf, unsigned n );
 

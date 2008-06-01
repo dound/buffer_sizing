@@ -32,7 +32,7 @@ Client: -client CLIENT_PARAMETERS\n\
   -d, -dst, -ip:   sets the server IP address to connect to\n\
   -p, -port:       sets the server port to connect to\n\
   -n, -nflow:      the number of flows to establish\n\
-  -bw, -bandwidth: the amount of bandwidth to use in bits per second (including overheads)\n\
+  -bw, -bandwidth: the amount of bandwidth to use in bits per second (not including overheads)\n\
   -i, -interval:   interval in milliseconds at which a client will write\n\
   -l, -listen:     the port to listen on for updates to parameters\n\
 \n\
@@ -43,14 +43,13 @@ Server: -server SERVER_PARAMETERS\n\
 
 #define MAX_FLOWS 65535
 #define MAX_PAYLOAD (MAX_FLOWS * sizeof(int))
-#define OVERHEAD (26+20+20) /* Ethernet Preamle/Header/CRC + IP + TCP */
 
 /** encapsulates information about a client */
 typedef struct {
     addr_ip_t server_ip;
     uint16_t  server_port;
     uint16_t  num_flows;
-    uint32_t  payload_bytes_per_sec;
+    uint32_t  bytes_per_sec;
     uint32_t  interval_millisec;
     uint16_t  listen_port;
     bool      warned;
@@ -74,16 +73,10 @@ static void client_main( client_t* c );
 static void server_main( uint16_t port, uint32_t nap_usec );
 
 /**
- * Convert bits to bytes, round up to nearest byte, and then subtract the size
- * of the Ethernet, IP, and TCP overheads (e.g. 26+20+20=66B).  If the result
- * would be less than or equal to 0, then 1 is returned.
+ * Convert bits to bytes, round up to nearest byte.
  */
-static uint32_t bits_to_payload_bytes_ceil( uint32_t num_bits ) {
-    uint32_t bytes = ((num_bits - 1) / 8) + 1;
-    if( bytes > OVERHEAD )
-        return bytes - OVERHEAD;
-    else
-        return 1;
+static uint32_t bits_to_bytes_ceil( uint32_t num_bits ) {
+    return ((num_bits - 1) / 8) + 1;
 }
 
 int main( int argc, char** argv ) {
@@ -163,7 +156,7 @@ int main( int argc, char** argv ) {
                 fprintf( stderr, "Error: %u is not a valid bandwidth rate\n", val );
                 return -1;
             }
-            client.payload_bytes_per_sec = bits_to_payload_bytes_ceil(val);
+            client.bytes_per_sec = bits_to_bytes_ceil(val);
         }
         else if( str_matches(argv[i], 3, "-i", "-interval", "--interval") ) {
             i += 1;
@@ -223,7 +216,7 @@ int main( int argc, char** argv ) {
             fprintf( stderr, "Error: missing required switch -nflow\n" );
             return -1;
         }
-        if( client.payload_bytes_per_sec == 0 ) {
+        if( client.bytes_per_sec == 0 ) {
             fprintf( stderr, "Error: missing required switch -bandwidth\n" );
             return -1;
         }
@@ -330,7 +323,7 @@ static void* controller_main( void* pclient ) {
                 break;
 
             case CODE_BPS:
-                c->payload_bytes_per_sec = bits_to_payload_bytes_ceil(packet.val);
+                c->bytes_per_sec = bits_to_bytes_ceil(packet.val);
                 fprintf( stderr, "bps is now %ub\n", packet.val );
                 break;
 
@@ -349,9 +342,6 @@ static void* controller_main( void* pclient ) {
             }
             c->warned = FALSE;
             client_reset_checkpoint();
-            debug_println( "avg packet size (on the wire) will be about %uB",
-                           OVERHEAD + (c->payload_bytes_per_sec * c->interval_millisec) / (c->num_flows * 1000) );
-
         }
 
         close( clientfd );
@@ -365,6 +355,8 @@ static void* controller_main( void* pclient ) {
 static struct timeval time_init;
 static uint64_t total_bytes = 0;
 static uint32_t total_packets = 0;
+static uint32_t total_partial_writes = 0;
+static uint32_t total_empty_writes = 0;
 static void client_report_stats_and_exit( int code ) {
     struct timeval now;
     uint32_t time_passed_sec;
@@ -382,11 +374,13 @@ static void client_report_stats_and_exit( int code ) {
     /* report the stats */
     fprintf( stderr, "\
 Client exiting (%d) ...\n\
-  Packets Sent:      %10u packets\n\
-  Bytes Sent:        %10llu bytes\n\
-  Total Uptime:      %10u seconds\n\
-  Average Bandwidth: %10u bits per second\n",
-             code, total_packets, total_bytes, time_passed_sec, avg_bps );
+  Packets Sent:     %10u\n\
+  Partial Writes:   %10u\n\
+  Empty Writes:     %10u\n\
+  Bytes Sent:       %10llu\n\
+  Total Uptime (s): %10u\n\
+  Average BW (bps): %10u\n",
+             code, total_packets, total_partial_writes, total_empty_writes, total_bytes, time_passed_sec, avg_bps );
 
     /* goodbye! */
     exit( code );
@@ -394,16 +388,6 @@ Client exiting (%d) ...\n\
 
 static void client_sig_int_handler( int sig ) {
     client_report_stats_and_exit( 0 );
-}
-
-/** Same as writen but calls exit if it is unable to write the bytes. */
-static inline void writen_or_die( int fd, const void* buf, unsigned n ) {
-    int ret = writen( fd, buf, n );
-    if( ret == -1 ) {
-        fprintf( stderr, "Error: write of %uB failed for fd=%d: ", n, fd );
-        perror( "" );
-        client_report_stats_and_exit( 1 );
-    }
 }
 
 static uint64_t checkpointed_prev = 0;
@@ -417,20 +401,20 @@ static void client_reset_checkpoint() {
 static void client_main( client_t* c ) {
     struct sockaddr_in servaddr;
     struct timeval start, end;
+    int send_buf_size = 0, rcv_buf_size = 1024;
     uint32_t actual_flows = 0;
     uint32_t req_num_flows;
     bool pause_ok = FALSE;
     uint32_t interval_ms;
-    uint32_t Bps, Bps_tot;
+    uint32_t Bps;
     uint32_t num_bytes, extra_bytes = 0;
     uint32_t actual_bytes, expected_bytes, time_elapsed;
-    int32_t time_ms;
+    int32_t time_ms, ret;
+    bool skip_next_sleep = FALSE;
     uint32_t i;
     int fd[MAX_FLOWS];
 
     debug_pthread_init( "Client", "Client" );
-    debug_println( "avg packet size (on the wire) will be about %uB",
-                   OVERHEAD + (c->payload_bytes_per_sec * c->interval_millisec) / (c->num_flows * 1000) );
     gettimeofday( &time_init, NULL );
     signal( SIGINT, client_sig_int_handler );
 
@@ -448,8 +432,7 @@ static void client_main( client_t* c ) {
         /* determine how many flows we're supposed to have now */
         req_num_flows = c->num_flows;
         interval_ms = c->interval_millisec;
-        Bps = c->payload_bytes_per_sec;
-        Bps_tot = Bps + (1000 * OVERHEAD) / interval_ms;
+        Bps = c->bytes_per_sec;
 
         /* create the requested number of flows */
         pause_ok = FALSE;
@@ -468,6 +451,22 @@ static void client_main( client_t* c ) {
                 perror( "Error: connect for new flow failed" );
                 client_report_stats_and_exit( 1 );
             }
+
+            /* turn the socket into a non-blocking socket */
+            if( fcntl(fd[actual_flows], F_SETFL, O_NONBLOCK) != 0 ) {
+                perror( "Error: unable to put socket into non-blocking mode" );
+                exit( 1 );
+            }
+
+            if( !send_buf_size ) {
+                i = sizeof(int);
+                if( -1==getsockopt(fd[actual_flows], SOL_SOCKET, SO_SNDBUF, &send_buf_size, &i) ) {
+                    perror( "Error: unable to retrieve send buffer size" );
+                    client_report_stats_and_exit( 1 );
+                }
+                fprintf( stderr, "Send Buffer Size = %dB\n", send_buf_size );
+            }
+            setsockopt(fd[actual_flows], SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, sizeof(rcv_buf_size) );
 
             /* success! */
             actual_flows += 1;
@@ -489,14 +488,14 @@ static void client_main( client_t* c ) {
         num_bytes = (extra_bytes + Bps * interval_ms) / (req_num_flows * 1000);
         if( num_bytes == 0 ) {
             if( !c->warned ) {
-                debug_println( "Warning: payload bytes will only be 1" );
+                fprintf( stderr, "Warning: payload bytes will only be 1\n" );
                 c->warned = TRUE;
             }
             num_bytes = 1;
         }
         else if( num_bytes > MAX_PAYLOAD ) {
             if( !c->warned ) {
-                debug_println( "Warning: payload bytes will be truncated to %u (should be %u)",
+                fprintf( stderr, "Warning: payload bytes will be truncated to %u (should be %u)\n",
                                MAX_PAYLOAD, num_bytes );
                 c->warned = TRUE;
             }
@@ -505,19 +504,30 @@ static void client_main( client_t* c ) {
 
         /* send garbage with each client */
         for( i=0; i<actual_flows; i++ ) {
-            /* ignore whether write works or not */
-            writen_or_die( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
+            ret = writen( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" */
+            if( ret == num_bytes ) {
+                total_bytes += num_bytes;
+                total_packets += 1;
+            }
+            else if( ret > 0 ) {
+                total_bytes += ret;
+                total_partial_writes += 1;
+            }
+            else if( ret == 0 )
+                total_empty_writes += 1;
         }
-        total_bytes += ((num_bytes + OVERHEAD) * actual_flows);
-        total_packets += actual_flows;
 
         /* pause for the rest of the interval */
         gettimeofday( &end, NULL );
         time_ms = get_time_passed_ms( &start, &end );
-        if( time_ms < (int64_t)interval_ms )
-            sleep_ms( interval_ms - time_ms );
+        if( time_ms < (int64_t)interval_ms ) {
+            if( !skip_next_sleep )
+                sleep_ms( interval_ms - time_ms );
+            else
+                skip_next_sleep = FALSE;
+        }
         else if( !pause_ok ) {
-            extra_bytes = (Bps_tot * (time_ms - interval_ms)) / 1000;
+            extra_bytes = (Bps * (time_ms - interval_ms)) / 1000;
             fprintf( stderr, "Warning: interval took too long (took %ums; needed < %ums) (will try to catch up by sending %u extra bytes next interval)\n",
                      time_ms, interval_ms, extra_bytes );
         }
@@ -534,11 +544,13 @@ static void client_main( client_t* c ) {
         actual_bytes = total_bytes - checkpointed_bytes - checkpointed_prev;
 
         /* were too many bytes sent? */
-        expected_bytes = Bps_tot * time_elapsed / 1000;
+        expected_bytes = Bps * time_elapsed / 1000;
         if( actual_bytes > expected_bytes ) {
             /* determine how much extra time we need to spend sleeping */
-            sleep_ms( (1000 * (actual_bytes - expected_bytes)) / Bps_tot );
+            sleep_ms( (1000 * (actual_bytes - expected_bytes)) / Bps );
         }
+        else if( (actual_bytes + Bps) < expected_bytes )
+            skip_next_sleep = TRUE; /* skip sleep if we get a second behind */
     }
 }
 
