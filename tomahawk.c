@@ -43,13 +43,14 @@ Server: -server SERVER_PARAMETERS\n\
 
 #define MAX_FLOWS 65535
 #define MAX_PAYLOAD (MAX_FLOWS * sizeof(int))
+#define OVERHEAD (26+20+20) /* Ethernet Preamle/Header/CRC + IP + TCP */
 
 /** encapsulates information about a client */
 typedef struct {
     addr_ip_t server_ip;
     uint16_t  server_port;
     uint16_t  num_flows;
-    uint32_t  payload_bytes_per_millisec;
+    uint32_t  payload_bytes_per_sec;
     uint32_t  interval_millisec;
     uint16_t  listen_port;
     bool      warned;
@@ -79,8 +80,8 @@ void server_main( uint16_t port, uint32_t nap_usec );
  */
 static uint32_t bits_to_payload_bytes_ceil( uint32_t num_bits ) {
     uint32_t bytes = ((num_bits - 1) / 8) + 1;
-    if( bytes > 66 )
-        return bytes - 66;
+    if( bytes > OVERHEAD )
+        return bytes - OVERHEAD;
     else
         return 1;
 }
@@ -162,7 +163,7 @@ int main( int argc, char** argv ) {
                 fprintf( stderr, "Error: %u is not a valid bandwidth rate\n", val );
                 return -1;
             }
-            client.payload_bytes_per_millisec = bits_to_payload_bytes_ceil(val) * 1000;
+            client.payload_bytes_per_sec = bits_to_payload_bytes_ceil(val);
         }
         else if( str_matches(argv[i], 3, "-i", "-interval", "--interval") ) {
             i += 1;
@@ -218,7 +219,7 @@ int main( int argc, char** argv ) {
             fprintf( stderr, "Error: missing required switch -nflow\n" );
             return -1;
         }
-        if( client.payload_bytes_per_millisec == 0 ) {
+        if( client.payload_bytes_per_sec == 0 ) {
             fprintf( stderr, "Error: missing required switch -bandwidth\n" );
             return -1;
         }
@@ -324,7 +325,7 @@ void* controller_main( void* pclient ) {
                 break;
 
             case CODE_BPS:
-                c->payload_bytes_per_millisec = bits_to_payload_bytes_ceil(packet.val) * 1000;
+                c->payload_bytes_per_sec = bits_to_payload_bytes_ceil(packet.val);
                 fprintf( stderr, "bps is now %ub\n", packet.val );
                 break;
 
@@ -354,6 +355,7 @@ void* controller_main( void* pclient ) {
 
 struct timeval time_init;
 static uint64_t total_bytes = 0;
+static uint32_t total_packets = 0;
 static void client_report_stats_and_exit( int code ) {
     struct timeval now;
     uint32_t time_passed_sec;
@@ -371,10 +373,11 @@ static void client_report_stats_and_exit( int code ) {
     /* report the stats */
     fprintf( stderr, "\
 Client exiting (%d) ...\n\
-  Total Data Sent:   %10llu bytes\n\
+  Packets Sent:      %10u packets\n\
+  Bytes Sent:        %10llu bytes\n\
   Total Uptime:      %10u seconds\n\
   Average Bandwidth: %10u bits per second\n",
-             code, total_bytes, time_passed_sec, avg_bps );
+             code, total_packets, total_bytes, time_passed_sec, avg_bps );
 
     /* goodbye! */
     exit( code );
@@ -408,6 +411,7 @@ void client_main( client_t* c ) {
     int fd[MAX_FLOWS];
 
     debug_pthread_init( "Client", "Client" );
+    debug_println( "payload Bps = %u\n", c->payload_bytes_per_sec );
     gettimeofday( &time_init, NULL );
     signal( SIGINT, client_sig_int_handler );
 
@@ -460,7 +464,7 @@ void client_main( client_t* c ) {
         }
 
         /* compute how much traffic each client should send this interval */
-        num_bytes = (extra_bytes + c->payload_bytes_per_millisec) / (req_num_flows * interval_ms);
+        num_bytes = (extra_bytes + c->payload_bytes_per_sec * interval_ms) / (req_num_flows * 1000);
         if( num_bytes == 0 ) {
             if( !c->warned ) {
                 debug_println( "Warning: payload bytes will only be 1" );
@@ -482,7 +486,8 @@ void client_main( client_t* c ) {
             /* ignore whether write works or not */
             writen_or_die( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
         }
-        total_bytes += (num_bytes * actual_flows);
+        total_bytes += ((num_bytes + OVERHEAD) * actual_flows);
+        total_packets += actual_flows;
 
         /* pause for the remainder of the interval */
         gettimeofday( &end, NULL );
@@ -499,7 +504,7 @@ void client_main( client_t* c ) {
             nanosleep( &sleep_time, NULL );
         }
         else if( !pause_ok ) {
-            extra_bytes = c->payload_bytes_per_millisec * (time_ms - interval_ms);
+            extra_bytes = (c->payload_bytes_per_sec * (time_ms - interval_ms)) / 1000;
             fprintf( stderr, "Warning: interval took too long (took %ums; needed < %ums) (will try to catch up by sending %u extra bytes next interval)\n",
                      time_ms, interval_ms, extra_bytes );
         }
@@ -510,18 +515,22 @@ void client_main( client_t* c ) {
     }
 }
 
+#define JUNK_SIZE 65536
 void server_main( uint16_t port, uint32_t nap_usec ) {
     struct sockaddr_in addr;
     struct sockaddr_in client_addr;
     unsigned sock_len = sizeof(client_addr);
     int sockfd;
     struct sockaddr* p_ca = (struct sockaddr*)&client_addr;
+    struct timespec sleep_time;
     uint32_t fd_num = 0;
     uint32_t i;
-    byte junk;
+    byte junk[JUNK_SIZE];
     int fd[MAX_FLOWS+1];
 
     debug_pthread_init( "Server", "Server" );
+    sleep_time.tv_sec = 0;
+    sleep_time.tv_nsec = nap_usec * 1000;
 
     /* create a socket to listen for connections on */
     sockfd = socket( AF_INET, SOCK_STREAM, 0 );
@@ -559,12 +568,6 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
                 fprintf( stderr, "Error: too many connection requests (%u)\n", fd_num );
                 exit( 1 );
             }
-
-            /* just discard all received data */
-            if( ioctl( fd[fd_num], I_SRDOPT, RMSGD ) == -1 ) {
-                perror( "Error: unable to put socket into read message discard mode" );
-                exit( 1 );
-            }
         }
 #ifdef _DEBUG_
         if( errno!=EINTR && errno!=EWOULDBLOCK ) {
@@ -576,7 +579,9 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
         /* remove any existing data from the receive buffers */
         /* (socket is in discard mode so leftover data will be tossed) */
         for( i=0; i<fd_num; i++ )
-            read( fd[i], &junk, 1 ); /* don't care if it fails */
+            read( fd[i], junk, JUNK_SIZE ); /* don't care if it fails */
+
+        nanosleep( &sleep_time, NULL );
     }
 
     close( sockfd );
