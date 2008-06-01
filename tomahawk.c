@@ -35,6 +35,7 @@ Client: -client CLIENT_PARAMETERS\n\
   -bw, -bandwidth: the amount of bandwidth to use in bits per second (including overheads)\n\
   -i, -interval:   interval in milliseconds at which a client will write\n\
   -l, -listen:     the port to listen on for updates to parameters\n\
+  -x, -checkpoint: seconds between rate limiter checkpoints (default=1sec)\n\
 \n\
 Server: -server SERVER_PARAMETERS\n\
   -s, -server:    run tomahawk in server mode\n\
@@ -52,6 +53,7 @@ typedef struct {
     uint16_t  num_flows;
     uint32_t  payload_bytes_per_sec;
     uint32_t  interval_millisec;
+    uint32_t  checkpoint_interval_sec;
     uint16_t  listen_port;
     bool      warned;
 } client_t;
@@ -96,6 +98,7 @@ int main( int argc, char** argv ) {
     /* initialize */
     debug_pthread_init_init();
     memset( &client, 0, sizeof(client) );
+    client.checkpoint_interval_sec = 1;
 
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
@@ -177,6 +180,19 @@ int main( int argc, char** argv ) {
                 return -1;
             }
             client.interval_millisec = val;
+        }
+        else if( str_matches(argv[i], 3, "-k", "-checkpoint", "--checkpoint") ) {
+            i += 1;
+            if( i == argc ) {
+                fprintf( stderr, "Error: -checkpoint requires a number to be specified\n" );
+                return -1;
+            }
+            uint32_t val = strtoul( argv[i], NULL, 10 );
+            if( val==0 ) {
+                fprintf( stderr, "Error: %u is not a valid checkpoint interval\n", val );
+                return -1;
+            }
+            client.checkpoint_interval_sec = val;
         }
         else if( str_matches(argv[i], 3, "-l", "-listen", "--listen") ) {
             i += 1;
@@ -402,14 +418,17 @@ inline void writen_or_die( int fd, const void* buf, unsigned n ) {
 
 void client_main( client_t* c ) {
     struct sockaddr_in servaddr;
-    struct timeval start, end;
+    struct timeval start, end, checkpoint;
     struct timespec sleep_time;
     uint32_t actual_flows = 0;
     uint32_t req_num_flows;
     bool pause_ok = FALSE;
     uint32_t interval_ms;
+    uint32_t Bps, Bps_tot;
     uint32_t num_bytes, extra_bytes = 0;
-    uint32_t time_ms, sleep_ms;
+    uint32_t checkpointed_bytes = 0, fast_bytes, fast_time, expected_bytes;
+    int32_t time_ms;
+    uint32_t sleep_ms;
     uint32_t i;
     int fd[MAX_FLOWS];
 
@@ -423,6 +442,7 @@ void client_main( client_t* c ) {
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = c->server_ip;
     servaddr.sin_port = htons( c->server_port );
+    gettimeofday( &checkpoint, NULL );
 
     /* one loop per interval */
     while( 1 ) {
@@ -432,6 +452,8 @@ void client_main( client_t* c ) {
         /* determine how many flows we're supposed to have now */
         req_num_flows = c->num_flows;
         interval_ms = c->interval_millisec;
+        Bps = c->payload_bytes_per_sec;
+        Bps_tot = Bps + OVERHEAD;
 
         /* create the requested number of flows */
         pause_ok = FALSE;
@@ -468,7 +490,7 @@ void client_main( client_t* c ) {
         }
 
         /* compute how much traffic each client should send this interval */
-        num_bytes = (extra_bytes + c->payload_bytes_per_sec * interval_ms) / (req_num_flows * 1000);
+        num_bytes = (extra_bytes + Bps * interval_ms) / (req_num_flows * 1000);
         if( num_bytes == 0 ) {
             if( !c->warned ) {
                 debug_println( "Warning: payload bytes will only be 1" );
@@ -493,10 +515,39 @@ void client_main( client_t* c ) {
         total_bytes += ((num_bytes + OVERHEAD) * actual_flows);
         total_packets += actual_flows;
 
-        /* pause for the remainder of the interval */
+        /* determine how much of the interval is left */
         gettimeofday( &end, NULL );
         time_ms = get_time_passed_ms( &start, &end );
-        if( time_ms < interval_ms ) {
+
+        /* every so often make sure we aren't sending too fast */
+        if( end.tv_sec - checkpoint.tv_sec > c->checkpoint_interval_sec ) {
+            /* the next checkpoint starts now */
+            checkpoint = end;
+
+            /* compute how many bytes were sent since the last checkpoint */
+            checkpointed_bytes = total_bytes - checkpointed_bytes;
+
+            /* were too many bytes sent? */
+            expected_bytes = c->checkpoint_interval_sec * Bps_tot;
+            if( checkpointed_bytes > expected_bytes ) {
+                /* determine how much extra time we need to spend sleeping */
+                fast_bytes = checkpointed_bytes - expected_bytes;
+                fast_time  = fast_bytes / Bps_tot;
+                time_ms -= (fast_time * 1000);
+
+                debug_println( "checkpoint => fast (over by %uB) (extra sleep of %ums)", fast_bytes, fast_time*1000 );
+
+                /* account for slop thanks to integer division */
+                checkpointed_bytes = total_bytes - (fast_bytes - fast_time * Bps_tot);
+            }
+            else {
+                debug_println( "checkpoint => on time (%uB expected, got %uB)", expected_bytes, checkpointed_bytes );
+                checkpointed_bytes = total_bytes;
+            }
+        }
+
+        /* pause for the remainder of the interval */
+        if( time_ms < (int64_t)interval_ms ) {
             sleep_ms = interval_ms - time_ms;
             if( sleep_ms < 1000 )
                 sleep_time.tv_sec = 0;
@@ -508,7 +559,7 @@ void client_main( client_t* c ) {
             nanosleep( &sleep_time, NULL );
         }
         else if( !pause_ok ) {
-            extra_bytes = (c->payload_bytes_per_sec * (time_ms - interval_ms)) / 1000;
+            extra_bytes = (Bps_tot * (time_ms - interval_ms)) / 1000;
             fprintf( stderr, "Warning: interval took too long (took %ums; needed < %ums) (will try to catch up by sending %u extra bytes next interval)\n",
                      time_ms, interval_ms, extra_bytes );
         }
