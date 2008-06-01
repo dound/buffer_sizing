@@ -343,6 +343,9 @@ void* controller_main( void* pclient ) {
                 fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
             }
             c->warned = FALSE;
+            debug_println( "avg packet size (on the wire) will be about %uB",
+                           OVERHEAD + (c->payload_bytes_per_sec * c->interval_millisec) / (c->num_flows * 1000) );
+
         }
 
         close( clientfd );
@@ -411,7 +414,8 @@ void client_main( client_t* c ) {
     int fd[MAX_FLOWS];
 
     debug_pthread_init( "Client", "Client" );
-    debug_println( "payload Bps = %u\n", c->payload_bytes_per_sec );
+    debug_println( "avg packet size (on the wire) will be about %uB",
+                   OVERHEAD + (c->payload_bytes_per_sec * c->interval_millisec) / (c->num_flows * 1000) );
     gettimeofday( &time_init, NULL );
     signal( SIGINT, client_sig_int_handler );
 
