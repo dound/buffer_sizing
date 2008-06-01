@@ -468,9 +468,6 @@ void client_main( client_t* c ) {
         /* send garbage with each client */
         for( i=0; i<actual_flows; i++ ) {
             /* ignore whether write works or not */
-/** Same as writen but calls exit if it is unable to write the bytes. */
-inline void writen_or_die( int fd, const void* buf, unsigned n );
-
             writen_or_die( fd[i], &fd, num_bytes ); /* reuse fd buffer as "data" :) */
         }
         total_bytes += (num_bytes * actual_flows);
