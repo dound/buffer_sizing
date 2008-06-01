@@ -357,7 +357,10 @@ public class MasterGUI extends javax.swing.JFrame {
 }//GEN-LAST:event_chkUseNumFlowsActionPerformed
 
     private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearDataActionPerformed
-        
+        dataOcc.clear();
+        dataQS.clear();
+        dataXput.clear();
+        tic = 0;
 }//GEN-LAST:event_btnClearDataActionPerformed
 
     private void txtLinkBWKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLinkBWKeyPressed
