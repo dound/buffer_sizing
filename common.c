@@ -6,6 +6,7 @@
 #include <stdlib.h>     /* calloc, malloc, realloc */
 #include <string.h>
 #include <sys/time.h>   /* struct timeval */
+#include <time.h>
 #include "common.h"
 #include "debug.h"
 
@@ -16,6 +17,19 @@ uint32_t get_time_passed_ms( struct timeval* start, struct timeval* end ) {
     start_ms = start->tv_sec*1000 + start->tv_usec / 1000;
     end_ms   =   end->tv_sec*1000 +   end->tv_usec / 1000;
     return( end_ms - start_ms );
+}
+
+void sleep_ms( uint32_t sleep_ms ) {
+    struct timespec sleep_time;
+
+    if( sleep_ms < 1000 )
+        sleep_time.tv_sec = 0;
+    else {
+        sleep_time.tv_sec = sleep_ms / 1000;
+        sleep_ms -= (sleep_time.tv_sec * 1000);
+    }
+    sleep_time.tv_nsec = sleep_ms * 1000 * 1000;
+    nanosleep( &sleep_time, NULL );
 }
 
 void ip_to_string( char* buf, addr_ip_t ip ) {

@@ -38,6 +38,9 @@ typedef uint32_t addr_ip_t;
  */
 uint32_t get_time_passed_ms( struct timeval* start, struct timeval* end );
 
+/** Sleeps for the specified number of milliseconds. */
+void sleep_ms( uint32_t sleep_ms );
+
 /**
  * Converts ip into a string and stores it in buf.  buf must be at least
  * STRLEN_IP bytes long.
