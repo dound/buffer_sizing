@@ -5,11 +5,13 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stropts.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <time.h>
@@ -31,12 +33,13 @@ Client: -client -ip DST_IP -port PORT_NUMBER -nflow NUM_FLOWS -bw BANDWIDTH_TO_U
   -i, -interval:   interval in milliseconds at which a client will write\n\
   -l, -listen:     the port to listen on for updates to parameters\n\
 \n\
-Server: -server -port PORT_NUMBER\n\
+Server: -server -port PORT_NUMBER [-nap SLEEP_BW_EMPTIES=50ms]\n\
   -s, -server:    run tomahawk in server mode\n\
-  -p, -port:      sets the port number to listen on\n"
+  -p, -port:      sets the port number to listen on\n\
+  -n, -nap:       milliseconds to sleep between emptying buffers (defaul=50ms)\n"
 
 #define MAX_FLOWS 65535
-#define MAX_PAYLOAD (MAX_FLOWS * sizeof(uint32_t))
+#define MAX_PAYLOAD (MAX_FLOWS * sizeof(int))
 
 /** encapsulates information about a client */
 typedef struct {
@@ -64,7 +67,7 @@ typedef enum {
 
 void* controller_main( void* pclient );
 void client_main( client_t* c );
-void server_main( uint16_t port );
+void server_main( uint16_t port, uint32_t nap_usec );
 
 /**
  * Convert bits to bytes, round up to nearest byte, and then subtract the size
@@ -84,6 +87,7 @@ int main( int argc, char** argv ) {
     bool is_server = FALSE;
     uint16_t port = 0;
     client_t client;
+    uint32_t nap_usec = 50;
     memset( &client, 0, sizeof(client) );
 
     debug_pthread_init_init();
@@ -183,6 +187,19 @@ int main( int argc, char** argv ) {
             }
             client.listen_port = val;
         }
+        else if( str_matches(argv[i], 3, "-n", "-nap", "--nap") ) {
+            i += 1;
+            if( i == argc ) {
+                fprintf( stderr, "Error: -nap requires a number to be specified\n" );
+                return -1;
+            }
+            uint32_t val = strtoul( argv[i], NULL, 10 );
+            if( val==0 || val >= 1000 ) {
+                fprintf( stderr, "Error: %u is not a valid nap quantity (must be in the range (0, 1000))\n", val );
+                return -1;
+            }
+            nap_usec = val * 1000;
+        }
     }
     if( port == 0 ) {
         fprintf( stderr, "Error: missing required switch -port\n" );
@@ -228,7 +245,7 @@ int main( int argc, char** argv ) {
     }
     else {
         /* start listening for client connections */
-        server_main( port );
+        server_main( port, nap_usec );
     }
 
     return 0;
@@ -335,11 +352,12 @@ void client_main( client_t* c ) {
     struct timespec sleep_time;
     uint32_t actual_flows = 0;
     uint32_t req_num_flows;
+    bool pause_ok = FALSE;
     uint32_t interval_ms;
     uint32_t num_bytes, extra_bytes = 0;
     uint32_t time_ms, sleep_ms;
     uint32_t i;
-    uint32_t fd[MAX_FLOWS];
+    int fd[MAX_FLOWS];
 
     /* initialize the server's info */
     servaddr.sin_family = AF_INET;
@@ -356,6 +374,7 @@ void client_main( client_t* c ) {
         interval_ms = c->interval_millisec;
 
         /* create the requested number of flows */
+        pause_ok = FALSE;
         while( actual_flows < req_num_flows ) {
             debug_println( "starting new flow (have %u, need %u)",
                            actual_flows, req_num_flows );
@@ -374,6 +393,7 @@ void client_main( client_t* c ) {
 
             /* success! */
             actual_flows += 1;
+            pause_ok = TRUE;
         }
 
         /* destroy any extra flows */
@@ -384,6 +404,7 @@ void client_main( client_t* c ) {
             /* close the extra flow */
             actual_flows -= 1;
             close( fd[actual_flows] );
+            pause_ok = TRUE;
         }
 
         /* compute how much traffic each client should send this interval */
@@ -424,14 +445,84 @@ void client_main( client_t* c ) {
             sleep_time.tv_nsec = sleep_ms * 1000 * 1000;
             nanosleep( &sleep_time, NULL );
         }
-        else {
+        else if( !pause_ok ) {
             extra_bytes = c->payload_bytes_per_millisec * (time_ms - interval_ms);
             fprintf( stderr, "Warning: interval took too long (took %ums; needed < %ums) (will try to catch up by sending %u extra bytes next interval)\n",
                      time_ms, interval_ms, extra_bytes );
         }
+        else {
+            fprintf( stderr, "Warning: interval took too long (took %ums; needed < %ums) (will not try to catch up because we spent part of the interval creating/destroying flows)\n",
+                     time_ms, interval_ms );
+        }
     }
 }
 
-void server_main( uint16_t port ) {
+void server_main( uint16_t port, uint32_t nap_usec ) {
+    struct sockaddr_in addr;
+    struct sockaddr_in client_addr;
+    unsigned sock_len = sizeof(client_addr);
+    int sockfd;
+    struct sockaddr* p_ca = (struct sockaddr*)&client_addr;
+    uint32_t fd_num = 0;
+    uint32_t i;
+    byte junk;
+    int fd[MAX_FLOWS+1];
 
+    /* create a socket to listen for connections on */
+    sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+    if( sockfd == -1 ) {
+        printf( "Error: unable to create TCP socket for server\n" );
+        exit( 1 );
+    }
+
+    /* bind to the requested port */
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = 0;
+    memset(&(addr.sin_zero), 0, sizeof(addr.sin_zero));
+    if( bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) ) {
+        printf( "Error: unable to bind to local port %u for server\n", port );
+        exit( 1 );
+    }
+
+    /* turn the socket into a non-blocking socket */
+    if( fcntl(fd[fd_num], F_SETFL, O_NONBLOCK) != 0 ) {
+        perror( "Error: unable to put socket into non-blocking mode" );
+        exit( 1 );
+    }
+
+    /* listen for incoming connection requests */
+    listen( sockfd, SOMAXCONN );
+
+    while( 1 ) {
+        debug_println( "controller waiting for new connection on port %u", port );
+
+        /* accept new clients */
+        while( (fd[fd_num]=accept(sockfd, p_ca, &sock_len )) != -1 ) {
+            fd_num += 1;
+            debug_println( "server has accepted a new client" );
+            if( fd_num == MAX_FLOWS + 1 ) {
+                fprintf( stderr, "Error: too many connection requests (%u)\n", fd_num );
+                exit( 1 );
+            }
+
+            /* just discard all received data */
+            if( ioctl( fd[fd_num], I_SRDOPT, RMSGD ) == -1 ) {
+                perror( "Error: unable to put socket into read message discard mode" );
+                exit( 1 );
+            }
+        }
+#ifdef _DEBUG_
+        if( errno!=EINTR && errno!=EWOULDBLOCK ) {
+            perror( "accept failed" );
+            exit( 1 );
+        }
+#endif
+
+        /* remove any existing data from the receive buffers */
+        /* (socket is in discard mode so leftover data will be tossed) */
+        for( i=0; i<fd_num; i++ )
+            read( fd[i], &junk, 1 ); /* don't care if it fails */
+    }
+
+    close( sockfd );
 }
