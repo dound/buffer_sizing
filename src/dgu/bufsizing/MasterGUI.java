@@ -32,6 +32,7 @@ public class MasterGUI extends javax.swing.JFrame {
     private static final XYSeries dataQS   = new XYSeries("Queue Size");
     private static final XYSeriesCollection collXput = new XYSeriesCollection();
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
+    private static int tic = 0;
     
     /** Creates new form MasterGUI */
     public MasterGUI() {
@@ -54,10 +55,10 @@ public class MasterGUI extends javax.swing.JFrame {
         collOcc.addSeries(dataOcc);
         collOcc.addSeries(dataQS);
         
-        for( int i=0; i<10; i++ ) {
-            dataXput.add( i, i );
-            dataOcc.add( i, i % 6 );
-            dataQS.add( i, 5 );
+        for( ; tic<10; tic++ ) {
+            dataXput.add( tic, tic );
+            dataOcc.add( tic, tic % 6 );
+            dataQS.add( tic, 5 );
         }
     }
     
@@ -73,15 +74,15 @@ public class MasterGUI extends javax.swing.JFrame {
             false //URLs
         );    
          
-        chart.setBackgroundPaint(Color.white);
-        chart.setBorderVisible(true);
+        chart.setBackgroundPaint(GUIHelper.DEFAULT_BG_COLOR);
+        chart.setBorderVisible(false);
         chart.setAntiAlias(false);
         chart.setTextAntiAlias(true);
         
         XYPlot plot = (XYPlot) chart.getPlot();
-        plot.setBackgroundPaint(Color.lightGray);
-        plot.setDomainGridlinePaint(Color.white);
-        plot.setRangeGridlinePaint(Color.white);
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
         plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
         plot.setDomainCrosshairVisible(false);
         plot.setRangeCrosshairVisible(true);
@@ -96,6 +97,12 @@ public class MasterGUI extends javax.swing.JFrame {
         range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
         range.setAutoRange(true);
        
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+        renderer.setSeriesPaint(0, new Color(0,196,0));
+        renderer.setStroke(new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        plot.setRenderer(0, renderer);
+        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+        
         NumberAxis range2 = new NumberAxis("Queue Occupancy / Size");
         plot.setRangeAxis(1, range2);
         plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
@@ -104,9 +111,9 @@ public class MasterGUI extends javax.swing.JFrame {
         range2.setAutoRange(true);
         
         XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
-        renderer2.setSeriesPaint(0, Color.red);
-        renderer2.setSeriesPaint(1, Color.green);
-        renderer2.setStroke(new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer2.setPaint(new Color(196,0,0));
+        renderer2.setSeriesStroke(0, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL,10.0f,new float[]{10.0f,5.0f},0.0f));
         plot.setRenderer(1, renderer2);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         
@@ -310,7 +317,7 @@ public class MasterGUI extends javax.swing.JFrame {
 }//GEN-LAST:event_chkUseNumFlowsActionPerformed
 
     private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearDataActionPerformed
-        // TODO add your handling code here:
+        
 }//GEN-LAST:event_btnClearDataActionPerformed
     
     /**
