@@ -35,7 +35,7 @@ Client: -client CLIENT_PARAMETERS\n\
   -bw, -bandwidth: the amount of bandwidth to use in bits per second (including overheads)\n\
   -i, -interval:   interval in milliseconds at which a client will write\n\
   -l, -listen:     the port to listen on for updates to parameters\n\
-  -x, -checkpoint: seconds between rate limiter checkpoints (default=1sec)\n\
+  -k, -checkpoint: seconds between rate limiter checkpoints (default=1sec)\n\
 \n\
 Server: -server SERVER_PARAMETERS\n\
   -s, -server:    run tomahawk in server mode\n\
@@ -219,6 +219,10 @@ int main( int argc, char** argv ) {
                 return -1;
             }
             nap_usec = val * 1000;
+        }
+        else {
+            fprintf( stderr, "Error: unrecognized switch '%s'\n", argv[i] );
+            return -1;
         }
     }
     if( port == 0 ) {
