@@ -580,6 +580,7 @@ static void server_main( uint16_t port, uint32_t nap_usec ) {
     struct sockaddr_in addr;
     struct sockaddr_in client_addr;
     unsigned sock_len = sizeof(client_addr);
+    int send_buf_size = 1024, rcv_buf_size = 0;
     int sockfd;
     struct sockaddr* p_ca = (struct sockaddr*)&client_addr;
     struct timespec sleep_time;
@@ -622,6 +623,16 @@ static void server_main( uint16_t port, uint32_t nap_usec ) {
 
         /* accept new clients */
         while( (fd[fd_num]=accept(sockfd, p_ca, &sock_len )) != -1 ) {
+            if( !rcv_buf_size ) {
+                i = sizeof(int);
+                if( -1==getsockopt(fd[fd_num], SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, &i) ) {
+                    perror( "Error: unable to retrieve receive buffer size" );
+                    exit( 1 );
+                }
+                fprintf( stderr, "Receive Buffer Size = %dB\n", rcv_buf_size );
+            }
+            setsockopt(fd[fd_num], SOL_SOCKET, SO_SNDBUF, &send_buf_size, sizeof(send_buf_size) );
+
             fd_num += 1;
             debug_println( "server has accepted a new client" );
             if( fd_num == MAX_FLOWS + 1 ) {
