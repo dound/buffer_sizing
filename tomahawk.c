@@ -251,6 +251,8 @@ int main( int argc, char** argv ) {
     return 0;
 }
 
+static void client_report_stats_and_exit( int code );
+
 void* controller_main( void* pclient ) {
     client_t* c = (client_t*)pclient;
     struct sockaddr_in addr;
@@ -329,7 +331,7 @@ void* controller_main( void* pclient ) {
 
             case CODE_EXIT:
                 fprintf( stderr, "client exiting (received exit command)\n" );
-                exit( 0 );
+                client_report_stats_and_exit( 0 );
                 break;
 
             default:
@@ -348,7 +350,7 @@ void* controller_main( void* pclient ) {
 
 struct timeval time_init;
 static uint64_t total_bytes = 0;
-void client_report_stats_and_exit( int code ) {
+static void client_report_stats_and_exit( int code ) {
     struct timeval now;
     uint32_t time_passed_sec;
     uint32_t avg_bps;
@@ -422,13 +424,13 @@ void client_main( client_t* c ) {
             /* make a TCP socket for the new flow */
             if( (fd[actual_flows] = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) != 0 ) {
                 perror( "Error: unable to create TCP socket for flow" );
-                exit( 1 );
+                client_report_stats_and_exit( 1 );
             }
 
             /* connect to the server */
             if( connect( fd[actual_flows], (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
                 perror( "Error: connect for new flow failed" );
-                exit( 1 );
+                client_report_stats_and_exit( 1 );
             }
 
             /* success! */
@@ -543,19 +545,19 @@ void server_main( uint16_t port, uint32_t nap_usec ) {
             debug_println( "server has accepted a new client" );
             if( fd_num == MAX_FLOWS + 1 ) {
                 fprintf( stderr, "Error: too many connection requests (%u)\n", fd_num );
-                client_report_stats_and_exit( 1 );
+                exit( 1 );
             }
 
             /* just discard all received data */
             if( ioctl( fd[fd_num], I_SRDOPT, RMSGD ) == -1 ) {
                 perror( "Error: unable to put socket into read message discard mode" );
-                client_report_stats_and_exit( 1 );
+                exit( 1 );
             }
         }
 #ifdef _DEBUG_
         if( errno!=EINTR && errno!=EWOULDBLOCK ) {
             perror( "accept failed" );
-            client_report_stats_and_exit( 1 );
+            exit( 1 );
         }
 #endif
 
