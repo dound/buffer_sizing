@@ -6,6 +6,8 @@
 package dgu.bufsizing;
 
 import dgu.util.swing.GUIHelper;
+import dgu.util.swing.binding.*;
+import dgu.util.translator.*;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import org.jfree.chart.*;
@@ -26,6 +28,10 @@ public class MasterGUI extends javax.swing.JFrame {
     /** the icon for the project */
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
   
+    public static final ControlParams ctl = new ControlParams();
+    
+    public static MasterGUI me;
+    
     private static JFreeChart chart;
     private static final XYSeries dataXput = new XYSeries("Goodput");
     private static final XYSeries dataOcc  = new XYSeries("Queue Occupancy");
@@ -36,6 +42,8 @@ public class MasterGUI extends javax.swing.JFrame {
     
     /** Creates new form MasterGUI */
     public MasterGUI() {
+        me = this;
+        
         GUIHelper.setGUIDefaults();
         initComponents();
         setIconImage( icon );
@@ -45,9 +53,16 @@ public class MasterGUI extends javax.swing.JFrame {
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setBounds(10, 180, 1005, 545);
         getContentPane().add(chartPanel);
+       
+        prepareBindings();
+        ctl.recomputeBufferSize();
         
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
+    }
+    
+    private void prepareBindings() {
+        
     }
     
     static private void initializeData() {
@@ -131,25 +146,26 @@ public class MasterGUI extends javax.swing.JFrame {
 
         pnlControl = new javax.swing.JPanel();
         pnlNetControl = new javax.swing.JPanel();
-        txtNumFlows = new dgu.util.swing.binding.JTextFieldBound();
+        txtNumFlows = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "numFlows");
         lblNumGen = new javax.swing.JLabel();
         lblNumGenVal = new javax.swing.JLabel();
         lblPayloadBW = new javax.swing.JLabel();
-        txtPayloadBW = new dgu.util.swing.binding.JTextFieldBound();
+        txtPayloadBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "payloadBW");
         lblPayloadBWUnits = new javax.swing.JLabel();
         lblNumFlows = new javax.swing.JLabel();
         pnlBufControl = new javax.swing.JPanel();
         lblCurBufSizeVal = new javax.swing.JLabel();
         lblCurBufSize = new javax.swing.JLabel();
         lblCurBufSizeUnits = new javax.swing.JLabel();
-        txtLinkBW = new dgu.util.swing.binding.JTextFieldBound();
+        txtLinkBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "linkBW");
         lblLinkBW = new javax.swing.JLabel();
         lblLinkBWUnits = new javax.swing.JLabel();
         lblDelay = new javax.swing.JLabel();
-        txtDelay = new dgu.util.swing.binding.JTextFieldBound();
-        lblDelayUnits = new javax.swing.JLabel();
+        txtDelay = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "delay");
+        lblNotCurBufSizeVal = new javax.swing.JLabel();
         lblUseNumFlows = new javax.swing.JLabel();
-        chkUseNumFlows = new dgu.util.swing.binding.JCheckBoxBound();
+        chkUseNumFlows = new JCheckBoxBound(new SelfTranslator<Boolean>(), this.ctl, "isUseNumFlows", "setUseNumFlows");
+        lblDelayUnits = new javax.swing.JLabel();
         btnClearData = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -166,6 +182,11 @@ public class MasterGUI extends javax.swing.JFrame {
         txtNumFlows.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtNumFlowsActionPerformed(evt);
+            }
+        });
+        txtNumFlows.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtNumFlowsKeyPressed(evt);
             }
         });
         pnlNetControl.add(txtNumFlows);
@@ -192,11 +213,16 @@ public class MasterGUI extends javax.swing.JFrame {
                 txtPayloadBWActionPerformed(evt);
             }
         });
+        txtPayloadBW.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtPayloadBWKeyPressed(evt);
+            }
+        });
         pnlNetControl.add(txtPayloadBW);
         txtPayloadBW.setBounds(200, 50, 110, 20);
 
         lblPayloadBWUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblPayloadBWUnits.setText("Mbps");
+        lblPayloadBWUnits.setText("bps");
         pnlNetControl.add(lblPayloadBWUnits);
         lblPayloadBWUnits.setBounds(315, 50, 50, 20);
 
@@ -235,6 +261,11 @@ public class MasterGUI extends javax.swing.JFrame {
                 txtLinkBWActionPerformed(evt);
             }
         });
+        txtLinkBW.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLinkBWKeyPressed(evt);
+            }
+        });
         pnlBufControl.add(txtLinkBW);
         txtLinkBW.setBounds(200, 50, 110, 20);
 
@@ -244,7 +275,7 @@ public class MasterGUI extends javax.swing.JFrame {
         lblLinkBW.setBounds(20, 50, 175, 20);
 
         lblLinkBWUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblLinkBWUnits.setText("Mbps");
+        lblLinkBWUnits.setText("bps");
         pnlBufControl.add(lblLinkBWUnits);
         lblLinkBWUnits.setBounds(315, 50, 50, 20);
 
@@ -259,13 +290,17 @@ public class MasterGUI extends javax.swing.JFrame {
                 txtDelayActionPerformed(evt);
             }
         });
+        txtDelay.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtDelayKeyPressed(evt);
+            }
+        });
         pnlBufControl.add(txtDelay);
         txtDelay.setBounds(200, 80, 110, 20);
 
-        lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblDelayUnits.setText("ms");
-        pnlBufControl.add(lblDelayUnits);
-        lblDelayUnits.setBounds(315, 80, 50, 20);
+        lblNotCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        pnlBufControl.add(lblNotCurBufSizeVal);
+        lblNotCurBufSizeVal.setBounds(220, 110, 140, 20);
 
         lblUseNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblUseNumFlows.setText("Use # of Flows:");
@@ -279,6 +314,11 @@ public class MasterGUI extends javax.swing.JFrame {
         });
         pnlBufControl.add(chkUseNumFlows);
         chkUseNumFlows.setBounds(200, 110, 21, 21);
+
+        lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblDelayUnits.setText("ms");
+        pnlBufControl.add(lblDelayUnits);
+        lblDelayUnits.setBounds(315, 80, 50, 20);
 
         pnlControl.add(pnlBufControl);
         pnlBufControl.setBounds(10, 20, 370, 140);
@@ -319,6 +359,26 @@ public class MasterGUI extends javax.swing.JFrame {
     private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearDataActionPerformed
         
 }//GEN-LAST:event_btnClearDataActionPerformed
+
+    private void txtLinkBWKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLinkBWKeyPressed
+        if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
+            txtLinkBW.getBindingDelegate().save();
+    }//GEN-LAST:event_txtLinkBWKeyPressed
+
+    private void txtDelayKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtDelayKeyPressed
+        if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
+            txtDelay.getBindingDelegate().save();
+    }//GEN-LAST:event_txtDelayKeyPressed
+
+    private void txtPayloadBWKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPayloadBWKeyPressed
+        if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
+            txtPayloadBW.getBindingDelegate().save();
+    }//GEN-LAST:event_txtPayloadBWKeyPressed
+
+    private void txtNumFlowsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNumFlowsKeyPressed
+        if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
+            txtNumFlows.getBindingDelegate().save();
+    }//GEN-LAST:event_txtNumFlowsKeyPressed
     
     /**
      * @param args the command line arguments
@@ -335,12 +395,13 @@ public class MasterGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnClearData;
     private dgu.util.swing.binding.JCheckBoxBound chkUseNumFlows;
     private javax.swing.JLabel lblCurBufSize;
-    private javax.swing.JLabel lblCurBufSizeUnits;
-    private javax.swing.JLabel lblCurBufSizeVal;
+    public javax.swing.JLabel lblCurBufSizeUnits;
+    public javax.swing.JLabel lblCurBufSizeVal;
     private javax.swing.JLabel lblDelay;
     private javax.swing.JLabel lblDelayUnits;
     private javax.swing.JLabel lblLinkBW;
     private javax.swing.JLabel lblLinkBWUnits;
+    public javax.swing.JLabel lblNotCurBufSizeVal;
     private javax.swing.JLabel lblNumFlows;
     private javax.swing.JLabel lblNumGen;
     private javax.swing.JLabel lblNumGenVal;
