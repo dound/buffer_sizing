@@ -40,11 +40,11 @@ public class MasterGUI extends javax.swing.JFrame {
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     private static int tic = 0;
     
-    private int getIntFromUser( String msg, int min, int max ) {
+    private int getIntFromUser( String msg, int min, int def, int max ) {
         int v;
         while( true ) {
             try {
-                v = Integer.valueOf( GUIHelper.getInput(msg) );
+                v = Integer.valueOf( GUIHelper.getInput(msg, String.valueOf(def)) );
                 if( v < min || v > max )
                     GUIHelper.displayError( "Error: must be between " + min + " and " + max + "." );
                 else
@@ -74,9 +74,9 @@ public class MasterGUI extends javax.swing.JFrame {
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
         
         // start the server sockets
-        ctl.waitForClients( getIntFromUser("How many traffic generators will there be?",0,100),
-                            getIntFromUser("On what port do you want to run on for your traffic generator commander(s)?",1,65535) );
-        ctl.waitForRouter( getIntFromUser("On what port do you want to run your router commander?",1,65535) );
+        ctl.waitForClients( getIntFromUser("How many traffic generators will there be?",0,0,100),
+                            getIntFromUser("On what port do you want to run on for your traffic generator commander(s)?",1,10000,65535) );
+        ctl.waitForRouter( getIntFromUser("On what port do you want to run your router commander?",1,10001,65535) );
 
         // setup the buffer size
         ctl.recomputeBufferSize();

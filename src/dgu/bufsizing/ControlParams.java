@@ -125,8 +125,8 @@ public class ControlParams {
         String both() { return a + b; }
     }
     
-    public StringPair formatBits( int b ) {
-        int bytes = b / 8;
+    public StringPair formatBits( long b ) {
+        long bytes = b / 8;
         int units = 0;
         while( bytes >= 10000 ) {
             bytes /= 1000;
@@ -144,7 +144,7 @@ public class ControlParams {
         }
         
         ControlParams.StringPair ret = new ControlParams.StringPair();
-        ret.a = Integer.toString( bytes );
+        ret.a = Long.toString( bytes );
         ret.b = strUnit;
         return ret;
     }
@@ -267,10 +267,10 @@ public class ControlParams {
         protected final Socket s;
 
         /** output stream to write to the socket */
-        protected final BufferedOutputStream out;
+        protected final OutputStream out;
 
         /** input stream to read from the socket */
-        protected final BufferedInputStream in;
+        protected final InputStream in;
 
         /** 
          * Sets up a client commander with the specified socket
@@ -280,9 +280,9 @@ public class ControlParams {
             this.s = clientSocket;
 
             //try to establish the I/O streams: if we can't establish either, then close the socket
-            BufferedOutputStream tmp;
+            OutputStream tmp;
             try {
-                tmp = new BufferedOutputStream( s.getOutputStream() );
+                tmp = s.getOutputStream();
             } catch( IOException e ) {
                 System.err.println( "Client Socket Setup Error: " + e.getMessage() );
                 System.exit( 1 );
@@ -292,9 +292,9 @@ public class ControlParams {
             } 
             out = tmp;
 
-            BufferedInputStream tmp2;
+            InputStream tmp2;
             try {
-                tmp2 = new BufferedInputStream( s.getInputStream() );
+                tmp2 = s.getInputStream();
             } catch( IOException e ) {
                 System.err.println( "Client Socket Setup Error: " + e.getMessage() );
                 System.exit( 1 );
@@ -366,9 +366,9 @@ public class ControlParams {
                         double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
                         for( int i=1; i<ret; i++ )
                             rate /= 2;
-                        StringPair sp = formatBits( ((int)rate) * 8 );
+                        StringPair sp = formatBits( ((long)rate) * 8 );
                         MasterGUI.me.lblRateLimVal.setText( sp.a );
-                        MasterGUI.me.lblRateLimUnits.setText( sp.b );
+                        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps" );
                     }
                 } catch( IOException e ) {
                     System.err.println( "command " + code + " / " + value + " => failed: " + e.getMessage() );
