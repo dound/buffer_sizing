@@ -43,7 +43,7 @@ Server: -server SERVER_PARAMETERS\n\
 
 #define MAX_FLOWS 65535
 #define MAX_PAYLOAD (MAX_FLOWS * sizeof(int))
-#define STATS_INTERVAL_SEC 1
+/* #define STATS_INTERVAL_SEC 1 */
 
 /** encapsulates information about a client */
 typedef struct {
@@ -261,6 +261,7 @@ static uint32_t total_empty_writes = 0;
 static void client_report_stats_and_exit( int code );
 static void client_reset_checkpoint();
 
+#ifdef STATS_INTERVAL_SEC
 /** periodically sends stats to the master */
 static void* controller_writer_main( void* vclientfd ) {
     int clientfd = (int)vclientfd;
@@ -273,6 +274,7 @@ static void* controller_writer_main( void* vclientfd ) {
         sleep( STATS_INTERVAL_SEC );
     }
 }
+#endif
 
 /** listens for incoming connections from the master who will send commands */
 static void* controller_main( void* pclient ) {
@@ -323,12 +325,14 @@ static void* controller_main( void* pclient ) {
         }
         debug_println( "controller accepted a new connection\n" );
 
+#ifdef STATS_INTERVAL_SEC
         /* start up the stats sending thread */
         pthread_t tid;
         if( 0 != pthread_create( &tid, NULL, controller_writer_main, (void*)clientfd ) ) {
             fprintf( stderr, "Error: unable to create controller writer thread\n" );
             client_report_stats_and_exit( 0 );
         }
+#endif
 
         /* wait for control packets */
         control_t packet;
