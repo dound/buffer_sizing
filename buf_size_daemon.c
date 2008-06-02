@@ -163,11 +163,12 @@ static void* controller_main( void* nil ) {
             if( len < 0 )
                 break;
 
+            int ret = 0;
             packet.val = ntohl( packet.val );
             switch( packet.code ) {
             case CODE_GET_RATE_LIMIT:
                 packet.val = htonl( get_rate_limit() );
-                writen( fd, &packet.val, sizeof(packet.val) );
+                ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_RATE_LIMIT:
@@ -176,7 +177,7 @@ static void* controller_main( void* nil ) {
 
             case CODE_GET_BUF_SIZE:
                 packet.val = htonl( get_buffer_size() );
-                writen( fd, &packet.val, sizeof(packet.val) );
+                ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_BUF_SIZE:
@@ -185,6 +186,10 @@ static void* controller_main( void* nil ) {
 
             default:
                 fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
+            }
+            if( ret == -1 ) {
+                fprintf( stderr, "controller failed to write (goodbye)\n" );
+                exit( 1 );
             }
         }
 
