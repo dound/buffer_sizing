@@ -66,7 +66,7 @@ static void set_rate_limit( uint32_t shift );
 static uint32_t get_bytes_sent();
 static uint32_t get_buffer_size();
 static void set_buffer_size( uint32_t size );
-static void get_queue_occupancy();
+static uint32_t get_queue_occupancy();
 
 int main( int argc, char** argv ) {
     server_ip = 0;
@@ -283,9 +283,9 @@ static void set_buffer_size( uint32_t size ) {
     writeReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, size );
 }
 
-static void get_queue_occupancy() {
+static uint32_t get_queue_occupancy() {
     /* queue 1 => nf2c1 */
     uint32_t val;
-    readReg( &nf2, RX_QUE_1_NUM_PKTS_IN_QUEUE, &val );
+    readReg( &nf2, RX_QUEUE_1_NUM_PKTS_IN_QUEUE_REG, &val );
     return val;
 }
