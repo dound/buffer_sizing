@@ -153,7 +153,7 @@ static void* controller_main( void* nil ) {
     }
 
     while( 1 ) {
-        fprintf( stderr, "Connected to the server\n" );
+        fprintf( stderr, "Connected to the master\n" );
 
         /* wait for control packets */
         control_t packet;

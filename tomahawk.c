@@ -34,7 +34,8 @@ Client: -client CLIENT_PARAMETERS\n\
   -n, -nflow:      the number of flows to establish\n\
   -bw, -bandwidth: the amount of bandwidth to use in bits per second (not including overheads)\n\
   -i, -interval:   interval in milliseconds at which a client will write\n\
-  -l, -listen:     the port to listen on for updates to parameters\n\
+  -mi, -mip:       the IP the master will listen on\n\
+  -mp, -mport:     the port to connect to the master on for updates to parameters\n\
 \n\
 Server: -server SERVER_PARAMETERS\n\
   -s, -server:    run tomahawk in server mode\n\
@@ -52,7 +53,8 @@ typedef struct {
     uint16_t  num_flows;
     uint32_t  bytes_per_sec;
     uint32_t  interval_millisec;
-    uint16_t  listen_port;
+    addr_ip_t master_ip;
+    uint16_t  master_port;
     bool      warned;
 } client_t;
 
@@ -172,10 +174,23 @@ int main( int argc, char** argv ) {
             }
             client.interval_millisec = val;
         }
-        else if( str_matches(argv[i], 3, "-l", "-listen", "--listen") ) {
+        else if( str_matches(argv[i], 3, "-mi", "-mip", "--mip") ) {
             i += 1;
             if( i == argc ) {
-                fprintf( stderr, "Error: -listen requires a port number to be specified\n" );
+                fprintf( stderr, "Error: -mip requires an IP address to be specified\n" );
+                return -1;
+            }
+            struct in_addr in_ip;
+            if( inet_aton(argv[i],&in_ip) == 0 ) {
+                fprintf( stderr, "Error: %s is not a valid IP address\n", argv[i] );
+                return -1;
+            }
+            client.master_ip = in_ip.s_addr;
+        }
+        else if( str_matches(argv[i], 3, "-mp", "-mport", "--mport") ) {
+            i += 1;
+            if( i == argc ) {
+                fprintf( stderr, "Error: -mport requires a port number to be specified\n" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
@@ -183,7 +198,7 @@ int main( int argc, char** argv ) {
                 fprintf( stderr, "Error: %u is not a valid port to listen on\n", val );
                 return -1;
             }
-            client.listen_port = val;
+            client.master_port = val;
         }
         else if( str_matches(argv[i], 3, "-n", "-nap", "--nap") ) {
             i += 1;
@@ -225,8 +240,12 @@ int main( int argc, char** argv ) {
             fprintf( stderr, "Error: missing required switch -interval\n" );
             return -1;
         }
-        if( client.listen_port == 0 ) {
-            fprintf( stderr, "Error: missing required switch -listen\n" );
+        if( client.master_ip == 0 ) {
+            fprintf( stderr, "Error: missing required switch -mip\n" );
+            return -1;
+        }
+        if( client.master_port == 0 ) {
+            fprintf( stderr, "Error: missing required switch -mport\n" );
             return -1;
         }
         client.warned = FALSE;
@@ -279,106 +298,79 @@ static void* controller_writer_main( void* vclientfd ) {
 /** listens for incoming connections from the master who will send commands */
 static void* controller_main( void* pclient ) {
     client_t* c = (client_t*)pclient;
-    struct sockaddr_in addr;
-    struct sockaddr_in client_addr;
-    unsigned sock_len = sizeof(client_addr);
-    int sockfd;
-    int clientfd;
-    int len;
-    struct sockaddr* p_ca = (struct sockaddr*)&client_addr;
+    struct sockaddr_in servaddr;
+    int fd, len;
 
-    debug_pthread_init( "Controller", "Controller" );
-    pthread_detach( pthread_self() );
+    /* initialize the server's info */
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = c->master_ip;
+    servaddr.sin_port = htons( c->master_port );
 
-    /* create a socket to listen for connections on */
-    sockfd = socket( AF_INET, SOCK_STREAM, 0 );
-    if( sockfd == -1 ) {
-        printf( "Error: unable to create TCP socket for controller\n" );
+    /* make a TCP socket for the new flow */
+    if( (fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
+        perror( "Error: unable to create TCP socket for controller" );
         exit( 1 );
     }
 
-    /* bind to the requested port */
-    uint16_t port = c->listen_port;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = 0;
-    memset(&(addr.sin_zero), 0, sizeof(addr.sin_zero));
-    if( bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) ) {
-        printf( "Error: unable to bind to local port %u for controller\n", port );
+    /* connect to the server */
+    if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
+        perror( "Error: connect for controller failed" );
         exit( 1 );
     }
 
-    /* listen for incoming connection request */
-    listen( sockfd, 1 );
-
-    while( 1 ) {
-        debug_println( "controller waiting for new connection on port %u", port );
-
-        /* wait for a new client */
-        clientfd = accept( sockfd, p_ca, &sock_len );
-        if( clientfd == - 1 ) {
-            if( errno == EINTR )
-                continue;
-
-            /* some error */
-            fprintf( stderr, "Warrning: accept() failed (%d) for controller\n", errno );
-            continue;
-        }
-        debug_println( "controller accepted a new connection\n" );
+    fprintf( stderr, "Connected to the master\n" );
 
 #ifdef STATS_INTERVAL_SEC
-        /* start up the stats sending thread */
-        pthread_t tid;
-        if( 0 != pthread_create( &tid, NULL, controller_writer_main, (void*)clientfd ) ) {
-            fprintf( stderr, "Error: unable to create controller writer thread\n" );
-            client_report_stats_and_exit( 0 );
-        }
+    /* start up the stats sending thread */
+    pthread_t tid;
+    if( 0 != pthread_create( &tid, NULL, controller_writer_main, (void*)clientfd ) ) {
+        fprintf( stderr, "Error: unable to create controller writer thread\n" );
+        client_report_stats_and_exit( 0 );
+    }
 #endif
 
-        /* wait for control packets */
-        control_t packet;
-        while( (len=readn(clientfd, &packet, sizeof(packet))) ) {
-            if( len < 0 )
-                break;
+    /* wait for control packets */
+    control_t packet;
+    while( (len=readn(fd, &packet, sizeof(packet))) ) {
+        if( len < 0 )
+            break;
 
-            packet.val = ntohl( packet.val );
-            if( packet.val == 0 && packet.code != CODE_EXIT ) {
-                fprintf( stderr, "warning: was asked to change code=%u to zero", packet.code );
-                continue;
-            }
-
-            switch( packet.code ) {
-            case CODE_FLOWS:
-                c->num_flows = packet.val;
-                fprintf( stderr, "# of flows is now %u\n", packet.val );
-                break;
-
-            case CODE_BPS:
-                c->bytes_per_sec = bits_to_bytes_ceil(packet.val);
-                fprintf( stderr, "bps is now %ub\n", packet.val );
-                break;
-
-            case CODE_INTERVAL:
-                c->interval_millisec = packet.val;
-                fprintf( stderr, "interval is now %ums\n", packet.val );
-                break;
-
-            case CODE_EXIT:
-                fprintf( stderr, "client exiting (received exit command)\n" );
-                client_report_stats_and_exit( 0 );
-                break;
-
-            default:
-                fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
-            }
-            c->warned = FALSE;
-            client_reset_checkpoint();
+        packet.val = ntohl( packet.val );
+        if( packet.val == 0 && packet.code != CODE_EXIT ) {
+            fprintf( stderr, "warning: was asked to change code=%u to zero", packet.code );
+            continue;
         }
 
-        close( clientfd );
-        debug_println( "controller connection closed\n" );
+        switch( packet.code ) {
+        case CODE_FLOWS:
+            c->num_flows = packet.val;
+            fprintf( stderr, "# of flows is now %u\n", packet.val );
+            break;
+
+        case CODE_BPS:
+            c->bytes_per_sec = bits_to_bytes_ceil(packet.val);
+            fprintf( stderr, "bps is now %ub\n", packet.val );
+            break;
+
+        case CODE_INTERVAL:
+            c->interval_millisec = packet.val;
+            fprintf( stderr, "interval is now %ums\n", packet.val );
+            break;
+
+        case CODE_EXIT:
+            fprintf( stderr, "client exiting (received exit command)\n" );
+            client_report_stats_and_exit( 0 );
+            break;
+
+        default:
+            fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
+        }
+        c->warned = FALSE;
+        client_reset_checkpoint();
     }
 
-    close( sockfd );
+    debug_println( "controller connection closed\n" );
+    close( fd );
     return NULL;
 }
 
