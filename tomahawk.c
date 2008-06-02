@@ -65,10 +65,10 @@ typedef struct {
 } __attribute__ ((packed)) control_t;
 
 typedef enum {
-    CODE_FLOWS,
-    CODE_BPS,
-    CODE_INTERVAL,
-    CODE_EXIT
+    CODE_FLOWS=0,
+    CODE_BPS=1,
+    CODE_INTERVAL=2,
+    CODE_EXIT=3
 } code_t;
 
 static void* controller_main( void* pclient );
@@ -226,18 +226,6 @@ int main( int argc, char** argv ) {
         client.server_port = port;
         if( client.server_ip == 0 ) {
             fprintf( stderr, "Error: missing required switch -ip\n" );
-            return -1;
-        }
-        if( client.num_flows == 0 ) {
-            fprintf( stderr, "Error: missing required switch -nflow\n" );
-            return -1;
-        }
-        if( client.bytes_per_sec == 0 ) {
-            fprintf( stderr, "Error: missing required switch -bandwidth\n" );
-            return -1;
-        }
-        if( client.interval_millisec == 0 ) {
-            fprintf( stderr, "Error: missing required switch -interval\n" );
             return -1;
         }
         if( client.master_ip == 0 ) {
@@ -450,6 +438,13 @@ static void client_main( client_t* c ) {
         req_num_flows = c->num_flows;
         interval_ms = c->interval_millisec;
         Bps = c->bytes_per_sec;
+
+        /* only go if config is setup */
+        if( req_num_flows==0 || Bps==0 || interval_ms==0 ) {
+            fprintf( stderr, "Waiting for non-zero configuration values.\n" );
+            sleep( 5 );
+            continue;
+        }
 
         /* create the requested number of flows */
         pause_ok = FALSE;

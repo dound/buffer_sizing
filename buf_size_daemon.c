@@ -26,7 +26,7 @@ Buffer Size Reporting Daemon v%s\n\
 %s: [-?]\n\
   -?, -help:       displays this help\n\
   -d, -dst, -ip:   sets the server IP address to connect to\n\
-  -p, -port:       sets the server port to connect to\n"
+  -p, -port:       sets the server port to connect to (both UDP and TCP)\n"
 
 /** number of seconds between updates */
 #define UPDATE_INTERVAL_SEC 2
@@ -44,7 +44,8 @@ typedef struct {
 typedef struct {
     uint32_t sec;
     uint32_t usec;
-    uint32_t words_sent;
+    uint32_t bytes_sent;
+    uint32_t queue_occ;
 } __attribute__ ((packed)) update_t;
 
 typedef enum {
@@ -62,9 +63,10 @@ static void* controller_main( void* nil );
 static void inform_server_loop();
 static uint32_t get_rate_limit();
 static void set_rate_limit( uint32_t shift );
-static uint32_t get_words_sent();
+static uint32_t get_bytes_sent();
 static uint32_t get_buffer_size();
 static void set_buffer_size( uint32_t size );
+static void get_queue_occupancy();
 
 int main( int argc, char** argv ) {
     server_ip = 0;
@@ -231,7 +233,9 @@ static void inform_server_loop() {
         gettimeofday( &now, NULL );
         update.sec        = htonl( now.tv_sec );
         update.usec       = htonl( now.tv_usec );
-        update.words_sent = htonl( get_words_sent() );
+        update.bytes_sent = htonl( get_bytes_sent() );
+        update.queue_occ  = htonl( get_queue_occupancy() );
+        /* note: still have 2B before we hit min Eth payload (incl overheads) */
 
         /* send the update to the server */
         if( -1 == sendto( fd, (char*)&update, sizeof(update), 0,
@@ -260,18 +264,28 @@ static void set_rate_limit( uint32_t shift ) {
     writeReg( &nf2, RATE_LIMIT_SHIFT_REG, shift );
 }
 
-static uint32_t get_words_sent() {
+static uint32_t get_bytes_sent() {
+    /* reg 2 => nf2c1 */
     uint32_t val;
     readReg( &nf2, OQ_NUM_PKT_BYTES_REMOVED_REG_2, &val );
     return val;
 }
 
 static uint32_t get_buffer_size() {
+    /* reg 2 => nf2c1 */
     uint32_t val;
     readReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, &val );
     return val;
 }
 
 static void set_buffer_size( uint32_t size ) {
+    /* reg 2 => nf2c1 */
     writeReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, size );
+}
+
+static void get_queue_occupancy() {
+    /* queue 1 => nf2c1 */
+    uint32_t val;
+    readReg( &nf2, RX_QUE_1_NUM_PKTS_IN_QUEUE, &val );
+    return val;
 }
