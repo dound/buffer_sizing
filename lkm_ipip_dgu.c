@@ -38,7 +38,7 @@
 #define IP_ADDR_HBO_LOOPBACK   0x7F000001 /* 127.0.0.1 */
 
 /** who we want to address the encapsulation packet to (outer header) */
-#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_HOUSTON_1
+#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_LA_1
 
 static struct nf_hook_ops netfilter_encap;
 #ifdef _LKM_IPIP_DO_DECAP_
@@ -102,6 +102,20 @@ static void skb_flag_as_changed( struct sk_buff* skb ) {
 #endif
 }
 
+/* resize an skb */
+static int skb_resize( struct sk_buff *skb, int extra_bytes ) {
+    skb_orphan(skb);
+
+    if (pskb_expand_head(skb, extra_bytes, 0, GFP_ATOMIC)) {
+        printk( "*** failed to expand skb!" );
+        return -1;
+    }
+
+    skb->truesize += extra_bytes;
+
+    return 0;
+}
+
 /**
  * Adjust headroom after the data is already in place.  This means the data from
  * skb->data (inclusive) to skb->tail (exclusive) will be shifted back towards
@@ -116,8 +130,19 @@ static int skb_late_reserve( struct sk_buff* skb, unsigned len ) {
     char* from, *to;
 
     /* make sure we have enough space */
-    if( unlikely(skb->tail + len > skb->end) )
-        return -1;
+    if( unlikely(skb->tail + len > skb->end) ) {
+        if( skb_resize( skb, len ) != 0 )
+            return -1;
+        else {
+#ifdef _LKM_IPIP_DEBUG_
+            printk( "*** grew the skb!\n" );
+            if( unlikely(skb->tail + len > skb->end) ) {
+                printk( "oh crap, are we scribbling on the kernel?\n" );
+                return -1;
+            }
+#endif
+        }
+    }
 
     /* move the data bytes (from the last byte to the first byte) */
     real_data_len = (unsigned)(skb->tail - skb->data);
