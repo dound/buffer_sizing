@@ -33,9 +33,9 @@ public class MasterGUI extends javax.swing.JFrame {
     public static MasterGUI me;
     
     private static JFreeChart chart;
-    private static final XYSeries dataXput = new XYSeries("Goodput");
-    private static final XYSeries dataOcc  = new XYSeries("Queue Occupancy");
-    private static final XYSeries dataQS   = new XYSeries("Queue Size");
+    public static final XYSeries dataXput = new XYSeries("Goodput");
+    public static final XYSeries dataOcc  = new XYSeries("Queue Occupancy");
+    public static final XYSeries dataQS   = new XYSeries("Queue Size");
     private static final XYSeriesCollection collXput = new XYSeriesCollection();
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     private static int tic = 0;
@@ -70,14 +70,19 @@ public class MasterGUI extends javax.swing.JFrame {
         chartPanel.setBounds(10, 180, 1005, 545);
         getContentPane().add(chartPanel);
        
-        ctl.recomputeBufferSize();
-        
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
         
-        // start the server
-        ctl.waitForClients( getIntFromUser("What port do you want to run on?",1,65535),
-                            getIntFromUser("How many traffic generators will there be?",0,100) );
+        // start the server sockets
+        ctl.waitForClients( getIntFromUser("How many traffic generators will there be?",0,100),
+                            getIntFromUser("On what port do you want to run on for your traffic generator commander(s)?",1,65535) );
+        ctl.waitForRouter( getIntFromUser("On what port do you want to run your router commander?",1,65535) );
+
+        // setup the buffer size
+        ctl.recomputeBufferSize();
+        
+        // ask for the current rate limiter value
+        ctl.refreshRateLim();
     }
     
     static private void initializeData() {
@@ -160,14 +165,6 @@ public class MasterGUI extends javax.swing.JFrame {
     private void initComponents() {
 
         pnlControl = new javax.swing.JPanel();
-        pnlNetControl = new javax.swing.JPanel();
-        txtNumFlows = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "numFlows");
-        lblNumGen = new javax.swing.JLabel();
-        lblNumGenVal = new javax.swing.JLabel();
-        lblPayloadBW = new javax.swing.JLabel();
-        txtPayloadBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "payloadBW");
-        lblPayloadBWUnits = new javax.swing.JLabel();
-        lblNumFlows = new javax.swing.JLabel();
         pnlBufControl = new javax.swing.JPanel();
         lblCurBufSizeVal = new javax.swing.JLabel();
         lblCurBufSize = new javax.swing.JLabel();
@@ -181,14 +178,131 @@ public class MasterGUI extends javax.swing.JFrame {
         lblUseNumFlows = new javax.swing.JLabel();
         chkUseNumFlows = new JCheckBoxBound(new SelfTranslator<Boolean>(), this.ctl, "isUseNumFlows", "setUseNumFlows");
         lblDelayUnits = new javax.swing.JLabel();
+        pnlNetControl = new javax.swing.JPanel();
+        txtNumFlows = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "numFlows");
+        lblNumGen = new javax.swing.JLabel();
+        lblNumGenVal = new javax.swing.JLabel();
+        lblPayloadBW = new javax.swing.JLabel();
+        txtPayloadBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "payloadBW");
+        lblNumFlows = new javax.swing.JLabel();
+        lblPayloadBWUnits2 = new javax.swing.JLabel();
+        pnlRouterState = new javax.swing.JPanel();
+        lblBufSize = new javax.swing.JLabel();
+        lblRateLimVal = new javax.swing.JLabel();
+        lblRateLim = new javax.swing.JLabel();
+        lblRateLimUnits = new javax.swing.JLabel();
+        lblQOcc = new javax.swing.JLabel();
+        lblBufSizeUnits = new javax.swing.JLabel();
+        lblBufSizeVal = new javax.swing.JLabel();
+        lblXputVal = new javax.swing.JLabel();
+        lblXputUnits = new javax.swing.JLabel();
+        lblQOccVal = new javax.swing.JLabel();
+        lblQOccUnits = new javax.swing.JLabel();
+        lblXput = new javax.swing.JLabel();
+        btnRateLimDown = new javax.swing.JButton();
+        btnRateLimUp = new javax.swing.JButton();
         btnClearData = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Buffer Sizing Demo GUI");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
         getContentPane().setLayout(null);
 
         pnlControl.setBorder(javax.swing.BorderFactory.createTitledBorder("Demo Control"));
         pnlControl.setLayout(null);
+
+        pnlBufControl.setBorder(javax.swing.BorderFactory.createTitledBorder("Router Buffer Size"));
+        pnlBufControl.setLayout(null);
+
+        lblCurBufSizeVal.setFont(new java.awt.Font("Tahoma", 1, 16));
+        lblCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblCurBufSizeVal.setText("0");
+        pnlBufControl.add(lblCurBufSizeVal);
+        lblCurBufSizeVal.setBounds(190, 20, 110, 20);
+
+        lblCurBufSize.setFont(new java.awt.Font("Tahoma", 1, 16));
+        lblCurBufSize.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblCurBufSize.setText("Current Buffer Size: ");
+        pnlBufControl.add(lblCurBufSize);
+        lblCurBufSize.setBounds(10, 20, 180, 20);
+
+        lblCurBufSizeUnits.setFont(new java.awt.Font("Tahoma", 1, 16));
+        lblCurBufSizeUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblCurBufSizeUnits.setText("B");
+        pnlBufControl.add(lblCurBufSizeUnits);
+        lblCurBufSizeUnits.setBounds(305, 20, 50, 20);
+
+        txtLinkBW.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtLinkBW.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtLinkBWActionPerformed(evt);
+            }
+        });
+        txtLinkBW.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLinkBWKeyPressed(evt);
+            }
+        });
+        pnlBufControl.add(txtLinkBW);
+        txtLinkBW.setBounds(190, 50, 110, 20);
+
+        lblLinkBW.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblLinkBW.setText("Link Bandwidth:");
+        pnlBufControl.add(lblLinkBW);
+        lblLinkBW.setBounds(10, 50, 175, 20);
+
+        lblLinkBWUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblLinkBWUnits.setText("bps");
+        pnlBufControl.add(lblLinkBWUnits);
+        lblLinkBWUnits.setBounds(305, 50, 50, 20);
+
+        lblDelay.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblDelay.setText("Delay Buffering:");
+        pnlBufControl.add(lblDelay);
+        lblDelay.setBounds(10, 80, 175, 20);
+
+        txtDelay.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtDelay.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtDelayActionPerformed(evt);
+            }
+        });
+        txtDelay.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtDelayKeyPressed(evt);
+            }
+        });
+        pnlBufControl.add(txtDelay);
+        txtDelay.setBounds(190, 80, 110, 20);
+
+        lblNotCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        pnlBufControl.add(lblNotCurBufSizeVal);
+        lblNotCurBufSizeVal.setBounds(220, 110, 140, 20);
+
+        lblUseNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblUseNumFlows.setText("Use # of Flows:");
+        pnlBufControl.add(lblUseNumFlows);
+        lblUseNumFlows.setBounds(10, 110, 175, 20);
+
+        chkUseNumFlows.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkUseNumFlowsActionPerformed(evt);
+            }
+        });
+        pnlBufControl.add(chkUseNumFlows);
+        chkUseNumFlows.setBounds(190, 110, 21, 21);
+
+        lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblDelayUnits.setText("ms");
+        pnlBufControl.add(lblDelayUnits);
+        lblDelayUnits.setBounds(305, 80, 50, 20);
+
+        pnlControl.add(pnlBufControl);
+        pnlBufControl.setBounds(10, 20, 370, 140);
 
         pnlNetControl.setBorder(javax.swing.BorderFactory.createTitledBorder("Network Traffic"));
         pnlNetControl.setLayout(null);
@@ -205,22 +319,22 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlNetControl.add(txtNumFlows);
-        txtNumFlows.setBounds(200, 80, 110, 20);
+        txtNumFlows.setBounds(170, 80, 110, 20);
 
         lblNumGen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblNumGen.setText("# of Generators:");
+        lblNumGen.setText("# of Traffic Generators:");
         pnlNetControl.add(lblNumGen);
-        lblNumGen.setBounds(20, 20, 175, 20);
+        lblNumGen.setBounds(5, 20, 160, 20);
 
         lblNumGenVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNumGenVal.setText("0");
         pnlNetControl.add(lblNumGenVal);
-        lblNumGenVal.setBounds(200, 20, 110, 20);
+        lblNumGenVal.setBounds(170, 20, 110, 20);
 
         lblPayloadBW.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblPayloadBW.setText("Aggregate Payload Bandwidth:");
         pnlNetControl.add(lblPayloadBW);
-        lblPayloadBW.setBounds(20, 50, 175, 20);
+        lblPayloadBW.setBounds(5, 50, 160, 20);
 
         txtPayloadBW.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtPayloadBW.addActionListener(new java.awt.event.ActionListener() {
@@ -234,109 +348,109 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlNetControl.add(txtPayloadBW);
-        txtPayloadBW.setBounds(200, 50, 110, 20);
-
-        lblPayloadBWUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblPayloadBWUnits.setText("bps");
-        pnlNetControl.add(lblPayloadBWUnits);
-        lblPayloadBWUnits.setBounds(315, 50, 50, 20);
+        txtPayloadBW.setBounds(170, 50, 110, 20);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNumFlows.setText("# of Flows:");
         pnlNetControl.add(lblNumFlows);
-        lblNumFlows.setBounds(20, 80, 175, 20);
+        lblNumFlows.setBounds(5, 80, 160, 20);
+
+        lblPayloadBWUnits2.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblPayloadBWUnits2.setText("bps");
+        pnlNetControl.add(lblPayloadBWUnits2);
+        lblPayloadBWUnits2.setBounds(285, 50, 50, 20);
 
         pnlControl.add(pnlNetControl);
-        pnlNetControl.setBounds(390, 20, 370, 140);
+        pnlNetControl.setBounds(385, 20, 310, 140);
 
-        pnlBufControl.setBorder(javax.swing.BorderFactory.createTitledBorder("Router Buffer Size"));
-        pnlBufControl.setLayout(null);
+        pnlRouterState.setBorder(javax.swing.BorderFactory.createTitledBorder("Router State"));
+        pnlRouterState.setLayout(null);
 
-        lblCurBufSizeVal.setFont(new java.awt.Font("Tahoma", 1, 16));
-        lblCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblCurBufSizeVal.setText("0");
-        pnlBufControl.add(lblCurBufSizeVal);
-        lblCurBufSizeVal.setBounds(200, 20, 110, 20);
+        lblBufSize.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblBufSize.setText("Buffer Size:");
+        pnlRouterState.add(lblBufSize);
+        lblBufSize.setBounds(10, 20, 140, 20);
 
-        lblCurBufSize.setFont(new java.awt.Font("Tahoma", 1, 16));
-        lblCurBufSize.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblCurBufSize.setText("Current Buffer Size: ");
-        pnlBufControl.add(lblCurBufSize);
-        lblCurBufSize.setBounds(20, 20, 180, 20);
+        lblRateLimVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblRateLimVal.setText("0");
+        pnlRouterState.add(lblRateLimVal);
+        lblRateLimVal.setBounds(140, 50, 110, 20);
 
-        lblCurBufSizeUnits.setFont(new java.awt.Font("Tahoma", 1, 16));
-        lblCurBufSizeUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblCurBufSizeUnits.setText("B");
-        pnlBufControl.add(lblCurBufSizeUnits);
-        lblCurBufSizeUnits.setBounds(315, 20, 50, 20);
+        lblRateLim.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblRateLim.setText("Rate Limiter:");
+        pnlRouterState.add(lblRateLim);
+        lblRateLim.setBounds(10, 50, 140, 20);
 
-        txtLinkBW.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtLinkBW.addActionListener(new java.awt.event.ActionListener() {
+        lblRateLimUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblRateLimUnits.setText("bps");
+        pnlRouterState.add(lblRateLimUnits);
+        lblRateLimUnits.setBounds(260, 50, 50, 20);
+
+        lblQOcc.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblQOcc.setText("Instant. Queue Occupancy:");
+        pnlRouterState.add(lblQOcc);
+        lblQOcc.setBounds(10, 110, 140, 20);
+
+        lblBufSizeUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblBufSizeUnits.setText("packets");
+        pnlRouterState.add(lblBufSizeUnits);
+        lblBufSizeUnits.setBounds(260, 20, 50, 20);
+
+        lblBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblBufSizeVal.setText("0");
+        pnlRouterState.add(lblBufSizeVal);
+        lblBufSizeVal.setBounds(140, 20, 110, 20);
+
+        lblXputVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblXputVal.setText("0");
+        pnlRouterState.add(lblXputVal);
+        lblXputVal.setBounds(140, 80, 110, 20);
+
+        lblXputUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblXputUnits.setText("bps");
+        pnlRouterState.add(lblXputUnits);
+        lblXputUnits.setBounds(260, 80, 50, 20);
+
+        lblQOccVal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblQOccVal.setText("0");
+        pnlRouterState.add(lblQOccVal);
+        lblQOccVal.setBounds(140, 110, 110, 20);
+
+        lblQOccUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblQOccUnits.setText("bps");
+        pnlRouterState.add(lblQOccUnits);
+        lblQOccUnits.setBounds(260, 110, 50, 20);
+
+        lblXput.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblXput.setText("Instantaneous Throughput:");
+        pnlRouterState.add(lblXput);
+        lblXput.setBounds(10, 80, 140, 20);
+
+        btnRateLimDown.setText("-");
+        btnRateLimDown.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnRateLimDown.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtLinkBWActionPerformed(evt);
+                btnRateLimDownActionPerformed(evt);
             }
         });
-        txtLinkBW.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtLinkBWKeyPressed(evt);
-            }
-        });
-        pnlBufControl.add(txtLinkBW);
-        txtLinkBW.setBounds(200, 50, 110, 20);
+        pnlRouterState.add(btnRateLimDown);
+        btnRateLimDown.setBounds(60, 51, 20, 20);
 
-        lblLinkBW.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblLinkBW.setText("Link Bandwidth:");
-        pnlBufControl.add(lblLinkBW);
-        lblLinkBW.setBounds(20, 50, 175, 20);
-
-        lblLinkBWUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblLinkBWUnits.setText("bps");
-        pnlBufControl.add(lblLinkBWUnits);
-        lblLinkBWUnits.setBounds(315, 50, 50, 20);
-
-        lblDelay.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblDelay.setText("Delay Buffering:");
-        pnlBufControl.add(lblDelay);
-        lblDelay.setBounds(20, 80, 175, 20);
-
-        txtDelay.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtDelay.addActionListener(new java.awt.event.ActionListener() {
+        btnRateLimUp.setText("+");
+        btnRateLimUp.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnRateLimUp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtDelayActionPerformed(evt);
+                btnRateLimUpActionPerformed(evt);
             }
         });
-        txtDelay.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtDelayKeyPressed(evt);
-            }
-        });
-        pnlBufControl.add(txtDelay);
-        txtDelay.setBounds(200, 80, 110, 20);
+        pnlRouterState.add(btnRateLimUp);
+        btnRateLimUp.setBounds(40, 51, 20, 20);
 
-        lblNotCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        pnlBufControl.add(lblNotCurBufSizeVal);
-        lblNotCurBufSizeVal.setBounds(220, 110, 140, 20);
+        pnlControl.add(pnlRouterState);
+        pnlRouterState.setBounds(700, 20, 310, 140);
 
-        lblUseNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblUseNumFlows.setText("Use # of Flows:");
-        pnlBufControl.add(lblUseNumFlows);
-        lblUseNumFlows.setBounds(20, 110, 175, 20);
-
-        chkUseNumFlows.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkUseNumFlowsActionPerformed(evt);
-            }
-        });
-        pnlBufControl.add(chkUseNumFlows);
-        chkUseNumFlows.setBounds(200, 110, 21, 21);
-
-        lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblDelayUnits.setText("ms");
-        pnlBufControl.add(lblDelayUnits);
-        lblDelayUnits.setBounds(315, 80, 50, 20);
-
-        pnlControl.add(pnlBufControl);
-        pnlBufControl.setBounds(10, 20, 370, 140);
+        getContentPane().add(pnlControl);
+        pnlControl.setBounds(5, 0, 1019, 170);
 
         btnClearData.setText("Clear Data");
         btnClearData.addActionListener(new java.awt.event.ActionListener() {
@@ -344,11 +458,8 @@ public class MasterGUI extends javax.swing.JFrame {
                 btnClearDataActionPerformed(evt);
             }
         });
-        pnlControl.add(btnClearData);
-        btnClearData.setBounds(840, 70, 110, 30);
-
-        getContentPane().add(pnlControl);
-        pnlControl.setBounds(5, 0, 1019, 170);
+        getContentPane().add(btnClearData);
+        btnClearData.setBounds(910, 170, 110, 30);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtNumFlowsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNumFlowsActionPerformed
@@ -397,6 +508,19 @@ public class MasterGUI extends javax.swing.JFrame {
         if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
             txtNumFlows.getBindingDelegate().save();
     }//GEN-LAST:event_txtNumFlowsKeyPressed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // tell our traffic generators to shutdown
+        ctl.shutdown();
+    }//GEN-LAST:event_formWindowClosing
+
+    private void btnRateLimUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRateLimUpActionPerformed
+        ctl.increaseRateLim();
+}//GEN-LAST:event_btnRateLimUpActionPerformed
+
+    private void btnRateLimDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRateLimDownActionPerformed
+        ctl.decreaseRateLim();
+}//GEN-LAST:event_btnRateLimDownActionPerformed
     
     /**
      * @param args the command line arguments
@@ -411,7 +535,12 @@ public class MasterGUI extends javax.swing.JFrame {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearData;
+    private javax.swing.JButton btnRateLimDown;
+    private javax.swing.JButton btnRateLimUp;
     private dgu.util.swing.binding.JCheckBoxBound chkUseNumFlows;
+    private javax.swing.JLabel lblBufSize;
+    private javax.swing.JLabel lblBufSizeUnits;
+    public javax.swing.JLabel lblBufSizeVal;
     private javax.swing.JLabel lblCurBufSize;
     public javax.swing.JLabel lblCurBufSizeUnits;
     public javax.swing.JLabel lblCurBufSizeVal;
@@ -422,13 +551,23 @@ public class MasterGUI extends javax.swing.JFrame {
     public javax.swing.JLabel lblNotCurBufSizeVal;
     private javax.swing.JLabel lblNumFlows;
     private javax.swing.JLabel lblNumGen;
-    private javax.swing.JLabel lblNumGenVal;
+    public javax.swing.JLabel lblNumGenVal;
     private javax.swing.JLabel lblPayloadBW;
-    private javax.swing.JLabel lblPayloadBWUnits;
+    private javax.swing.JLabel lblPayloadBWUnits2;
+    private javax.swing.JLabel lblQOcc;
+    public javax.swing.JLabel lblQOccUnits;
+    public javax.swing.JLabel lblQOccVal;
+    private javax.swing.JLabel lblRateLim;
+    public javax.swing.JLabel lblRateLimUnits;
+    public javax.swing.JLabel lblRateLimVal;
     private javax.swing.JLabel lblUseNumFlows;
+    private javax.swing.JLabel lblXput;
+    public javax.swing.JLabel lblXputUnits;
+    public javax.swing.JLabel lblXputVal;
     private javax.swing.JPanel pnlBufControl;
     private javax.swing.JPanel pnlControl;
     private javax.swing.JPanel pnlNetControl;
+    private javax.swing.JPanel pnlRouterState;
     private dgu.util.swing.binding.JTextFieldBound txtDelay;
     private dgu.util.swing.binding.JTextFieldBound txtLinkBW;
     private dgu.util.swing.binding.JTextFieldBound txtNumFlows;
