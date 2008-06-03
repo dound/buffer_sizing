@@ -40,6 +40,7 @@ public class MasterGUI extends javax.swing.JFrame {
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     private static int tic = 0;
     public static boolean pause = false;
+    public static boolean rangeUseAuto = true;
     
     private int getIntFromUser( String msg, int min, int def, int max ) {
         int v;
@@ -122,12 +123,12 @@ public class MasterGUI extends javax.swing.JFrame {
         domain.setTickLabelsVisible(false);
         domain.setTickMarksVisible(false);
         domain.setAutoRange(true);
-        domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
+        //domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
         
         range = plot.getRangeAxis();
         range.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
         range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
-        range.setAutoRange(false);
+        range.setAutoRange( rangeUseAuto );
         
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,196,0));

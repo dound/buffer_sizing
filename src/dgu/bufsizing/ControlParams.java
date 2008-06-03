@@ -225,7 +225,7 @@ public class ControlParams {
         StringPair sp = formatBits( ((long)rate) * 8, false );
         MasterGUI.me.lblRateLimVal.setText( sp.a );
         MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps (" + rateLim +")" ); 
-        MasterGUI.range.setRange( 0, rate * 8.0 );
+        if( !MasterGUI.rangeUseAuto ) MasterGUI.range.setRange( 0, rate * 8.0 );
     }
     
     public int getNumFlows() {
