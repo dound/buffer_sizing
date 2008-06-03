@@ -31,12 +31,13 @@ public class MasterGUI extends javax.swing.JFrame {
     public static MasterGUI me;
     
     private static JFreeChart chart;
-    public static final XYSeries dataXput = new XYSeries("Goodput");
+    public static final XYSeries dataXput = new XYSeries("Throughput");
     public static final XYSeries dataOcc  = new XYSeries("Queue Occupancy");
     public static final XYSeries dataQS   = new XYSeries("Queue Size");
     private static final XYSeriesCollection collXput = new XYSeriesCollection();
     private static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     private static int tic = 0;
+    public static boolean pause = false;
     
     private int getIntFromUser( String msg, int min, int def, int max ) {
         int v;
@@ -93,7 +94,7 @@ public class MasterGUI extends javax.swing.JFrame {
         chart = ChartFactory.createXYLineChart(
             "Throughput and Queue Occupancy vs. Time",
             "Time",
-            "Throughput (Goodput) (bps)",
+            "Throughput (bps)",
             collXput,
             PlotOrientation.VERTICAL,
             true, //legend
@@ -116,8 +117,10 @@ public class MasterGUI extends javax.swing.JFrame {
         
         ValueAxis domain = plot.getDomainAxis();
         domain.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
-        domain.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
+        domain.setTickLabelsVisible(false);
+        domain.setTickMarksVisible(false);
         domain.setAutoRange(true);
+        domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
         
         ValueAxis range = plot.getRangeAxis();
         range.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
@@ -126,7 +129,7 @@ public class MasterGUI extends javax.swing.JFrame {
        
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,196,0));
-        renderer.setStroke(new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         
@@ -139,7 +142,7 @@ public class MasterGUI extends javax.swing.JFrame {
         
         XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
         renderer2.setPaint(new Color(196,0,0));
-        renderer2.setSeriesStroke(0, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer2.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL,10.0f,new float[]{10.0f,5.0f},0.0f));
         plot.setRenderer(1, renderer2);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
@@ -178,7 +181,6 @@ public class MasterGUI extends javax.swing.JFrame {
         txtPayloadBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "payloadBW");
         lblNumFlows = new javax.swing.JLabel();
         lblPayloadBWUnits2 = new javax.swing.JLabel();
-        btnClearData = new javax.swing.JButton();
         pnlRouterState = new javax.swing.JPanel();
         lblBufSize = new javax.swing.JLabel();
         lblRateLimVal = new javax.swing.JLabel();
@@ -194,6 +196,8 @@ public class MasterGUI extends javax.swing.JFrame {
         lblXput = new javax.swing.JLabel();
         btnRateLimDown = new javax.swing.JButton();
         btnRateLimUp = new javax.swing.JButton();
+        btnClearData = new javax.swing.JButton();
+        btnFreezeFrame = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Buffer Sizing Demo GUI");
@@ -352,17 +356,8 @@ public class MasterGUI extends javax.swing.JFrame {
         pnlNetControl.add(lblPayloadBWUnits2);
         lblPayloadBWUnits2.setBounds(285, 50, 50, 20);
 
-        btnClearData.setText("Clear Data");
-        btnClearData.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearDataActionPerformed(evt);
-            }
-        });
-        pnlNetControl.add(btnClearData);
-        btnClearData.setBounds(10, 100, 110, 30);
-
         pnlControl.add(pnlNetControl);
-        pnlNetControl.setBounds(385, 20, 310, 140);
+        pnlNetControl.setBounds(385, 20, 310, 120);
 
         pnlRouterState.setBorder(javax.swing.BorderFactory.createTitledBorder("Router State"));
         pnlRouterState.setLayout(null);
@@ -450,6 +445,24 @@ public class MasterGUI extends javax.swing.JFrame {
         pnlControl.add(pnlRouterState);
         pnlRouterState.setBounds(700, 20, 310, 140);
 
+        btnClearData.setText("Clear Data");
+        btnClearData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearDataActionPerformed(evt);
+            }
+        });
+        pnlControl.add(btnClearData);
+        btnClearData.setBounds(385, 140, 110, 20);
+
+        btnFreezeFrame.setText("Freeze Frame");
+        btnFreezeFrame.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFreezeFrameActionPerformed(evt);
+            }
+        });
+        pnlControl.add(btnFreezeFrame);
+        btnFreezeFrame.setBounds(585, 140, 110, 20);
+
         getContentPane().add(pnlControl);
         pnlControl.setBounds(5, 0, 1019, 170);
     }// </editor-fold>//GEN-END:initComponents
@@ -474,12 +487,13 @@ public class MasterGUI extends javax.swing.JFrame {
         // TODO add your handling code here:
 }//GEN-LAST:event_chkUseNumFlowsActionPerformed
 
-    private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearDataActionPerformed
-        dataOcc.clear();
-        dataQS.clear();
-        dataXput.clear();
-        tic = 0;
-}//GEN-LAST:event_btnClearDataActionPerformed
+    private void btnFreezeFrameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFreezeFrameActionPerformed
+        pause = !pause;
+        if( pause )
+            btnFreezeFrame.setText("Unfreeze");
+        else
+            btnFreezeFrame.setText("Freeze Frame");
+}//GEN-LAST:event_btnFreezeFrameActionPerformed
 
     private void txtLinkBWKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLinkBWKeyPressed
         if( evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER )
@@ -513,6 +527,15 @@ public class MasterGUI extends javax.swing.JFrame {
     private void btnRateLimDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRateLimDownActionPerformed
         ctl.decreaseRateLim();
 }//GEN-LAST:event_btnRateLimDownActionPerformed
+
+private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearDataActionPerformed
+    synchronized(me) {
+        dataOcc.clear();
+        dataQS.clear();
+        dataXput.clear();
+        tic = 0;
+    }
+}//GEN-LAST:event_btnClearDataActionPerformed
     
     /**
      * @param args the command line arguments
@@ -527,6 +550,7 @@ public class MasterGUI extends javax.swing.JFrame {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearData;
+    private javax.swing.JButton btnFreezeFrame;
     private javax.swing.JButton btnRateLimDown;
     private javax.swing.JButton btnRateLimUp;
     private dgu.util.swing.binding.JCheckBoxBound chkUseNumFlows;

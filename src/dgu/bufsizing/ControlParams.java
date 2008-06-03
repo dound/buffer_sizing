@@ -443,10 +443,14 @@ public class ControlParams {
                     double throughput = bytes_sent * 8 / diff;
                     double x = total / 1024.0;
                     
-                    /** add new data points to the graph */
-                    MasterGUI.dataXput.add( x, throughput );
-                    MasterGUI.dataOcc.add(  x, queue_occ  );
-                    MasterGUI.dataQS.add(   x, queueSize  );
+                    /** add new data points to the graph (if not paused) */
+                    if( !MasterGUI.pause ) {
+                        synchronized(MasterGUI.me) {
+                            MasterGUI.dataXput.add( x, throughput );
+                            MasterGUI.dataOcc.add(  x, queue_occ  );
+                            MasterGUI.dataQS.add(   x, queueSize  );
+                        }
+                    }
                     
                     MasterGUI.me.lblXputVal.setText( Integer.toString((int)throughput) );
                     MasterGUI.me.lblQOccVal.setText( Integer.toString(queue_occ) );
