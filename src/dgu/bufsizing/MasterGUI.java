@@ -13,9 +13,7 @@ import java.awt.Color;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
-import org.jfree.chart.renderer.category.*;
 import org.jfree.chart.renderer.xy.*;
-import org.jfree.data.time.*;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.*;
@@ -89,12 +87,6 @@ public class MasterGUI extends javax.swing.JFrame {
         collXput.addSeries(dataXput);
         collOcc.addSeries(dataOcc);
         collOcc.addSeries(dataQS);
-        
-        for( ; tic<10; tic++ ) {
-            dataXput.add( tic, tic );
-            dataOcc.add( tic, tic % 6 );
-            dataQS.add( tic, 5 );
-        }
     }
     
     static private void createChart() {
