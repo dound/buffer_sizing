@@ -32,17 +32,13 @@ public class ControlParams {
     }
     
     public void decreaseRateLim() {
-        if( rateLim > 0 ) {
-            rtrCommander.command( RouterCmd.CMD_SET_RATE.code, rateLim - 1 );
+        if( rateLim > 2 )
             setRateLimit( rateLim - 1 );
-        }
     }
     
     public void increaseRateLim() {
-        if( rateLim < 16 ) {
-            rtrCommander.command( RouterCmd.CMD_SET_RATE.code, rateLim + 1 );
+        if( rateLim < 16 )
             setRateLimit( rateLim + 1 );
-        }
     }
     
     public enum SendValueType {
@@ -219,12 +215,14 @@ public class ControlParams {
     }
 
     public void setRateLimit( int newRate ) {
+        rateLim = newRate;
+        rtrCommander.command( RouterCmd.CMD_SET_RATE.code, newRate );
         double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
-        for( int i=1; i<newRate; i++ )
+        for( int i=2; i<newRate; i++ )
             rate /= 2;
         StringPair sp = formatBits( ((long)rate) * 8 );
         MasterGUI.me.lblRateLimVal.setText( sp.a );
-        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps" );        
+        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps (" + rateLim +")" );        
     }
     
     public int getNumFlows() {
