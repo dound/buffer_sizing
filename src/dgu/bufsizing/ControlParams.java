@@ -32,13 +32,17 @@ public class ControlParams {
     }
     
     public void decreaseRateLim() {
-        if( rateLim > 0 )
+        if( rateLim > 0 ) {
             rtrCommander.command( RouterCmd.CMD_SET_RATE.code, rateLim - 1 );
+            setRateLimit( rateLim - 1 );
+        }
     }
     
     public void increaseRateLim() {
-        if( rateLim < 16 )
+        if( rateLim < 16 ) {
             rtrCommander.command( RouterCmd.CMD_SET_RATE.code, rateLim + 1 );
+            setRateLimit( rateLim + 1 );
+        }
     }
     
     public enum SendValueType {
@@ -207,13 +211,22 @@ public class ControlParams {
     }
 
     public void setPayloadBW(int payload_bw_bps) throws IllegalArgValException {
-        if( payload_bw_bps <= 1000 || payload_bw_bps > 1000 * 1000 * 1000 )
+        if( payload_bw_bps < 1000 || payload_bw_bps > 1000 * 1000 * 1000 )
             throw( new IllegalArgValException("Payload rate must be between 1kbps and 1Gbps") );
         
         this.payloadBW = payload_bw_bps;
         sendCommands( ClientCmd.CMD_BPS.code, this.payloadBW, SendValueType.SV_SPLIT );
     }
 
+    public void setRateLimit( int newRate ) {
+        double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
+        for( int i=1; i<newRate; i++ )
+            rate /= 2;
+        StringPair sp = formatBits( ((long)rate) * 8 );
+        MasterGUI.me.lblRateLimVal.setText( sp.a );
+        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps" );        
+    }
+    
     public int getNumFlows() {
         return numFlows;
     }
@@ -363,13 +376,7 @@ public class ControlParams {
                     }
                     else {
                         // convert the value of the register to something meaningful to the user
-                        rateLim = ret;
-                        double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
-                        for( int i=1; i<ret; i++ )
-                            rate /= 2;
-                        StringPair sp = formatBits( ((long)rate) * 8 );
-                        MasterGUI.me.lblRateLimVal.setText( sp.a );
-                        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps" );
+                        setRateLimit( ret );
                     }
                 } catch( IOException e ) {
                     System.err.println( "command " + code + " / " + value + " => failed: " + e.getMessage() );
