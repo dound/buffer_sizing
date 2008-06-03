@@ -16,7 +16,7 @@ public class ControlParams {
     private short numFlows = 1;
     private boolean useNumFlows = false;
 
-    private int queueSize;
+    private int queueSizeBytes;
     private int rateLim = -1;
     private ServerSocket serverSocketTGens;
     private ServerSocket serverSocketRtr;
@@ -162,20 +162,21 @@ public class ControlParams {
             MasterGUI.me.lblNotCurBufSizeVal.setText( "(trad => " + strOrig.both() + ")" );
             MasterGUI.me.lblCurBufSizeVal.setText( strNew.a );
             MasterGUI.me.lblCurBufSizeUnits.setText( strNew.b );
-            queueSize = bufSizeNew;
+            queueSizeBytes = bufSizeNew / 8;
         }
         else {
             MasterGUI.me.lblNotCurBufSizeVal.setText( "(new => " + strNew.both() + ")" );
             MasterGUI.me.lblCurBufSizeVal.setText( strOrig.a );
             MasterGUI.me.lblCurBufSizeUnits.setText( strOrig.b );
-            queueSize = bufSizeOrig;
+            queueSizeBytes = bufSizeOrig / 8;
         }
         
         // update the router with its new buffer size (it takes the number in packets)
-        int queueSizeInPackets = queueSize / ControlParams.BYTES_PER_PACKET + 1;
+        int queueSizeInPackets = queueSizeBytes / ControlParams.BYTES_PER_PACKET + 1;
         rtrCommander.command( RouterCmd.CMD_SET_BUF_SZ.code, queueSizeInPackets );
         
         MasterGUI.me.lblBufSizeVal.setText( Integer.toString(queueSizeInPackets) );
+        MasterGUI.range2.setRange(0, queueSizeBytes);
     }
     
     public int getLinkBW() {
@@ -220,9 +221,11 @@ public class ControlParams {
         double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
         for( int i=2; i<newRate; i++ )
             rate /= 2;
+        
         StringPair sp = formatBits( ((long)rate) * 8, false );
         MasterGUI.me.lblRateLimVal.setText( sp.a );
-        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps (" + rateLim +")" );        
+        MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps (" + rateLim +")" ); 
+        MasterGUI.range.setRange( 0, rate * 8.0 );
     }
     
     public int getNumFlows() {
@@ -428,8 +431,9 @@ public class ControlParams {
                     int sec       = bytes_to_int( buf,  0 );
                     int usec      = bytes_to_int( buf,  4 );
                     long time     = ((long)sec)*1000*1000 + ((long)usec);
-                    long bytes    = ((long)8) * bytes_to_int( buf,  8 ); /* is a count of 8-byte words */
-                    int queue_occ  = bytes_to_int( buf, 12 );
+                    long bytes    = ((long)8) * bytes_to_int( buf,  8 );
+                    int queue_occ_words  = bytes_to_int( buf, 12 ); /* 8-byte words! */
+                    int queue_occ_bytes = queue_occ_words * 8;
                     
                     /* ignore old packets which arrive out or order */
                     if( time < prev_time )
@@ -461,15 +465,20 @@ public class ControlParams {
                     if( !MasterGUI.pause ) {
                         /** add new data points to the graph (if not paused) */
                         synchronized(MasterGUI.me) {
-                            MasterGUI.dataXput.add( time_millis, throughput );
-                            MasterGUI.dataOcc.add(  time_millis, queue_occ  );
-                            MasterGUI.dataQS.add(   time_millis, queueSize  );
+                            MasterGUI.dataXput.add( time_millis, throughput      );
+                            MasterGUI.dataOcc.add(  time_millis, queue_occ_bytes );
+                            MasterGUI.dataQS.add(   time_millis, queueSizeBytes  );
                         }
                     }
                     
                     /* update instantaneous readings */
-                    MasterGUI.me.lblXputVal.setText( Integer.toString((int)throughput) );
-                    MasterGUI.me.lblQOccVal.setText( Integer.toString(queue_occ) );
+                    StringPair p = formatBits( (int)throughput, false );
+                    MasterGUI.me.lblXputVal.setText( p.a );
+                    MasterGUI.me.lblXputUnits.setText( p.b );
+                    
+                    p = formatBits( queue_occ_bytes, true );
+                    MasterGUI.me.lblQOccVal.setText( p.a );
+                    MasterGUI.me.lblQOccUnits.setText( p.b );
                 } catch( IOException e ) {
                     System.err.println( "Error: UDP stats receive failed: " + e.getMessage() );
                     System.exit( 1 );

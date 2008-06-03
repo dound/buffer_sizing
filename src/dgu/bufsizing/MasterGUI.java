@@ -31,6 +31,8 @@ public class MasterGUI extends javax.swing.JFrame {
     public static MasterGUI me;
     
     private static JFreeChart chart;
+    public static ValueAxis range;
+    public static NumberAxis range2;
     public static final XYSeries dataXput = new XYSeries("Throughput");
     public static final XYSeries dataOcc  = new XYSeries("Queue Occupancy");
     public static final XYSeries dataQS   = new XYSeries("Queue Size");
@@ -122,23 +124,23 @@ public class MasterGUI extends javax.swing.JFrame {
         domain.setAutoRange(true);
         domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
         
-        ValueAxis range = plot.getRangeAxis();
+        range = plot.getRangeAxis();
         range.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
         range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
-        range.setAutoRange(true);
-       
+        range.setAutoRange(false);
+        
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,196,0));
         renderer.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         
-        NumberAxis range2 = new NumberAxis("Queue Occupancy / Size");
+        range2 = new NumberAxis("Queue Occupancy / Size (Bytes)");
         plot.setRangeAxis(1, range2);
         plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
         range2.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
         range2.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
-        range2.setAutoRange(true);
+        range2.setAutoRange(false);
         
         XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
         renderer2.setPaint(new Color(196,0,0));
