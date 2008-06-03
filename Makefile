@@ -25,6 +25,7 @@ endif
 # define names of our build targets
 APP = tomahawk
 DAEMON = buf_size_daemon
+LOGGER = logger
 
 # compiler and its directives
 DIR_INC       = -I.
@@ -53,9 +54,14 @@ D_SRCS = buf_size_daemon.c nf2util.c
 D_OBJS = $(patsubst %.c,%.o,$(D_SRCS)) common.o debug.o io_wrapper.o
 D_DEPS = $(patsubst %.c,.%.d,$(D_SRCS))
 
+# logger sources
+L_SRCS = logger.c
+L_OBJS = $(patsubst %.c,%.o,$(L_SRCS)) common.o debug.o io_wrapper.o nf2util.c
+L_DEPS = $(patsubst %.c,.%.d,$(L_SRCS))
+
 # include the dependencies once we've built them
 ifdef INCLUDE_DEPS
-include $(DEPS) $(D_DEPS)
+include $(DEPS) $(D_DEPS) $(L_DEPS)
 endif
 
 #########################
@@ -65,11 +71,11 @@ endif
 .PHONY: all clean clean-all clean-deps daemon debug release deps $(APP).ir
 
 # build the program
-all: $(APP) $(DAEMON)
+all: $(APP) $(DAEMON) $(LOGGER)
 
 # clean up by-products (except dependency files)
 clean:
-	rm -f *.o $(APP) $(DAEMON)
+	rm -f *.o $(APP) $(DAEMON) $(LOGGER)
 
 # clean up all by-products
 clean-all: clean clean-deps
@@ -90,9 +96,11 @@ IR=ir
 $(APP).$(IR): $(OBJS)
 	$(CC) -o $(APP) $(OBJS) $(DIR_LIB) $(LIBS)
 
-IR=ir
 $(DAEMON).$(IR): $(D_OBJS)
 	$(CC) -o $(DAEMON) $(D_OBJS) $(DIR_LIB) $(LIBS)
+
+$(LOGGER).$(IR): $(L_OBJS)
+	$(CC) -o $(LOGGER) $(L_OBJS) $(DIR_LIB) $(LIBS)
 
 #########################
 ## REAL TARGETS
@@ -104,5 +112,8 @@ daemon : $(DAEMON)
 $(DAEMON): deps
 	@$(MAKE) BUILD_TYPE=$(BUILD_TYPE) INCLUDE_DEPS=1 $@.$(IR)
 
-$(DEPS) $(D_DEPS) : .%.d: %.c
+$(LOGGER): deps
+	@$(MAKE) BUILD_TYPE=$(BUILD_TYPE) INCLUDE_DEPS=1 $@.$(IR)
+
+$(DEPS) $(D_DEPS) $(L_DEPS) : .%.d: %.c
 	$(CC) -MM $(CFLAGS) $(DIRS_INC) $< > $@
