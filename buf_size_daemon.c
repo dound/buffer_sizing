@@ -291,9 +291,9 @@ static void set_buffer_size( uint32_t size ) {
     writeReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, size );
 }
 
-static uint32_t get_queue_occupancy() {
+static uint32_t get_queue_occupancy() { /* in 8B words */
     /* queue 1 => nf2c1 */
     uint32_t val;
-    readReg( &nf2, RX_QUEUE_1_NUM_PKTS_IN_QUEUE_REG, &val );
+    readReg( &nf2, OQ_NUM_WORDS_IN_Q_REG_2, &val );
     return val;
 }
