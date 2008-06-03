@@ -228,21 +228,20 @@ int main( int argc, char** argv ) {
             fprintf( stderr, "Error: missing required switch -ip\n" );
             return -1;
         }
-        if( client.master_ip == 0 ) {
-            fprintf( stderr, "Error: missing required switch -mip\n" );
-            return -1;
-        }
-        if( client.master_port == 0 ) {
-            fprintf( stderr, "Error: missing required switch -mport\n" );
-            return -1;
-        }
         client.warned = FALSE;
 
         /* start the background controller */
-        pthread_t tid;
-        if( 0 != pthread_create( &tid, NULL, controller_main, &client ) ) {
-            fprintf( stderr, "Error: unable to start controller thread\n" );
-            return -1;
+        if( client.master_ip == 0 || client.master_port == 0 ) {
+            if( client.master_ip || client.master_port ) {
+                fprintf( stderr, "Error: must specify either both master IP and port or neither\n" );
+                exit( 1 );
+            }
+
+            pthread_t tid;
+            if( 0 != pthread_create( &tid, NULL, controller_main, &client ) ) {
+                fprintf( stderr, "Error: unable to start controller thread\n" );
+                return -1;
+            }
         }
 
         /* start sending data to the server */
