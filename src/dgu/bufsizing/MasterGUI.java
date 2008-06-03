@@ -142,7 +142,7 @@ public class MasterGUI extends javax.swing.JFrame {
         
         XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
         renderer2.setPaint(new Color(196,0,0));
-        renderer2.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer2.setSeriesStroke(0, new BasicStroke(2f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL,10.0f,new float[]{10.0f,5.0f},0.0f));
         plot.setRenderer(1, renderer2);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);

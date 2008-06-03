@@ -125,8 +125,8 @@ public class ControlParams {
         String both() { return a + b; }
     }
     
-    public StringPair formatBits( long b ) {
-        long bytes = b / 8;
+    public StringPair formatBits( long b, boolean toBytes ) {
+        long bytes = b / (toBytes ? 8 : 1);
         int units = 0;
         while( bytes >= 10000 ) {
             bytes /= 1000;
@@ -134,18 +134,18 @@ public class ControlParams {
         }
         String strUnit;
         switch( units ) {
-            case  0: strUnit = "B";  break;
-            case  1: strUnit = "kB"; break;
-            case  2: strUnit = "MB"; break;
-            case  3: strUnit = "GB"; break;
-            case  4: strUnit = "TB"; break;
-            case  5: strUnit = "PB"; break;
-            default: strUnit = "?B"; break;
+            case  0: strUnit = "";  break;
+            case  1: strUnit = "k"; break;
+            case  2: strUnit = "M"; break;
+            case  3: strUnit = "G"; break;
+            case  4: strUnit = "T"; break;
+            case  5: strUnit = "P"; break;
+            default: strUnit = "?"; break;
         }
         
         ControlParams.StringPair ret = new ControlParams.StringPair();
         ret.a = Long.toString( bytes );
-        ret.b = strUnit;
+        ret.b = strUnit + (toBytes ? "B" : "b");
         return ret;
     }
     
@@ -155,8 +155,8 @@ public class ControlParams {
     public void recomputeBufferSize() {
         int bufSizeOrig = linkBW * delay / 1000;
         int bufSizeNew = (int)(bufSizeOrig / Math.sqrt(numFlows));
-        StringPair strOrig = formatBits(bufSizeOrig);
-        StringPair strNew = formatBits(bufSizeNew);
+        StringPair strOrig = formatBits(bufSizeOrig, true);
+        StringPair strNew = formatBits(bufSizeNew, true);
         
         if( useNumFlows ) {
             MasterGUI.me.lblNotCurBufSizeVal.setText( "(trad => " + strOrig.both() + ")" );
@@ -220,7 +220,7 @@ public class ControlParams {
         double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
         for( int i=2; i<newRate; i++ )
             rate /= 2;
-        StringPair sp = formatBits( ((long)rate) * 8 );
+        StringPair sp = formatBits( ((long)rate) * 8, false );
         MasterGUI.me.lblRateLimVal.setText( sp.a );
         MasterGUI.me.lblRateLimUnits.setText( sp.b + "ps (" + rateLim +")" );        
     }
@@ -393,11 +393,13 @@ public class ControlParams {
             this.port = port;
         }
         
+        private boolean first = true;
         public void run() {
             DatagramSocket dsocket;
             byte[] buf;
             DatagramPacket packet;
-            long prev_total = 0;
+            long prev_time = 0;
+            long prev_bytes = 0;
             
             /* establish a socket for the stats port */
             try {
@@ -425,33 +427,47 @@ public class ControlParams {
                     /* extract the stats */
                     int sec       = bytes_to_int( buf,  0 );
                     int usec      = bytes_to_int( buf,  4 );
-                    int bytes_sent = bytes_to_int( buf,  8 );
+                    long time     = ((long)sec)*1000*1000 + ((long)usec);
+                    long bytes    = ((long)8) * bytes_to_int( buf,  8 ); /* is a count of 8-byte words */
                     int queue_occ  = bytes_to_int( buf, 12 );
                     
-                    /* compute throughput */
-                    long total = ((long)sec)*1000*1000 + ((long)usec);
-                    if( total < prev_total)
-                        continue; /* ignore out of order packets */
+                    /* ignore old packets which arrive out or order */
+                    if( time < prev_time )
+                        continue;
                     
-                    long diff = total - prev_total;
-                    if( prev_total == 0 ) {
-                        prev_total = total;
+                    /* determine if we can compute xput yet */
+                    if( first ) {
+                        first = false;
+                        prev_time = time;
+                        prev_bytes = bytes;
                         continue;
                     }
-                    prev_total = total;
-                           
-                    double throughput = bytes_sent * 8 / diff;
-                    double x = total / 1024.0;
+
+                    /* determine diffs */
+                    long diff_times = time - prev_time;
+                    long diff_bytes = bytes - prev_bytes;
+                    if( diff_bytes < 0 )
+                        diff_bytes = 0;
+
+                    /* save new prev values */
+                    prev_time = time;
+                    prev_bytes = bytes;
+
+                    /* compute throughput in bits per second */       
+                    double throughput = diff_bytes * 8 / diff_times;
+                    double time_millis = time / 1000.0;
                     
-                    /** add new data points to the graph (if not paused) */
+                    /* update graph with new data points if not paused */
                     if( !MasterGUI.pause ) {
+                        /** add new data points to the graph (if not paused) */
                         synchronized(MasterGUI.me) {
-                            MasterGUI.dataXput.add( x, throughput );
-                            MasterGUI.dataOcc.add(  x, queue_occ  );
-                            MasterGUI.dataQS.add(   x, queueSize  );
+                            MasterGUI.dataXput.add( time_millis, throughput );
+                            MasterGUI.dataOcc.add(  time_millis, queue_occ  );
+                            MasterGUI.dataQS.add(   time_millis, queueSize  );
                         }
                     }
                     
+                    /* update instantaneous readings */
                     MasterGUI.me.lblXputVal.setText( Integer.toString((int)throughput) );
                     MasterGUI.me.lblQOccVal.setText( Integer.toString(queue_occ) );
                 } catch( IOException e ) {
