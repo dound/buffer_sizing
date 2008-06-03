@@ -178,6 +178,7 @@ public class MasterGUI extends javax.swing.JFrame {
         txtPayloadBW = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "payloadBW");
         lblNumFlows = new javax.swing.JLabel();
         lblPayloadBWUnits2 = new javax.swing.JLabel();
+        btnClearData = new javax.swing.JButton();
         pnlRouterState = new javax.swing.JPanel();
         lblBufSize = new javax.swing.JLabel();
         lblRateLimVal = new javax.swing.JLabel();
@@ -193,7 +194,6 @@ public class MasterGUI extends javax.swing.JFrame {
         lblXput = new javax.swing.JLabel();
         btnRateLimDown = new javax.swing.JButton();
         btnRateLimUp = new javax.swing.JButton();
-        btnClearData = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Buffer Sizing Demo GUI");
@@ -240,7 +240,7 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlBufControl.add(txtLinkBW);
-        txtLinkBW.setBounds(190, 50, 110, 20);
+        txtLinkBW.setBounds(190, 50, 110, 27);
 
         lblLinkBW.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblLinkBW.setText("Link Bandwidth:");
@@ -269,7 +269,7 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlBufControl.add(txtDelay);
-        txtDelay.setBounds(190, 80, 110, 20);
+        txtDelay.setBounds(190, 80, 110, 27);
 
         lblNotCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         pnlBufControl.add(lblNotCurBufSizeVal);
@@ -286,7 +286,7 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlBufControl.add(chkUseNumFlows);
-        chkUseNumFlows.setBounds(190, 110, 21, 21);
+        chkUseNumFlows.setBounds(190, 110, 20, 22);
 
         lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblDelayUnits.setText("ms");
@@ -311,7 +311,7 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlNetControl.add(txtNumFlows);
-        txtNumFlows.setBounds(170, 80, 110, 20);
+        txtNumFlows.setBounds(170, 80, 110, 27);
 
         lblNumGen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNumGen.setText("# of Traffic Generators:");
@@ -340,7 +340,7 @@ public class MasterGUI extends javax.swing.JFrame {
             }
         });
         pnlNetControl.add(txtPayloadBW);
-        txtPayloadBW.setBounds(170, 50, 110, 20);
+        txtPayloadBW.setBounds(170, 50, 110, 27);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNumFlows.setText("# of Flows:");
@@ -351,6 +351,15 @@ public class MasterGUI extends javax.swing.JFrame {
         lblPayloadBWUnits2.setText("bps");
         pnlNetControl.add(lblPayloadBWUnits2);
         lblPayloadBWUnits2.setBounds(285, 50, 50, 20);
+
+        btnClearData.setText("Clear Data");
+        btnClearData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearDataActionPerformed(evt);
+            }
+        });
+        pnlNetControl.add(btnClearData);
+        btnClearData.setBounds(10, 100, 110, 30);
 
         pnlControl.add(pnlNetControl);
         pnlNetControl.setBounds(385, 20, 310, 140);
@@ -443,15 +452,6 @@ public class MasterGUI extends javax.swing.JFrame {
 
         getContentPane().add(pnlControl);
         pnlControl.setBounds(5, 0, 1019, 170);
-
-        btnClearData.setText("Clear Data");
-        btnClearData.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearDataActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnClearData);
-        btnClearData.setBounds(910, 170, 110, 30);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtNumFlowsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNumFlowsActionPerformed
