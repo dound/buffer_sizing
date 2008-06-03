@@ -363,6 +363,7 @@ public class ControlParams {
                     }
                     else {
                         // convert the value of the register to something meaningful to the user
+                        rateLim = ret;
                         double rate = 1000 * 1000 * 1000; // base rate is 1Gbps
                         for( int i=1; i<ret; i++ )
                             rate /= 2;
