@@ -322,6 +322,9 @@ static void* controller_main( void* pclient ) {
         if( len < 0 )
             break;
 
+        if( len != sizeof(packet) )
+            continue;
+
         packet.val = ntohl( packet.val );
         if( packet.val == 0 && packet.code != CODE_EXIT ) {
             fprintf( stderr, "warning: was asked to change code=%u to zero", packet.code );
@@ -441,7 +444,7 @@ static void client_main( client_t* c ) {
         /* only go if config is setup */
         if( req_num_flows==0 || Bps==0 || interval_ms==0 ) {
             fprintf( stderr, "Waiting for non-zero configuration values.\n" );
-            sleep( 5 );
+            sleep_ms( 500 );
             continue;
         }
 
@@ -512,6 +515,8 @@ static void client_main( client_t* c ) {
             }
             num_bytes = MAX_PAYLOAD;
         }
+        else
+            fprintf( stderr, "Will sending %uB\n", num_bytes );
 
         /* send garbage with each client */
         for( i=0; i<actual_flows; i++ ) {
