@@ -231,8 +231,8 @@ int main( int argc, char** argv ) {
         client.warned = FALSE;
 
         /* start the background controller */
-        if( client.master_ip == 0 || client.master_port == 0 ) {
-            if( client.master_ip || client.master_port ) {
+        if( client.master_ip != 0 || client.master_port != 0 ) {
+            if( client.master_ip==0 || client.master_port==0 ) {
                 fprintf( stderr, "Error: must specify either both master IP and port or neither\n" );
                 exit( 1 );
             }
