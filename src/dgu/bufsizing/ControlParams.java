@@ -434,17 +434,19 @@ public class ControlParams {
                         continue; /* ignore out of order packets */
                     
                     long diff = total - prev_total;
-                    prev_total = total;
-                    if( prev_total == 0 )
+                    if( prev_total == 0 ) {
                         prev_total = total;
-                        
+                        continue;
+                    }
+                    prev_total = total;
+                           
                     double throughput = bytes_sent * 8 / diff;
-                    double tic = total / 1024.0;
+                    double x = total / 1024.0;
                     
                     /** add new data points to the graph */
-                    MasterGUI.dataXput.add( tic, throughput );
-                    MasterGUI.dataOcc.add(  tic, queue_occ  );
-                    MasterGUI.dataQS.add(   tic, queueSize  );
+                    MasterGUI.dataXput.add( x, throughput );
+                    MasterGUI.dataOcc.add(  x, queue_occ  );
+                    MasterGUI.dataQS.add(   x, queueSize  );
                     
                     MasterGUI.me.lblXputVal.setText( Integer.toString((int)throughput) );
                     MasterGUI.me.lblQOccVal.setText( Integer.toString(queue_occ) );
@@ -456,3 +458,4 @@ public class ControlParams {
         }
     }
 }
+//
