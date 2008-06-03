@@ -29,8 +29,8 @@ Buffer Size Reporting Daemon v%s\n\
   -p, -port:       sets the server port to connect to (both UDP and TCP)\n"
 
 /** number of seconds between updates */
-#define UPDATE_INTERVAL_SEC 2
-#define UPDATE_INTERVAL_NSEC 0
+#define UPDATE_INTERVAL_SEC 0
+#define UPDATE_INTERVAL_NSEC (1000 * 1000) /* one per millisecond */
 
 /** port to contact the server on */
 #define DEFAULT_PORT 60308
@@ -241,6 +241,9 @@ static void inform_server_loop() {
         update.bytes_sent = htonl( get_bytes_sent() );
         update.queue_occ  = htonl( get_queue_occupancy() );
         /* note: still have 2B before we hit min Eth payload (incl overheads) */
+
+        /* reuse sin as server addr */
+        sin.sin_addr.s_addr = server_ip;
 
         /* send the update to the server */
         if( -1 == sendto( fd, (char*)&update, sizeof(update), 0,
