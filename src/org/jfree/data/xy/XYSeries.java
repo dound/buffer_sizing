@@ -413,6 +413,22 @@ public class XYSeries extends Series implements Cloneable, Serializable {
     }
     
     /**
+     * Removes the item at the specified index and sends a 
+     * {@link SeriesChangeEvent} to all registered listeners if notify is true.
+     * 
+     * @param index  the index.
+     * 
+     * @return The item removed.
+     * @author David Underhill
+     */
+    public XYDataItem remove(int index, boolean notify) {
+        XYDataItem result = (XYDataItem) this.data.remove(index);
+        if( notify )
+            fireSeriesChanged();
+        return result;
+    }
+    
+    /**
      * Removes the item with the specified x-value and sends a 
      * {@link SeriesChangeEvent} to all registered listeners.
      * 
