@@ -1,21 +1,20 @@
 package dgu.bufsizing;
 
 import java.awt.Graphics2D;
+import java.util.LinkedList;
+import java.util.Vector;
 
 /**
  * Information about a router.
  * @author David Underhill
  */
 public class Router extends Node {
-    private int bufSize_msec;
-    private int rate_Mbps;
-    private int dataPointsToKeep;
-
-    public Router( String name, int bufSize_msec, int rate_Mbps, int dataPointsToKeep ) {
+    public static int MAX_LINKS = 4;
+    private Vector<Link> link = new Vector<Link>( MAX_LINKS );
+    private Vector<BottleneckLink> bottleneck = new Vector<BottleneckLink>();
+    
+    public Router( String name ) {
         super( name );
-        this.bufSize_msec = bufSize_msec;
-        this.rate_Mbps = rate_Mbps;
-        this.dataPointsToKeep = dataPointsToKeep;
     }
     
     public void draw( Graphics2D gfx ) {
@@ -25,20 +24,8 @@ public class Router extends Node {
     public String getTypeString() {
         return "NetFGPA";
     }
-
-    public int getBufSize() {
-        return bufSize_msec;
-    }
-
-    public void setBufSize( int bufSize_msec ) {
-        this.bufSize_msec = bufSize_msec;
-    }
-
-    public int getRate() {
-        return rate_Mbps;
-    }
-
-    public void setRate( int rate_Mbps ) {
-        this.rate_Mbps = rate_Mbps;
+    
+    public Link getLink( int i ) {
+        return link.get(i);
     }
 }

@@ -21,6 +21,10 @@ public abstract class Node implements Drawable {
     
     public abstract String getTypeString();
 
+    public int getSaturationTo( Node x ) {
+        return 0;
+    }
+    
     public String getName() {
         return name;
     }
