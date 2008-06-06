@@ -486,5 +486,66 @@ public class ControlParams {
             }
         }
     }
+    
+    private static int readit(FileInputStream fin) throws Exception {
+        int ret, r;
+
+        r = fin.read();
+        if( r == -1 )
+            throw(new IllegalArgValException("done"));
+        else
+            ret = r;
+
+        r = fin.read();
+        if( r == -1 )
+            throw(new IllegalArgValException("done"));
+        else
+            ret += (r << 8);
+
+        r = fin.read();
+        if( r == -1 )
+            throw(new IllegalArgValException("done"));
+        else
+            ret += (r << 16);
+
+        r = fin.read();
+        if( r == -1 )
+            throw(new IllegalArgValException("done"));
+        else
+            ret +=  (r << 24);
+
+        return ret;
+    }
+    
+    public static void playback( String f, int sleep_millis ) {
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream( f );
+            
+            while( true ) {
+                int sec = readit(fin);
+                int usec = readit(fin);
+                double time_millis = (sec + usec / (double)1000000) * 1000;
+
+                int occ_words = readit(fin);
+
+                MasterGUI.dataOcc.add(  time_millis, occ_words * 8 );
+                
+                Thread.currentThread().sleep(sleep_millis);
+            }
+        }
+        catch( Exception e ) {
+            System.err.println( "completed playback" );
+            try {
+            if( fin != null ) fin.close();
+            } catch(IOException e2 ){}
+        }
+    }
+    
+    public static void main( String[] args ) {
+        // get fn and then go
+        System.err.println("playback mode!!");
+        playback(args[0],5);
+    }
 }
 //

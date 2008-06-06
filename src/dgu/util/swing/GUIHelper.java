@@ -163,5 +163,29 @@ public abstract class GUIHelper {
   }
   
   //</editor-fold>
+  
+  /**
+   * Gets an integer from the user within the specified range.
+   * @param msg  The prompt to show the user.
+   * @param min  The minimum allowed value.
+   * @param def  The default value/
+   * @param max  The maximum allowed value.
+   * @return  The user-specified value.
+   */
+  public static int getIntFromUser( String msg, int min, int def, int max ) {
+        int v;
+        while( true ) {
+            try {
+                v = Integer.valueOf( getInput(msg, String.valueOf(def)) );
+                if( v < min || v > max )
+                    displayError( "Error: must be between " + min + " and " + max + "." );
+                else
+                    return v;
+            }
+            catch( NumberFormatException e ) {
+                displayError(e);
+            }
+        }
+    }
 
 }

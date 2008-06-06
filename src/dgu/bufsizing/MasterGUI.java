@@ -42,22 +42,6 @@ public class MasterGUI extends javax.swing.JFrame {
     public static boolean pause = false;
     public static boolean rangeUseAuto = true;
     
-    private int getIntFromUser( String msg, int min, int def, int max ) {
-        int v;
-        while( true ) {
-            try {
-                v = Integer.valueOf( GUIHelper.getInput(msg, String.valueOf(def)) );
-                if( v < min || v > max )
-                    GUIHelper.displayError( "Error: must be between " + min + " and " + max + "." );
-                else
-                    return v;
-            }
-            catch( NumberFormatException e ) {
-                GUIHelper.displayError(e);
-            }
-        }
-    }
-    
     /** Creates new form MasterGUI */
     public MasterGUI() {
         me = this;
@@ -76,9 +60,9 @@ public class MasterGUI extends javax.swing.JFrame {
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
         
         // start the server sockets
-        ctl.waitForClients( getIntFromUser("How many traffic generators will there be?",0,0,100),
-                            getIntFromUser("On what port do you want to run on for your traffic generator commander(s)?",1,10000,65535) );
-        ctl.waitForRouter( getIntFromUser("On what port do you want to run your router commander?",1,10001,65535) );
+        //ctl.waitForClients( getIntFromUser("How many traffic generators will there be?",0,0,100),
+        //                    getIntFromUser("On what port do you want to run on for your traffic generator commander(s)?",1,10000,65535) );
+        //ctl.waitForRouter( getIntFromUser("On what port do you want to run your router commander?",1,10001,65535) );
 
         // setup the buffer size
         ctl.recomputeBufferSize();
@@ -173,8 +157,6 @@ public class MasterGUI extends javax.swing.JFrame {
         lblDelay = new javax.swing.JLabel();
         txtDelay = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "delay");
         lblNotCurBufSizeVal = new javax.swing.JLabel();
-        lblUseNumFlows = new javax.swing.JLabel();
-        chkUseNumFlows = new JCheckBoxBound(new SelfTranslator<Boolean>(), this.ctl, "isUseNumFlows", "setUseNumFlows");
         lblDelayUnits = new javax.swing.JLabel();
         pnlNetControl = new javax.swing.JPanel();
         txtNumFlows = new JTextFieldBound<Integer>(new TranslatorIntegerString(), this.ctl, "numFlows");
@@ -199,8 +181,12 @@ public class MasterGUI extends javax.swing.JFrame {
         lblXput = new javax.swing.JLabel();
         btnRateLimDown = new javax.swing.JButton();
         btnRateLimUp = new javax.swing.JButton();
-        btnClearData = new javax.swing.JButton();
         btnFreezeFrame = new javax.swing.JButton();
+        btnClearData1 = new javax.swing.JButton();
+        jSliderBound1 = new dgu.util.swing.binding.JSliderBound();
+        btnClearData = new javax.swing.JButton();
+        chkUseNumFlows = new JCheckBoxBound(new SelfTranslator<Boolean>(), this.ctl, "isUseNumFlows", "setUseNumFlows");
+        lblUseNumFlows = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Buffer Sizing Demo GUI");
@@ -281,19 +267,6 @@ public class MasterGUI extends javax.swing.JFrame {
         lblNotCurBufSizeVal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         pnlBufControl.add(lblNotCurBufSizeVal);
         lblNotCurBufSizeVal.setBounds(220, 110, 140, 20);
-
-        lblUseNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblUseNumFlows.setText("Use # of Flows:");
-        pnlBufControl.add(lblUseNumFlows);
-        lblUseNumFlows.setBounds(10, 110, 175, 20);
-
-        chkUseNumFlows.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkUseNumFlowsActionPerformed(evt);
-            }
-        });
-        pnlBufControl.add(chkUseNumFlows);
-        chkUseNumFlows.setBounds(190, 110, 20, 22);
 
         lblDelayUnits.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblDelayUnits.setText("ms");
@@ -448,15 +421,6 @@ public class MasterGUI extends javax.swing.JFrame {
         pnlControl.add(pnlRouterState);
         pnlRouterState.setBounds(700, 20, 310, 140);
 
-        btnClearData.setText("Clear Data");
-        btnClearData.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearDataActionPerformed(evt);
-            }
-        });
-        pnlControl.add(btnClearData);
-        btnClearData.setBounds(385, 140, 110, 20);
-
         btnFreezeFrame.setText("Freeze Frame");
         btnFreezeFrame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -466,8 +430,41 @@ public class MasterGUI extends javax.swing.JFrame {
         pnlControl.add(btnFreezeFrame);
         btnFreezeFrame.setBounds(585, 140, 110, 20);
 
+        btnClearData1.setText("Playback");
+        btnClearData1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearData1ActionPerformed(evt);
+            }
+        });
+        pnlControl.add(btnClearData1);
+        btnClearData1.setBounds(502, 140, 80, 20);
+
         getContentPane().add(pnlControl);
         pnlControl.setBounds(5, 0, 1019, 170);
+        getContentPane().add(jSliderBound1);
+        jSliderBound1.setBounds(310, 330, 200, 39);
+
+        btnClearData.setText("Clear Data");
+        btnClearData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearDataActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnClearData);
+        btnClearData.setBounds(290, 300, 110, 20);
+
+        chkUseNumFlows.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkUseNumFlowsActionPerformed(evt);
+            }
+        });
+        getContentPane().add(chkUseNumFlows);
+        chkUseNumFlows.setBounds(250, 250, 20, 22);
+
+        lblUseNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblUseNumFlows.setText("Use # of Flows:");
+        getContentPane().add(lblUseNumFlows);
+        lblUseNumFlows.setBounds(80, 250, 175, 20);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtNumFlowsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNumFlowsActionPerformed
@@ -539,6 +536,13 @@ private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
         tic = 0;
     }
 }//GEN-LAST:event_btnClearDataActionPerformed
+
+private void btnClearData1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearData1ActionPerformed
+    String fn = GUIHelper.getInput("What data do you want to playback?", "exper");
+    synchronized(me) {
+        ControlParams.playback(fn, 1);
+    }
+}//GEN-LAST:event_btnClearData1ActionPerformed
     
     /**
      * @param args the command line arguments
@@ -553,10 +557,12 @@ private void btnClearDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearData;
+    private javax.swing.JButton btnClearData1;
     private javax.swing.JButton btnFreezeFrame;
     private javax.swing.JButton btnRateLimDown;
     private javax.swing.JButton btnRateLimUp;
     private dgu.util.swing.binding.JCheckBoxBound chkUseNumFlows;
+    private dgu.util.swing.binding.JSliderBound jSliderBound1;
     private javax.swing.JLabel lblBufSize;
     private javax.swing.JLabel lblBufSizeUnits;
     public javax.swing.JLabel lblBufSizeVal;
