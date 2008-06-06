@@ -7,21 +7,23 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public abstract class TrafficGenerator extends Node {
-
-    public TrafficGenerator( String name ) {
-        super( name );
+    protected static final int ICON_WIDTH  = 50;
+    protected static final int ICON_HEIGHT = 50;
+    
+    public TrafficGenerator( String name, int x, int y ) {
+        super( name, x, y );
     }
     
-    public void draw( Graphics2D gfx ) {
-        throw new UnsupportedOperationException( "Not yet implemented." );
+    public void drawNode( Graphics2D gfx ) {
+        drawIcon( gfx );
+        drawName( gfx, getX(), getY() + ICON_HEIGHT, ICON_WIDTH );
     }
     
-    public abstract void drawIcon( Graphics2D gfx, int x, int y, int height, int width );   
+    public abstract void drawIcon( Graphics2D gfx );
     
     public abstract String getTrafficTypeString();
     
     public String getTypeString() {
         return "Traffic Generator [" + getTrafficTypeString() + "]";
     }
-
 }

@@ -7,17 +7,18 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Tomahawk extends TrafficGenerator {
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("tomahawk.jpg");
     private int numFlows;
     private int output_Mbps;
 
-    public Tomahawk( String name, int numFlows, int output_Mbps ) {
-        super( name );
+    public Tomahawk( String name, int x, int y, int numFlows, int output_Mbps ) {
+        super( name, x, y );
         this.numFlows = numFlows;
         this.output_Mbps = output_Mbps;
     }
     
-    public void drawIcon( Graphics2D gfx, int x, int y, int height, int width ) {
-        throw new UnsupportedOperationException( "Not yet implemented." );
+    public void drawIcon( Graphics2D gfx ) {
+        gfx.drawImage( ICON, getX(), getY(), ICON_WIDTH, ICON_HEIGHT, null );
     }
 
     public String getTrafficTypeString() {

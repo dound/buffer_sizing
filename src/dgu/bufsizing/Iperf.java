@@ -7,17 +7,18 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Iperf extends TrafficGenerator {
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("iperf.gif");
     private boolean useTCP;
     private int output_Mbps;
 
-    public Iperf( String name, boolean useTCP, int output_Mbps ) {
-        super( name );
+    public Iperf( String name, int x, int y, boolean useTCP, int output_Mbps ) {
+        super( name, x, y );
         this.useTCP = useTCP;
         this.output_Mbps = output_Mbps;
     }
     
-    public void drawIcon( Graphics2D gfx, int x, int y, int height, int width ) {
-        throw new UnsupportedOperationException( "Not yet implemented." );
+    public void drawIcon( Graphics2D gfx ) {
+        gfx.drawImage( ICON, getX(), getY(), ICON_WIDTH, ICON_HEIGHT, null );
     }
 
     public String getTrafficTypeString() {

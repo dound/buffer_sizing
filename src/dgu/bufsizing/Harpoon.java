@@ -7,12 +7,14 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Harpoon extends TrafficGenerator {
-    public Harpoon( String name ) {
-        super( name );
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("harpoon.png");
+    
+    public Harpoon( String name, int x, int y ) {
+        super( name, x, y );
     }
     
-    public void drawIcon( Graphics2D gfx, int x, int y, int height, int width ) {
-        throw new UnsupportedOperationException( "Not yet implemented." );
+    public void drawIcon( Graphics2D gfx ) {
+        gfx.drawImage( ICON, getX(), getY(), ICON_WIDTH, ICON_HEIGHT, null );
     }
 
     public String getTrafficTypeString() {

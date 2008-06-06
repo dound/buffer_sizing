@@ -15,21 +15,32 @@ public abstract class Node implements Drawable {
     private int numLinks = 0;
     
     // basic properties for GUI stuff
-    private String name;
-    private int x;
-    private int y;
-    private int width;
-    private int height;
+    private final String name;
+    private final int x;
+    private final int y;
     
-    public Node( String name ) {
+    public Node( String name, int x, int y ) {
         this.name = name;
+        this.x = x;
+        this.y = y;
         
         for( int i=0; i<MAX_LINKS; i++ )
             link[i] = null;
     }
     
-    public abstract void draw( Graphics2D gfx );
+    public final void draw( Graphics2D gfx ) {
+        for( int i=0; i<numLinks; i++ )
+            link[i].draw( gfx );
+        
+        drawNode( gfx );
+    }
     
+    protected final void drawName( Graphics2D gfx, int x, int y, int width ) {
+        gfx.drawString( name, x, y );
+    }
+
+    public abstract void drawNode( Graphics2D gfx );
+
     public abstract String getTypeString();
 
     private void addLink( Link l, boolean bottleneck ) throws IllegalArgValException {
@@ -71,40 +82,12 @@ public abstract class Node implements Drawable {
         return name;
     }
     
-    public void setName( String name ) {
-        this.name = name;
-    }
-
     public int getX() {
         return x;
     }
 
-    public void setX(int x) {
-        this.x = x;
-    }
-
     public int getY() {
         return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     public String toString() {
