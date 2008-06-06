@@ -88,11 +88,10 @@ public abstract class Controller {
     
     public abstract String getTypeString();
 
-    protected synchronized void sendCommand( int code, int value ) {
+    protected synchronized void sendCommand( byte code, int value ) {
         try {
             //write the code (one byte)
-            byte b = (byte)code;
-            out.write(b);
+            out.write( code );
 
             //write each byte in the value
             out.write(  value >> 24 );

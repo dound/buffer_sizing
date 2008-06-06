@@ -4,7 +4,7 @@ import java.io.IOException;
 
 /**
  * Interacts with the NetFPGA router client.
- * @author David Underhi;;
+ * @author David Underhill
  */
 public class RouterController extends Controller {
     public enum RouterCmd {

@@ -1,27 +1,31 @@
-/*
- * DemoGUI.java
- *
- * Created on June 5, 2008, 8:47 PM
- */
-
 package dgu.bufsizing;
 
 import dgu.util.swing.GUIHelper;
+import java.awt.Graphics2D;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 
 /**
- *
- * @author  dgu
+ * The GUI for our SIGCOMM demo.  Displays the topology and current link 
+ * utilizatoins.  It also enables the user to modify buffer queues and 
+ * bottlenecks in real-time.  In the future, we hope to support the modification 
+ * of traffic in real-time too.  It can also displays detailed link information.
+ * 
+ * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chart;
     public static DemoGUI me;
+    private final Graphics2D gfx;
+    private final Demo demo;
     
     /** Creates new form DemoGUI */
-    public DemoGUI() {
+    public DemoGUI( Demo d ) {
         me = this;
+        gfx = (Graphics2D)pnlMap.getGraphics();
+        demo = d;
+        
         GUIHelper.setGUIDefaults();
         initComponents();
         setIconImage( icon );
@@ -211,17 +215,6 @@ public class DemoGUI extends javax.swing.JFrame {
 private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
 // TODO add your handling code here:
 }//GEN-LAST:event_optRuleOfThumbActionPerformed
-
-    /**
-    * @param args the command line arguments
-    */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new DemoGUI().setVisible(true);
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private dgu.util.swing.binding.ButtonGroupBound buttonGroupBound1;
