@@ -43,13 +43,13 @@ public abstract class Node implements Drawable {
 
     public abstract String getTypeString();
 
-    private void addLink( Link l, boolean bottleneck ) throws IllegalArgValException {
+    private int addLink( Link l, boolean bottleneck ) throws IllegalArgValException {
         if( numLinks >= MAX_LINKS )
             throw( new IllegalArgValException("Exceeded maximum number of links") );
         
         link[numLinks] = l;
         isBottleneck[numLinks] = bottleneck;
-        numLinks += 1;
+        return numLinks++;
     }
     
     /**
@@ -67,7 +67,7 @@ public abstract class Node implements Drawable {
      * @throws dgu.util.IllegalArgValException  thrown if too many links are added
      */
     void addLink( BottleneckLink l ) throws IllegalArgValException {
-        addLink( l, true );
+        l.setQueueID( (byte)addLink( l, true ) );
     }
     
     public Link getLink( int i ) {

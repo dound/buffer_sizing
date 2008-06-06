@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.RouterController;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
@@ -15,12 +16,15 @@ public class Router extends Node {
     private static final Paint PAINT_ROUTER    = new GradientPaint(   0,   0, Color.BLUE,
                                                                     100, 100, new Color(0,0,128),
                                                                     true );
-    
     private final Ellipse2D objForDrawing;
     
-    public Router( String name, int x, int y ) {
+    private final RouterController controller;
+    
+    
+    public Router( String name, int x, int y, int commandPort ) {
         super( name, x, y );
         objForDrawing = new Ellipse2D.Float( x, y, ROUTER_DIAMETER, ROUTER_DIAMETER );
+        controller = new RouterController( commandPort );
     }
     
     public void drawNode( Graphics2D gfx ) {
@@ -30,7 +34,7 @@ public class Router extends Node {
         
         // put its name on top
         gfx.setPaint( Color.WHITE );
-        drawName( gfx, getX(), getY() + ROUTER_DIAMETER / 2, ROUTER_DIAMETER );
+        drawName( gfx, getX(), getY() + ROUTER_DIAMETER / 3, ROUTER_DIAMETER );
         
         // restore the default paint
         gfx.setPaint( PAINT_DEFAULT );
@@ -38,5 +42,9 @@ public class Router extends Node {
 
     public String getTypeString() {
         return "NetFGPA";
+    }
+    
+    RouterController getController() {
+        return controller;
     }
 }

@@ -17,15 +17,80 @@ import org.jfree.chart.JFreeChart;
 public class DemoGUI extends javax.swing.JFrame {
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chart;
+    public static DemoGUI me;
     
     /** Creates new form DemoGUI */
     public DemoGUI() {
+        me = this;
         GUIHelper.setGUIDefaults();
         initComponents();
         setIconImage( icon );
        
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
+    }
+    
+    public static class StringPair {
+        public String a, b;
+        String both() { return a + b; }
+    }
+    
+    public enum UnitTime {
+        TIME_NONE,
+        TIME_MILLIS,
+        TIME_SEC
+    }
+    
+    public StringPair formatBits( long b, boolean toBytes, UnitTime timeUnits ) {
+        long bytes = b / (toBytes ? 8 : 1);
+        int units = 0;
+        while( bytes >= 10000 ) {
+            bytes /= (timeUnits==UnitTime.TIME_NONE ? 1024 : 1000);
+            units += 1;
+        }
+        String strUnit;
+        switch( units ) {
+            case  0: strUnit = "";  break;
+            case  1: strUnit = "k"; break;
+            case  2: strUnit = "M"; break;
+            case  3: strUnit = "G"; break;
+            case  4: strUnit = "T"; break;
+            case  5: strUnit = "P"; break;
+            default: strUnit = "?"; break;
+        }
+        
+        StringPair ret = new StringPair();
+        ret.a = Long.toString( bytes );
+        ret.b = strUnit + (toBytes ? "B" : "b");
+        
+        if( timeUnits == UnitTime.TIME_MILLIS )
+            ret.b += "/ms";
+        else if( timeUnits == UnitTime.TIME_SEC )
+            ret.b += "/s";
+        
+        return ret;
+    }
+    
+    public synchronized void setBufferSizeText( BottleneckLink l ) {
+        synchronized( l ) {
+            int size_msec        = l.getBufSize_msec();
+            int size_old_bytes   = l.getBufSize_bytes(true);
+            int size_old_packets = l.getBufSize_packets(true);
+            int size_new_bytes   = l.getBufSize_bytes(false);
+            int size_new_packets = l.getBufSize_packets(false);
+            
+            this.lblBufferSize.setText( "Buffer = " + size_msec + "ms" );
+            this.optRuleOfThumb.setText( "Rule of Thumb = " 
+                                         + formatBits(size_old_bytes*8,true,UnitTime.TIME_NONE) 
+                                         + " / " + size_old_packets + "pkt" );
+        }
+    }
+    
+    public synchronized void setRateLimitText( BottleneckLink l ) {
+        synchronized( l ) {
+            this.lblRateLimit.setText( "Rate Limit = " 
+                    + formatBits(1000*l.getRateLimit_kbps(), false, UnitTime.TIME_SEC) );
+        }
     }
 
     /** This method is called from within the constructor to
@@ -61,25 +126,26 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.setLayout(null);
 
         pnlDetails.add(cboNode);
-        cboNode.setBounds(340, 10, 150, 25);
+        cboNode.setBounds(350, 10, 150, 25);
 
         lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblBottleneck.setText("Bottleneck:");
         pnlDetails.add(lblBottleneck);
-        lblBottleneck.setBounds(250, 40, 85, 25);
+        lblBottleneck.setBounds(260, 40, 85, 25);
 
         pnlDetails.add(cboBottleneck);
-        cboBottleneck.setBounds(340, 40, 150, 25);
+        cboBottleneck.setBounds(350, 40, 150, 25);
 
         lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNode.setText("Node:");
         pnlDetails.add(lblNode);
-        lblNode.setBounds(250, 10, 85, 25);
+        lblNode.setBounds(260, 10, 85, 25);
 
         lblBufferSize.setAlignment(java.awt.Label.CENTER);
-        lblBufferSize.setText("Buffer Size = 100ms (*100kb* / 50kb)");
+        lblBufferSize.setText("Buffer = 1000ms");
         pnlDetails.add(lblBufferSize);
-        lblBufferSize.setBounds(500, 10, 240, 18);
+        lblBufferSize.setBounds(510, 10, 250, 18);
+        lblBufferSize.getAccessibleContext().setAccessibleName("Buffer = 1000ms !(1000kB / 512pkt)! vs. (1000 / 512))");
 
         slBufferSize.setMajorTickSpacing(100);
         slBufferSize.setMaximum(500);
@@ -87,12 +153,12 @@ public class DemoGUI extends javax.swing.JFrame {
         slBufferSize.setPaintTicks(true);
         slBufferSize.setValue(100);
         pnlDetails.add(slBufferSize);
-        slBufferSize.setBounds(495, 15, 250, 45);
+        slBufferSize.setBounds(510, 15, 250, 45);
 
         lblRateLimit.setAlignment(java.awt.Label.CENTER);
         lblRateLimit.setText("Rate Limit = 100Mb/s");
         pnlDetails.add(lblRateLimit);
-        lblRateLimit.setBounds(765, 10, 240, 18);
+        lblRateLimit.setBounds(770, 10, 250, 18);
 
         slRateLimit.setMajorTickSpacing(100);
         slRateLimit.setMaximum(1000);
@@ -100,7 +166,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slRateLimit.setPaintTicks(true);
         slRateLimit.setValue(100);
         pnlDetails.add(slRateLimit);
-        slRateLimit.setBounds(760, 15, 250, 45);
+        slRateLimit.setBounds(770, 15, 250, 45);
 
         pnlChart.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnlChart.setLayout(null);
@@ -111,22 +177,23 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setLayout(null);
 
         buttonGroupBound1.add(optGuido);
-        optGuido.setText("Flow-Sensitive (Appenzellar '04)");
+        optGuido.setSelected(true);
+        optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 230, 22);
+        optGuido.setBounds(10, 35, 250, 22);
 
         buttonGroupBound1.add(optRuleOfThumb);
-        optRuleOfThumb.setText("Rule of Thumb");
+        optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optRuleOfThumbActionPerformed(evt);
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 117, 22);
+        optRuleOfThumb.setBounds(10, 15, 250, 22);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(5, 5, 245, 65);
+        pnlSizing.setBounds(5, 5, 265, 65);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 

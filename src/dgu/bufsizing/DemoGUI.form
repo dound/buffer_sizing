@@ -51,7 +51,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="340" y="10" width="150" height="25"/>
+              <AbsoluteConstraints x="350" y="10" width="150" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -62,7 +62,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="250" y="40" width="85" height="25"/>
+              <AbsoluteConstraints x="260" y="40" width="85" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -74,7 +74,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="340" y="40" width="150" height="25"/>
+              <AbsoluteConstraints x="350" y="40" width="150" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -85,18 +85,21 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="250" y="10" width="85" height="25"/>
+              <AbsoluteConstraints x="260" y="10" width="85" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
         <Component class="java.awt.Label" name="lblBufferSize">
           <Properties>
             <Property name="alignment" type="int" value="1"/>
-            <Property name="text" type="java.lang.String" value="Buffer Size = 100ms (*100kb* / 50kb)"/>
+            <Property name="text" type="java.lang.String" value="Buffer = 1000ms"/>
           </Properties>
+          <AccessibilityProperties>
+            <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Buffer = 1000ms !(1000kB / 512pkt)! vs. (1000 / 512))"/>
+          </AccessibilityProperties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="500" y="10" width="240" height="18"/>
+              <AbsoluteConstraints x="510" y="10" width="250" height="18"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -110,7 +113,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="495" y="15" width="250" height="45"/>
+              <AbsoluteConstraints x="510" y="15" width="250" height="45"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -121,7 +124,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="765" y="10" width="240" height="18"/>
+              <AbsoluteConstraints x="770" y="10" width="250" height="18"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -135,7 +138,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="760" y="15" width="250" height="45"/>
+              <AbsoluteConstraints x="770" y="15" width="250" height="45"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -170,7 +173,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="5" y="5" width="245" height="65"/>
+              <AbsoluteConstraints x="5" y="5" width="265" height="65"/>
             </Constraint>
           </Constraints>
 
@@ -183,11 +186,12 @@
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="buttonGroupBound1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Flow-Sensitive (Appenzellar &apos;04)"/>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="Flow-Sensitive = 1000kB / 512pkt"/>
               </Properties>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="35" width="230" height="-1"/>
+                  <AbsoluteConstraints x="10" y="35" width="250" height="-1"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -196,14 +200,14 @@
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="buttonGroupBound1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Rule of Thumb"/>
+                <Property name="text" type="java.lang.String" value="Rule of Thumb = 1000kB / 512pkt"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optRuleOfThumbActionPerformed"/>
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="-1" height="-1"/>
+                  <AbsoluteConstraints x="10" y="15" width="250" height="-1"/>
                 </Constraint>
               </Constraints>
             </Component>

@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.RouterController.RouterCmd;
 import dgu.util.IllegalArgValException;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -15,9 +16,12 @@ public class BottleneckLink extends Link<Router> {
     private static final boolean ALLOW_DUPS_SETTING = false;
     
     // user-defined variables on this bottleneck link
+    private boolean useRuleOfThumb = true;
+    private int numFlows = 1;
     private int bufSize_msec;
     private int rateLimit_kbps;
     private boolean notifyOnChange;
+    private byte queueID;
     
     // empirical data collected from the router
     private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -99,11 +103,51 @@ public class BottleneckLink extends Link<Router> {
         dataDropRate.add(   time_msec, dropRate_percent, notifyOnChange );
     }
     
+    public boolean getUseRuleOfThumb() {
+        return useRuleOfThumb;
+    }
+
+    public synchronized void setUseRuleOfThumb( boolean useRuleOfThumb ) {
+        if( this.useRuleOfThumb == useRuleOfThumb )
+            return;
+        
+        this.useRuleOfThumb = useRuleOfThumb;
+        updateBufSize();
+    }
+    
+    public int getNumFlows() {
+        return numFlows;
+    }
+
+    public synchronized void adjustNumFlows( int adjust ) {
+        this.numFlows += adjust;
+        updateBufSize();
+    }
+    
     public int getBufSize_msec() {
         return bufSize_msec;
     }
+    
+    public int getBufSize_bytes( boolean useRuleOfThumb ) {
+        return bufSize_msec * rateLimit_kbps / (8 * (useRuleOfThumb ? 1 : numFlows));
+    }
+    
+    public int getBufSize_packets( boolean useRuleOfThumb ) {
+        return bufSize_msec * rateLimit_kbps / (8 * 1500 * (useRuleOfThumb ? 1 : numFlows));
+    }
+    
+    private void updateBufSize() {
+        // tell the router about the new buffer size in terms of packets
+        this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, getBufSize_packets(useRuleOfThumb) );
+        
+        // refresh the GUI
+        DemoGUI.me.setBufferSizeText( this );
+    }
 
     public synchronized void setBufSize_msec( int bufSize_msec ) {
+        if( this.bufSize_msec == bufSize_msec )
+            return;
+        
         // remove the old fake endpoint (don't notify yet)
         dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
         
@@ -112,6 +156,9 @@ public class BottleneckLink extends Link<Router> {
         
         // set the new buffer size
         this.bufSize_msec = bufSize_msec;
+        
+        // tell the router about the new buffer size in terms of packets
+        updateBufSize();
         
         // add the real start point of the new buffer size (don't notify yet)
         dataBufSize.add( System.currentTimeMillis(), this.bufSize_msec, false );
@@ -125,6 +172,9 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
+        if( this.rateLimit_kbps == rateLimit_kbps )
+            return;
+        
         // remove the old fake endpoint (don't notify yet)
         dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
         
@@ -133,6 +183,11 @@ public class BottleneckLink extends Link<Router> {
         
         // set the new buffer size
         this.rateLimit_kbps = rateLimit_kbps;
+        DemoGUI.me.setRateLimitText( this );
+        updateBufSize();
+        
+        // tell the router about the new rate limit
+        this.src.getController().command( RouterCmd.CMD_SET_RATE, queueID, rateLimit_kbps );
         
         // add the real start point of the new buffer size (don't notify yet)
         dataRateLimit.add( System.currentTimeMillis(), this.bufSize_msec, false );
@@ -159,6 +214,10 @@ public class BottleneckLink extends Link<Router> {
 
     public XYSeries getDataRateLimit() {
         return dataRateLimit;
+    }
+    
+    void setQueueID( byte queueID ) {
+        this.queueID = queueID;
     }
     
     public String toString() {
