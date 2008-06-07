@@ -85,18 +85,24 @@ public class BottleneckLink extends Link<Router> {
         setBufSize_msec( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
     }
-    
+    static float temporary_counter = 0.0f; // xxx temporary
     public void draw( Graphics2D gfx ) {
         // get a local copy of the current utilization
         float saturation = instantaneousUtilization;
         float queue_usage = instantaneousQueueOcc;
+        
+        // xxx temporary, just to test the visuals
+        temporary_counter = temporary_counter + 0.01f;
+        if( temporary_counter > 1.0f ) temporary_counter = 0.0f;
+        saturation = queue_usage = temporary_counter;
         
         // draw the outline of the bottleneck link
         gfx.setStroke( STROKE_BOTTLENECK_OUTLINE );
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
         
         // draw the inner part of the bottleneck link (redder => less saturated/lower utilization)
-        gfx.setColor( new Color( 1.0f - saturation, saturation, 0.0f ) );
+        float extra = 2.0f * (0.5f - Math.abs( saturation - 0.5f ));
+        gfx.setColor( new Color( 1.0f - saturation, saturation, extra ) );
         gfx.setStroke( STROKE_BOTTLENECK );
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
 
@@ -109,7 +115,8 @@ public class BottleneckLink extends Link<Router> {
         gfx.drawLine( x, y + QUEUE_HEIGHT, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
 
         // fill the queue based on current occupancy
-        gfx.setColor( Color.RED );
+        extra = 2.0f * (0.5f - Math.abs( queue_usage - 0.5f ));
+        gfx.setColor( new Color( queue_usage, 1.0f - queue_usage, extra ) );
         gfx.setStroke( STROKE_OCC );
         int width = (int)(QUEUE_WIDTH * queue_usage);
         int fillX = x + (QUEUE_WIDTH - width);
