@@ -156,7 +156,7 @@ static void* controller_main( void* nil ) {
     }
 
     /* connect to the server */
-    fprintf( stderr, "Trying to connect to the Router controller" );
+    fprintf( stderr, "Trying to connect to the Router controller\n" );
     if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
         perror( "Error: connect for controller failed" );
         sleep( 5 );
