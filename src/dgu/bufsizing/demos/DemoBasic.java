@@ -23,12 +23,11 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "LA1",  50, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
+        Router la  = new Router( "LA", 50, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
         demo.addRouter( la );
         
-        Router hou = new Router( "LA1", 500, 160, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
-        demo.addRouter( hou );
-        
+        Receiver hou = new Receiver( "Houston", 500, 160 );
+        demo.addGenericNode( hou );
         
         // add our traffic generators
         TrafficGenerator su = new Harpoon( "Harpoon",   0,  25 );

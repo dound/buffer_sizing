@@ -14,6 +14,7 @@ public class Demo {
     
     public LinkedList<Router> routers = new LinkedList<Router>();
     public LinkedList<TrafficGenerator> trafficGenerators = new LinkedList<TrafficGenerator>();
+    public LinkedList<Node> genericNodes = new LinkedList<Node>();
     
     public void addRouter( Router r ) {
         routers.add( r );
@@ -21,6 +22,10 @@ public class Demo {
     
     public void addTrafficGenerator( TrafficGenerator t ) {
         trafficGenerators.add( t );
+    }
+    
+    public void addGenericNode( Node n ) {
+        genericNodes.add( n );
     }
     
     public void runDemo() {
