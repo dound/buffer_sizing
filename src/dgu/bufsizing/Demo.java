@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import java.awt.Graphics2D;
 import java.util.LinkedList;
 
 /**
@@ -43,5 +44,18 @@ public class Demo {
     
     public LinkedList<TrafficGenerator> getTrafficGenerators() {
         return trafficGenerators;
+    }
+
+    void redraw(Graphics2D gfx) {
+        gfx.clearRect(0, 0, 1028, 250);
+        
+        for( Node n : genericNodes )
+            n.drawNode( gfx );
+        
+        for( TrafficGenerator t : trafficGenerators )
+            t.drawNode( gfx );
+        
+        for( Router r : routers )
+            r.drawNode( gfx );
     }
 }

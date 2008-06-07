@@ -39,7 +39,7 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     
     /** Creates new form DemoGUI */
-    public DemoGUI( Demo d ) {
+    public DemoGUI( final Demo d ) {
         me = this;
         demo = d;
         
@@ -53,6 +53,18 @@ public class DemoGUI extends javax.swing.JFrame {
        
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
+        
+        // starts a thread to keep the topology map refreshed
+        new Thread() {
+            public void run() {
+                d.redraw( gfx );
+                try {
+                    Thread.sleep( 250 );
+                } catch( InterruptedException e ) {
+                    // no-op
+                }
+            }
+        }.start();
     }
     
     private void createChart() {
