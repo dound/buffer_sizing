@@ -3,6 +3,7 @@ package dgu.util.swing;
 import dgu.util.StringOps;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.util.Enumeration;
 import javax.swing.UIManager;
 
@@ -188,4 +189,9 @@ public abstract class GUIHelper {
         }
     }
 
+    public static final void drawCeneteredString( String s, Graphics2D gfx, int x, int y ) {
+        // center the string horizontally
+        x -= gfx.getFontMetrics().stringWidth( s ) / 2;
+        gfx.drawString( s, x, y );
+    }
 }

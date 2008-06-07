@@ -12,7 +12,7 @@ import java.awt.geom.Ellipse2D;
  * @author David Underhill
  */
 public class Receiver extends Node {
-    private static final int RECEIVER_DIAMETER = 50;
+    private static final int RECEIVER_DIAMETER = 10;
     private static final Paint PAINT_RECEIVER = new GradientPaint(  0,  0, Color.YELLOW,
                                                                    50, 50, Color.WHITE,
                                                                    true );
@@ -36,7 +36,7 @@ public class Receiver extends Node {
         gfx.setStroke( Drawable.STROKE_DEFAULT );
         
         // put its name on top
-        drawName( gfx, getX(), getY() - RECEIVER_DIAMETER / 4 );
+        drawName( gfx, getX(), getY() + RECEIVER_DIAMETER / 2 + gfx.getFontMetrics().getHeight() );
     }
 
     public String getTypeString() {

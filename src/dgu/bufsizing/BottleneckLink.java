@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.bufsizing.control.RouterController.RouterCmd;
 import dgu.util.IllegalArgValException;
+import dgu.util.swing.GUIHelper;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -103,22 +104,24 @@ public class BottleneckLink extends Link<Router> {
         gfx.setColor( Drawable.COLOR_DEFAULT );
         gfx.setStroke( Drawable.STROKE_THICK );
         int x = src.getX() - QUEUE_WIDTH / 2;
-        int y = src.getY() + src.ROUTER_DIAMETER / 2 + 3;
+        int y = src.getQueueY( gfx ) + QUEUE_HEIGHT * queueID;
         gfx.drawLine( x, y, x + QUEUE_WIDTH, y );
         gfx.drawLine( x, y + QUEUE_HEIGHT, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
-        //gfx.drawLine( x + QUEUE_WIDTH, y, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
 
         // fill the queue based on current occupancy
         gfx.setColor( Color.RED );
         gfx.setStroke( STROKE_OCC );
         int width = (int)(QUEUE_WIDTH * queue_usage);
-        x += (QUEUE_WIDTH - width);
-        y += QUEUE_HEIGHT / 2;
-        gfx.drawLine( x, y, x + width, y );
+        int fillX = x + (QUEUE_WIDTH - width);
+        int fillY = y + QUEUE_HEIGHT / 2;
+        gfx.drawLine( fillX, fillY, fillX + width, fillY );
         
         // restore defaults
         gfx.setPaint( Drawable.PAINT_DEFAULT );
         gfx.setStroke( Drawable.STROKE_DEFAULT );
+        
+        // paint the name of the interface
+        GUIHelper.drawCeneteredString( dst.getName(), gfx, x + QUEUE_WIDTH / 2, fillY + 4 );
     }
     
     public synchronized void addDataPoint( long time_msec, int throughput_kbps, long queueOcc_packets, float dropRate_percent ) {

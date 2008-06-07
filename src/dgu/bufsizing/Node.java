@@ -1,6 +1,7 @@
 package dgu.bufsizing;
 
 import dgu.util.IllegalArgValException;
+import dgu.util.swing.GUIHelper;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -41,9 +42,7 @@ public abstract class Node implements Drawable {
     }
     
     protected final void drawName( Graphics2D gfx, int x, int y ) {
-        // center the string horizontally
-        x -= gfx.getFontMetrics().stringWidth( name ) / 2;
-        gfx.drawString( name, x, y );
+        GUIHelper.drawCeneteredString( name, gfx, x, y );
     }
 
     public abstract void drawNode( Graphics2D gfx );
