@@ -169,6 +169,10 @@ public class DemoGUI extends javax.swing.JFrame {
                         DemoGUI.collOcc.removeAllSeries();
                         DemoGUI.collOcc.addSeries( b.getDataQueueOcc() );
                         DemoGUI.collOcc.addSeries( b.getDataBufSize() );
+                        
+                        // refresh the text
+                        DemoGUI.me.setRateLimitText( b );
+                        DemoGUI.me.setBufferSizeText( b );
                     } catch( Exception bleh ) {
                         //Do nothing, don't yet have a bottleneck
                     }
@@ -190,6 +194,9 @@ public class DemoGUI extends javax.swing.JFrame {
     public static class StringPair {
         public String a, b;
         String both() { return a + b; }
+        public String toString() {
+            return a + b;
+        }
     }
     
     public enum UnitTime {
@@ -236,10 +243,16 @@ public class DemoGUI extends javax.swing.JFrame {
             int size_new_bytes   = l.getBufSize_bytes(false);
             int size_new_packets = l.getBufSize_packets(false);
             
+            String str_size_old_bytes = formatBits(size_old_bytes*8,true,UnitTime.TIME_NONE).both();
+            String str_size_new_bytes = formatBits(size_new_bytes*8,true,UnitTime.TIME_NONE).both();
+            
             this.lblBufferSize.setText( "Buffer = " + size_msec + "ms" );
             this.optRuleOfThumb.setText( "Rule of Thumb = " 
-                                         + formatBits(size_old_bytes*8,true,UnitTime.TIME_NONE) 
-                                         + " / " + size_old_packets + "pkt" );
+                                         + str_size_old_bytes
+                                         + " / " + size_old_packets + " pkts" );
+            this.optGuido.setText( "Flow-Sensitive = " 
+                                         + str_size_new_bytes
+                                         + " / " + size_new_packets + " pkts" );
         }
     }
     
@@ -292,7 +305,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slBufferSize.setMaximum(500);
         slBufferSize.setMinorTickSpacing(25);
         slBufferSize.setPaintTicks(true);
-        slBufferSize.setValue(100);
+        slBufferSize.setValue(0);
         pnlDetails.add(slBufferSize);
         slBufferSize.setBounds(510, 15, 250, 45);
 
@@ -305,7 +318,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slRateLimit.setMaximum(1000);
         slRateLimit.setMinorTickSpacing(50);
         slRateLimit.setPaintTicks(true);
-        slRateLimit.setValue(100);
+        slRateLimit.setValue(0);
         pnlDetails.add(slRateLimit);
         slRateLimit.setBounds(770, 15, 250, 45);
 
@@ -320,12 +333,12 @@ public class DemoGUI extends javax.swing.JFrame {
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 250, 23);
+        optRuleOfThumb.setBounds(10, 15, 250, 22);
 
         optGroupRule.add(optGuido);
         optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 250, 23);
+        optGuido.setBounds(10, 35, 250, 22);
 
         pnlDetails.add(pnlSizing);
         pnlSizing.setBounds(245, 5, 265, 63);

@@ -65,16 +65,9 @@ public abstract class Node implements Drawable {
      */
     void addLink( Link l ) throws IllegalArgValException {
         addLink( l, false );
-    }
-    
-    /**
-     * Adds a new bottleneck link from this router to another.
-     * @param l  the link
-     * @throws dgu.util.IllegalArgValException  thrown if too many links are added
-     */
-    void addLink( BottleneckLink l ) throws IllegalArgValException {
-        addLink( l, true );
-        bottlenecks.add( l );
+        
+        if( l.getClass() == BottleneckLink.class )
+            bottlenecks.add( (BottleneckLink)l );
     }
     
     public Link getLink( int i ) {
