@@ -19,7 +19,7 @@
 #include "nf2util.h"
 #include "reg_defines_bsr.h"
 
-#define STR_VERSION "0.01b"
+#define STR_VERSION "0.02b"
 
 #define STR_USAGE "\
 Buffer Size Reporting Daemon v%s\n\
@@ -37,7 +37,13 @@ Buffer Size Reporting Daemon v%s\n\
 
 /** encapsulates a message to a client's controller */
 typedef struct {
-    byte code;
+#ifdef _BIG_ENDIAN_
+    byte code:6;
+    byte queue:2;
+#else
+    byte queue:2;
+    byte code:6;
+#endif
     uint32_t val;
 } __attribute__ ((packed)) control_t;
 
@@ -61,12 +67,12 @@ static uint16_t server_port;
 
 static void* controller_main( void* nil );
 static void inform_server_loop();
-static uint32_t get_rate_limit();
-static void set_rate_limit( uint32_t shift );
+static uint32_t get_rate_limit( int queue );
+static void set_rate_limit( int queue, uint32_t shift );
 static uint32_t get_bytes_sent();
-static uint32_t get_buffer_size();
-static void set_buffer_size( uint32_t size );
-static uint32_t get_queue_occupancy();
+static uint32_t get_buffer_size( int queue );
+static void set_buffer_size( int queue, uint32_t size );
+static uint32_t get_queue_occupancy( int queue );
 
 int main( int argc, char** argv ) {
     server_ip = 0;
@@ -134,6 +140,7 @@ int main( int argc, char** argv ) {
 
 /** listens for incoming connections from the master who will send commands */
 static void* controller_main( void* nil ) {
+  while(1) {
     struct sockaddr_in servaddr;
     int fd, len;
 
@@ -149,9 +156,11 @@ static void* controller_main( void* nil ) {
     }
 
     /* connect to the server */
+    fprintf( stderr, "Trying to connect to the Router controller" );
     if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
         perror( "Error: connect for controller failed" );
-        exit( 1 );
+        sleep( 5 );
+        continue;
     }
 
     while( 1 ) {
@@ -167,38 +176,38 @@ static void* controller_main( void* nil ) {
             packet.val = ntohl( packet.val );
             switch( packet.code ) {
             case CODE_GET_RATE_LIMIT:
-                packet.val = htonl( get_rate_limit() );
+                packet.val = htonl( get_rate_limit(packet.queue) );
                 ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_RATE_LIMIT:
-                set_rate_limit( packet.val );
+                set_rate_limit( packet.queue, packet.val );
                 break;
 
             case CODE_GET_BUF_SIZE:
-                packet.val = htonl( get_buffer_size() );
+                packet.val = htonl( get_buffer_size(packet.queue) );
                 ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_BUF_SIZE:
-                set_buffer_size( packet.val );
+                set_buffer_size( packet.queue, packet.val );
                 break;
 
             default:
                 fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
             }
             if( ret == -1 ) {
-                fprintf( stderr, "controller failed to write (goodbye)\n" );
-                exit( 1 );
+                fprintf( stderr, "controller failed to write (will terminate)\n" );
+                break;
             }
         }
 
         close( fd );
         fprintf( stderr, "master connection closed (goodbye)\n" );
-        exit( 0 );
+        break;
     }
-
-    return NULL;
+  }
+  return NULL;
 }
 
 /** Periodically sends an update with the NetFPGA's info to the master. */
@@ -239,7 +248,7 @@ static void inform_server_loop() {
         update.sec        = htonl( now.tv_sec );
         update.usec       = htonl( now.tv_usec );
         update.bytes_sent = htonl( get_bytes_sent() );
-        update.queue_occ  = htonl( get_queue_occupancy() );
+        update.queue_occ  = htonl( get_queue_occupancy(1) );
         /* note: still have 2B before we hit min Eth payload (incl overheads) */
 
         /* reuse sin as server addr */
@@ -259,41 +268,75 @@ static void inform_server_loop() {
     }
 }
 
-static uint32_t get_rate_limit() {
+static uint32_t get_rate_limit( int queue ) {
     uint32_t enabled, val;
+
+    if( queue != 1 ) {
+        fprintf( stderr, "Error: only queue 1 (not queue %d) can do rate limiting\n", queue );
+        exit( 1 );
+    }
+
     readReg( &nf2, RATE_LIMIT_ENABLE_REG, &enabled );
     readReg( &nf2, RATE_LIMIT_SHIFT_REG, &val );
     return enabled ? val : 0;
 }
 
-static void set_rate_limit( uint32_t shift ) {
+static void set_rate_limit( int queue, uint32_t shift ) {
+    if( queue != 1 ) {
+        fprintf( stderr, "Error: only queue 1 (not queue %d) can do rate limiting\n", queue );
+        exit( 1 );
+    }
+
     uint32_t enabled = shift ? 1 : 0;
     writeReg( &nf2, RATE_LIMIT_ENABLE_REG, enabled );
     writeReg( &nf2, RATE_LIMIT_SHIFT_REG, shift );
 }
 
-static uint32_t get_bytes_sent() {
-    /* reg 2 => nf2c1 */
+static uint32_t get_bytes_sent( int queue ) {
+    unsigned reg;
+    switch( queue ) {
+    case 0: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_0; break;
+    case 1: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_2; break;
+    case 2: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_4; break;
+    case 3: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_6; break;
+    }
+
     uint32_t val;
-    readReg( &nf2, OQ_NUM_PKT_BYTES_REMOVED_REG_2, &val );
+    readReg( &nf2, reg, &val );
     return val;
 }
 
-static uint32_t get_buffer_size() {
-    /* reg 2 => nf2c1 */
+static inline unsigned get_buffer_size_reg( int queue ) {
+    unsigned reg;
+    switch( queue ) {
+    case 0: reg = OQ_MAX_PKTS_IN_Q_REG_0; break;
+    case 1: reg = OQ_MAX_PKTS_IN_Q_REG_2; break;
+    case 2: reg = OQ_MAX_PKTS_IN_Q_REG_4; break;
+    case 3: reg = OQ_MAX_PKTS_IN_Q_REG_6; break;
+    }
+    return reg;
+}
+
+static uint32_t get_buffer_size( int queue ) {
     uint32_t val;
-    readReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, &val );
+    readReg( &nf2, get_buffer_size_reg(queue), &val );
     return val;
 }
 
-static void set_buffer_size( uint32_t size ) {
-    /* reg 2 => nf2c1 */
-    writeReg( &nf2, OQ_MAX_PKTS_IN_Q_REG_2, size );
+static void set_buffer_size( int queue, uint32_t size ) {
+    writeReg( &nf2, get_buffer_size_reg(queue), size );
 }
 
-static uint32_t get_queue_occupancy() { /* in 8B words */
-    /* queue 1 => nf2c1 */
+static uint32_t get_queue_occupancy( int queue ) { /* in 8B words */
+    unsigned reg;
+    switch( queue ) {
+    case 0: reg = OQ_NUM_WORDS_IN_Q_REG_0; break;
+    case 1: reg = OQ_NUM_WORDS_IN_Q_REG_2; break;
+    case 2: reg = OQ_NUM_WORDS_IN_Q_REG_4; break;
+    case 3: reg = OQ_NUM_WORDS_IN_Q_REG_6; break;
+    }
+
     uint32_t val;
-    readReg( &nf2, OQ_NUM_WORDS_IN_Q_REG_2, &val );
+    readReg( &nf2, reg, &val );
     return val;
 }
