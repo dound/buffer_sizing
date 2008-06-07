@@ -14,8 +14,6 @@ public class Link<SOURCE_TYPE extends Node> implements Drawable {
     public static final int NF2C2 = 2;
     public static final int NF2C3 = 3;
     
-    public static final BasicStroke STROKE_BOTTLENECK = new BasicStroke( 5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
-    
     protected final SOURCE_TYPE src;
     protected final Node dst;
     protected final byte queueID;

@@ -12,7 +12,7 @@ import java.awt.geom.Ellipse2D;
  * @author David Underhill
  */
 public class Router extends Node {
-    private static final int   ROUTER_DIAMETER = 75;
+    public static final int   ROUTER_DIAMETER = 75;
     private static final Paint PAINT_ROUTER    = new GradientPaint(   0,   0, Color.BLUE,
                                                                     100, 100, new Color(0,0,128),
                                                                     true );

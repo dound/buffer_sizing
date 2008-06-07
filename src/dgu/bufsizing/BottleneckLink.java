@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.bufsizing.control.RouterController.RouterCmd;
 import dgu.util.IllegalArgValException;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import org.jfree.data.xy.XYSeries;
@@ -11,6 +12,12 @@ import org.jfree.data.xy.XYSeries;
  * @author David Underhill
  */
 public class BottleneckLink extends Link<Router> {
+    private static final int QUEUE_WIDTH  = 50;
+    private static final int QUEUE_HEIGHT = 12;
+    public static final BasicStroke STROKE_OCC = new BasicStroke( 8.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL ); 
+    public static final BasicStroke STROKE_BOTTLENECK = new BasicStroke( 5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
+    public static final BasicStroke STROKE_BOTTLENECK_OUTLINE = new BasicStroke( 7.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
+    
     // don't have JFreeChart worry about sorting data or looking for duplicates (performance!)
     private static final boolean AUTOSORT_SETTING = false;
     private static final boolean ALLOW_DUPS_SETTING = false;
@@ -29,6 +36,7 @@ public class BottleneckLink extends Link<Router> {
     
     // last throughput data point (replicated to avoid critical section / locking) (float => one word ~=> atomic)
     private float instantaneousUtilization = 0.0f;
+    private float instantaneousQueueOcc    = 0.0f;
     
     // settings for buffer size and rate limit as set by the user
     private final XYSeries dataBufSize = new XYSeries("Max Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -80,26 +88,53 @@ public class BottleneckLink extends Link<Router> {
     public void draw( Graphics2D gfx ) {
         // get a local copy of the current utilization
         float saturation = instantaneousUtilization;
+        float queue_usage = instantaneousQueueOcc;
         
-        // setup context for drawing the bottleneck link (redder => less saturated/lower utilization)
+        // draw the outline of the bottleneck link
+        gfx.setStroke( STROKE_BOTTLENECK_OUTLINE );
+        gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
+        
+        // draw the inner part of the bottleneck link (redder => less saturated/lower utilization)
         gfx.setColor( new Color( 1.0f - saturation, saturation, 0.0f ) );
         gfx.setStroke( STROKE_BOTTLENECK );
-
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
 
-        // restore defaults
+        // draw the queue
         gfx.setColor( Drawable.COLOR_DEFAULT );
+        gfx.setStroke( Drawable.STROKE_THICK );
+        int x = src.getX() - QUEUE_WIDTH / 2;
+        int y = src.getY() + src.ROUTER_DIAMETER / 2 + 3;
+        gfx.drawLine( x, y, x + QUEUE_WIDTH, y );
+        gfx.drawLine( x, y + QUEUE_HEIGHT, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
+        //gfx.drawLine( x + QUEUE_WIDTH, y, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
+
+        // fill the queue based on current occupancy
+        gfx.setColor( Color.RED );
+        gfx.setStroke( STROKE_OCC );
+        int width = (int)(QUEUE_WIDTH * queue_usage);
+        x += (QUEUE_WIDTH - width);
+        y += QUEUE_HEIGHT / 2;
+        gfx.drawLine( x, y, x + width, y );
+        
+        // restore defaults
+        gfx.setPaint( Drawable.PAINT_DEFAULT );
         gfx.setStroke( Drawable.STROKE_DEFAULT );
     }
     
-    public synchronized void addDataPoint( long time_msec, int throughput_kbps, long queueOcc_bytes, float dropRate_percent ) {
+    public synchronized void addDataPoint( long time_msec, int throughput_kbps, long queueOcc_packets, float dropRate_percent ) {
         if( throughput_kbps < rateLimit_kbps )
             instantaneousUtilization = throughput_kbps / (float)rateLimit_kbps;
         else
             instantaneousUtilization = 1.0f;
         
+        int bufSize_packets = getBufSize_packets(useRuleOfThumb);
+        if( queueOcc_packets < bufSize_packets )
+            instantaneousQueueOcc = queueOcc_packets / (float)bufSize_packets;
+        else
+            instantaneousQueueOcc = 1.0f;
+        
         dataThroughput.add( time_msec, throughput_kbps,  notifyOnChange );
-        dataQueueOcc.add(   time_msec, queueOcc_bytes,   notifyOnChange );
+        dataQueueOcc.add(   time_msec, queueOcc_packets,   notifyOnChange );
         dataDropRate.add(   time_msec, dropRate_percent, notifyOnChange );
     }
     
