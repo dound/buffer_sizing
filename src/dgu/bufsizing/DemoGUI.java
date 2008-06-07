@@ -6,12 +6,18 @@ import dgu.util.swing.binding.BindingEvent;
 import dgu.util.swing.binding.JComboBoxBound;
 import dgu.util.swing.binding.JSliderBound;
 import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
+import org.jfree.chart.*;
+import org.jfree.chart.axis.*;
+import org.jfree.chart.plot.*;
+import org.jfree.chart.renderer.xy.*;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.*;
 
 /**
  * The GUI for our SIGCOMM demo.  Displays the topology and current link 
@@ -22,18 +28,24 @@ import org.jfree.chart.JFreeChart;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
+    public static final String VERSION = "v0.01b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chart;
     public static DemoGUI me;
     private final Graphics2D gfx;
     private final Demo demo;
     
+    public static final XYSeriesCollection collXput = new XYSeriesCollection();
+    public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
+    
     /** Creates new form DemoGUI */
     public DemoGUI( Demo d ) {
         me = this;
         demo = d;
         
+        setTitle( "Experimenting with Programmable Routers in Real Networks " + VERSION );
         GUIHelper.setGUIDefaults();
+        createChart();
         initComponents();
         gfx = (Graphics2D)pnlMap.getGraphics();
         prepareBindings();
@@ -43,6 +55,67 @@ public class DemoGUI extends javax.swing.JFrame {
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
     }
     
+    private void createChart() {
+        chart = ChartFactory.createXYLineChart(
+            "Throughput and Queue Occupancy vs. Time",
+            "Time",
+            "Throughput (kbps)",
+            collXput,
+            PlotOrientation.VERTICAL,
+            true, //legend
+            false, //tooltips
+            false //URLs
+        );    
+         
+        chart.setBackgroundPaint(GUIHelper.DEFAULT_BG_COLOR);
+        chart.setBorderVisible(false);
+        chart.setAntiAlias(false);
+        chart.setTextAntiAlias(true);
+        
+        XYPlot plot = (XYPlot) chart.getPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
+        plot.setDomainCrosshairVisible(false);
+        plot.setRangeCrosshairVisible(true);
+        
+        ValueAxis domain = plot.getDomainAxis();
+        domain.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
+        domain.setTickLabelsVisible(false);
+        domain.setTickMarksVisible(false);
+        domain.setAutoRange(true);
+        //domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
+        
+        ValueAxis range = plot.getRangeAxis();
+        range.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
+        range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
+        range.setAutoRange( true );
+        
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+        renderer.setSeriesPaint(0, new Color(0,196,0));
+        renderer.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        plot.setRenderer(0, renderer);
+        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+        
+        NumberAxis range2 = new NumberAxis("Queue Occupancy (Packets)");
+        plot.setRangeAxis(1, range2);
+        plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        range2.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
+        range2.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
+        range2.setAutoRange(false);
+        
+        XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
+        renderer2.setPaint(new Color(196,0,0));
+        renderer2.setSeriesStroke(0, new BasicStroke(2f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL,10.0f,new float[]{10.0f,5.0f},0.0f));
+        plot.setRenderer(1, renderer2);
+        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+        
+        plot.setDataset(1, collOcc);
+        plot.mapDatasetToRangeAxis(1, 1);
+    }
+    
     void prepareBindings() {
         {
             ListBasedComponentDelegate d = cboBottleneck.getBindingDelegate();
@@ -50,16 +123,27 @@ public class DemoGUI extends javax.swing.JFrame {
             d.addBoundComponent( slRateLimit );
             d.setPrimaryComponent( -2 );
             
-            /* manually populate the bottleneck */
+            // manual actions to take once the binding data has been loaded
             d.addBindingListener( new BindingAdapter() {
                 public void bindingLoaded( BindingEvent e ) {
                     try {
+                        // get the bottleneck which is now selected
                         LinkedList<BottleneckLink> links = (LinkedList<BottleneckLink>)e.getBinding().getBoundItem();
                         BottleneckLink b = links.get( e.getBinding().getIndexAt() );
+                        
+                        // select the appropriate radio button for buffer sizing formula
                         if( b.getUseRuleOfThumb() )
                             optRuleOfThumb.setSelected( true );
                         else
                             optGuido.setSelected( true );
+                        
+                        // bind this bottleneck's data to the chart and remove old data
+                        DemoGUI.collXput.removeAllSeries();
+                        DemoGUI.collXput.addSeries( b.getDataThroughput() );
+                        DemoGUI.collXput.addSeries( b.getDataRateLimit() );
+                        DemoGUI.collOcc.removeAllSeries();
+                        DemoGUI.collOcc.addSeries( b.getDataQueueOcc() );
+                        DemoGUI.collOcc.addSeries( b.getDataBufSize() );
                     } catch( Exception bleh ) {
                         //Do nothing, don't yet have a bottleneck
                     }
