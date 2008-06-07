@@ -330,10 +330,10 @@ static void set_buffer_size( int queue, uint32_t size ) {
 static uint32_t get_queue_occupancy( int queue ) { /* in 8B words */
     unsigned reg;
     switch( queue ) {
-    case 0: reg = OQ_NUM_WORDS_IN_Q_REG_0; break;
-    case 1: reg = OQ_NUM_WORDS_IN_Q_REG_2; break;
-    case 2: reg = OQ_NUM_WORDS_IN_Q_REG_4; break;
-    case 3: reg = OQ_NUM_WORDS_IN_Q_REG_6; break;
+    case 0: reg = OQ_NUM_PKTS_IN_Q_REG_0; break;
+    case 1: reg = OQ_NUM_PKTS_IN_Q_REG_2; break;
+    case 2: reg = OQ_NUM_PKTS_IN_Q_REG_4; break;
+    case 3: reg = OQ_NUM_PKTS_IN_Q_REG_6; break;
     }
 
     uint32_t val;
