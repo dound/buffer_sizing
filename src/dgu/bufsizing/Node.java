@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.util.IllegalArgValException;
 import java.awt.Graphics2D;
+import java.util.LinkedList;
 
 /**
  * Informaiton about a node.
@@ -12,6 +13,7 @@ public abstract class Node implements Drawable {
     public static int MAX_LINKS = 4;
     private Link[] link = new Link[MAX_LINKS];
     private boolean[] isBottleneck = new boolean[MAX_LINKS];
+    private LinkedList<BottleneckLink> bottlenecks = new LinkedList<BottleneckLink>();
     private int numLinks = 0;
     
     // basic properties for GUI stuff
@@ -68,10 +70,15 @@ public abstract class Node implements Drawable {
      */
     void addLink( BottleneckLink l ) throws IllegalArgValException {
         l.setQueueID( (byte)addLink( l, true ) );
+        bottlenecks.add( l );
     }
     
     public Link getLink( int i ) {
         return link[i];
+    }
+    
+    public LinkedList<BottleneckLink> getBottlenecks() {
+        return bottlenecks;
     }
     
     public BottleneckLink getBottleneckLink( int i ) {

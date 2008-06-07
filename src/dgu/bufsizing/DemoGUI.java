@@ -1,7 +1,15 @@
 package dgu.bufsizing;
 
 import dgu.util.swing.GUIHelper;
+import dgu.util.swing.binding.BindingAdapter;
+import dgu.util.swing.binding.BindingEvent;
+import dgu.util.swing.binding.JComboBoxBound;
+import dgu.util.swing.binding.JSliderBound;
+import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.LinkedList;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 
@@ -23,15 +31,51 @@ public class DemoGUI extends javax.swing.JFrame {
     /** Creates new form DemoGUI */
     public DemoGUI( Demo d ) {
         me = this;
-        gfx = (Graphics2D)pnlMap.getGraphics();
         demo = d;
         
         GUIHelper.setGUIDefaults();
         initComponents();
+        gfx = (Graphics2D)pnlMap.getGraphics();
+        prepareBindings();
         setIconImage( icon );
        
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
+    }
+    
+    void prepareBindings() {
+        {
+            ListBasedComponentDelegate d = cboBottleneck.getBindingDelegate();
+            d.addBoundComponent( slBufferSize );
+            d.addBoundComponent( slRateLimit );
+            d.setPrimaryComponent( -2 );
+            
+            /* manually populate the bottleneck */
+            d.addBindingListener( new BindingAdapter() {
+                public void bindingLoaded( BindingEvent e ) {
+                    try {
+                        LinkedList<BottleneckLink> links = (LinkedList<BottleneckLink>)e.getBinding().getBoundItem();
+                        BottleneckLink b = links.get( e.getBinding().getIndexAt() );
+                        if( b.getUseRuleOfThumb() )
+                            optRuleOfThumb.setSelected( true );
+                        else
+                            optGuido.setSelected( true );
+                    } catch( Exception bleh ) {
+                        //Do nothing, don't yet have a bottleneck
+                    }
+                }
+            });
+        }
+        
+        {
+            ListBasedComponentDelegate d = cboNode.getBindingDelegate();
+            d.addBoundComponent( cboBottleneck );
+            d.setPrimaryComponent( -2 );
+            
+            d.changeBinding( demo );
+            d.load();
+            d.setSelectedIndex( 0 );
+        }
     }
     
     public static class StringPair {
@@ -106,21 +150,21 @@ public class DemoGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroupBound1 = new dgu.util.swing.binding.ButtonGroupBound();
+        optGroupRule = new javax.swing.ButtonGroup();
         pnlDetails = new javax.swing.JPanel();
-        cboNode = new dgu.util.swing.binding.JComboBoxBound();
-        lblBottleneck = new javax.swing.JLabel();
-        cboBottleneck = new dgu.util.swing.binding.JComboBoxBound();
-        lblNode = new javax.swing.JLabel();
         lblBufferSize = new java.awt.Label();
-        slBufferSize = new dgu.util.swing.binding.JSliderBound();
+        slBufferSize = new JSliderBound( "bufSize_msec" );
         lblRateLimit = new java.awt.Label();
-        slRateLimit = new dgu.util.swing.binding.JSliderBound();
+        slRateLimit = new JSliderBound( "rateLimit_kbps" );
         pnlChart = new ChartPanel(chart);
         pnlSizing = new javax.swing.JPanel();
-        optGuido = new dgu.util.swing.binding.JRadioButtonBound();
-        optRuleOfThumb = new dgu.util.swing.binding.JRadioButtonBound();
+        optRuleOfThumb = new javax.swing.JRadioButton();
+        optGuido = new javax.swing.JRadioButton();
         jSeparator1 = new javax.swing.JSeparator();
+        cboNode = new JComboBoxBound( "getRouters", "" );
+        cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
+        lblBottleneck = new javax.swing.JLabel();
+        lblNode = new javax.swing.JLabel();
         pnlMap = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -128,22 +172,6 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlDetails.setBorder(null);
         pnlDetails.setLayout(null);
-
-        pnlDetails.add(cboNode);
-        cboNode.setBounds(350, 10, 150, 25);
-
-        lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblBottleneck.setText("Bottleneck:");
-        pnlDetails.add(lblBottleneck);
-        lblBottleneck.setBounds(260, 40, 85, 25);
-
-        pnlDetails.add(cboBottleneck);
-        cboBottleneck.setBounds(350, 40, 150, 25);
-
-        lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblNode.setText("Node:");
-        pnlDetails.add(lblNode);
-        lblNode.setBounds(260, 10, 85, 25);
 
         lblBufferSize.setAlignment(java.awt.Label.CENTER);
         lblBufferSize.setText("Buffer = 1000ms");
@@ -180,26 +208,36 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
 
-        buttonGroupBound1.add(optGuido);
-        optGuido.setSelected(true);
+        optGroupRule.add(optRuleOfThumb);
+        optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
+        pnlSizing.add(optRuleOfThumb);
+        optRuleOfThumb.setBounds(10, 15, 250, 22);
+
+        optGroupRule.add(optGuido);
         optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
         pnlSizing.add(optGuido);
         optGuido.setBounds(10, 35, 250, 22);
 
-        buttonGroupBound1.add(optRuleOfThumb);
-        optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
-        optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optRuleOfThumbActionPerformed(evt);
-            }
-        });
-        pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 250, 22);
-
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(5, 5, 265, 65);
+        pnlSizing.setBounds(245, 5, 265, 63);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
+
+        pnlDetails.add(cboNode);
+        cboNode.setBounds(90, 10, 150, 25);
+
+        pnlDetails.add(cboBottleneck);
+        cboBottleneck.setBounds(90, 40, 150, 25);
+
+        lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblBottleneck.setText("Bottleneck:");
+        pnlDetails.add(lblBottleneck);
+        lblBottleneck.setBounds(5, 40, 80, 25);
+
+        lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblNode.setText("Node:");
+        pnlDetails.add(lblNode);
+        lblNode.setBounds(5, 10, 80, 25);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -212,12 +250,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
-// TODO add your handling code here:
-}//GEN-LAST:event_optRuleOfThumbActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private dgu.util.swing.binding.ButtonGroupBound buttonGroupBound1;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
     private dgu.util.swing.binding.JComboBoxBound cboNode;
     private javax.swing.JSeparator jSeparator1;
@@ -225,8 +258,9 @@ private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GE
     private java.awt.Label lblBufferSize;
     private javax.swing.JLabel lblNode;
     private java.awt.Label lblRateLimit;
-    private dgu.util.swing.binding.JRadioButtonBound optGuido;
-    private dgu.util.swing.binding.JRadioButtonBound optRuleOfThumb;
+    private javax.swing.ButtonGroup optGroupRule;
+    private javax.swing.JRadioButton optGuido;
+    private javax.swing.JRadioButton optRuleOfThumb;
     private org.jfree.chart.ChartPanel pnlChart;
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
@@ -234,5 +268,13 @@ private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GE
     private dgu.util.swing.binding.JSliderBound slBufferSize;
     private dgu.util.swing.binding.JSliderBound slRateLimit;
     // End of variables declaration//GEN-END:variables
-
+    
+    /** Listens for radio button clicks and updates the rule of thumb setting appropriately. */
+    private ActionListener varRadio = new ActionListener(){  
+        public void actionPerformed(ActionEvent e) {
+            LinkedList<BottleneckLink> c = (LinkedList<BottleneckLink>)cboBottleneck.getBindingDelegate().getBinding().getValue();
+            BottleneckLink b = c.get( cboBottleneck.getBindingDelegate().getSelectedIndex() );
+            b.setUseRuleOfThumb( e.getActionCommand().equals("rot") );
+        }
+    };
 }

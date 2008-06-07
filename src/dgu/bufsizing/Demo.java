@@ -31,4 +31,12 @@ public class Demo {
             }
         });
     }
+    
+    public LinkedList<Router> getRouters() {
+        return routers;
+    }
+    
+    public LinkedList<TrafficGenerator> getTrafficGenerators() {
+        return trafficGenerators;
+    }
 }

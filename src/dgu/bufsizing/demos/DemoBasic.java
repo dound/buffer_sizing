@@ -9,7 +9,7 @@ import dgu.util.IllegalArgValException;
  * @author David Underhill
  */
 public class DemoBasic {
-    public void main( String args[] ) {
+    public static void main( String args[] ) {
         try {
             createDemo().runDemo();
         }
@@ -19,7 +19,7 @@ public class DemoBasic {
         }
     }
     
-    public Demo createDemo() throws IllegalArgValException {
+    public static Demo createDemo() throws IllegalArgValException {
         Demo demo = new Demo();
         
         // add our routers
