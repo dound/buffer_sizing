@@ -47,6 +47,16 @@ public class RouterController extends Controller {
                 ret += (in.read() << 16);
                 ret += (in.read() << 8);
                 ret +=  in.read();
+                
+                if( cmd.code == RouterCmd.CMD_GET_RATE.code ) {
+                    // determine how much to divide the base rate by based on the bit
+                    int div = 1000; /* bits to kilobits for a RATE so 1000 not 1024 */
+                    while( ret-- > 2 )
+                        div *= 2;
+                    
+                    // 1Gbps is the base
+                    return (1000*1000*1000) / div;
+                }
             } catch( IOException e ) {
                 System.err.println( "command " + cmd.code + " / " + value + " => failed: " + e.getMessage() );
                 System.exit( 1 );

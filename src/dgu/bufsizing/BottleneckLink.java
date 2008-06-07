@@ -21,7 +21,6 @@ public class BottleneckLink extends Link<Router> {
     private int bufSize_msec;
     private int rateLimit_kbps;
     private boolean notifyOnChange;
-    private byte queueID;
     
     // empirical data collected from the router
     private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -45,16 +44,17 @@ public class BottleneckLink extends Link<Router> {
      * Constructs a new uni-directional bottleneck link between src and dst.
      * @param src               The source of data on this link.
      * @param dst               The endpoint of this link.
+     * @param queueID           The interface index for the queue on src for this link.
      * @param bufSize_msec      Initial buffer size in milliseconds
      * @param rateLimit_kbps    Initial rate limit in kilobits per second
      * @param dataPointsToKeep  Maximum number of data points to keep around
      * @param notifyOnChange    Whether to redraw any attached charts when the mutator methods are called.
      * @throws IllegalArgValException  thrown if too many links already exist from src
      */
-    public BottleneckLink( Router src, Node dst, 
+    public BottleneckLink( Router src, Node dst, int queueID,
                            int bufSize_msec, int rateLimit_kbps, int dataPointsToKeep, boolean notifyOnChange ) 
                            throws IllegalArgValException {
-        super( src, dst );
+        super( src, dst, queueID );
         this.notifyOnChange = notifyOnChange;
         
         prepareXYSeries( dataThroughput, dataPointsToKeep );
@@ -187,7 +187,13 @@ public class BottleneckLink extends Link<Router> {
         updateBufSize();
         
         // tell the router about the new rate limit
-        this.src.getController().command( RouterCmd.CMD_SET_RATE, queueID, rateLimit_kbps );
+        int tmp_rate = rateLimit_kbps;
+        byte real_value = 2;
+        while( tmp_rate > 1000 * 1000 * 1000 ) {
+            tmp_rate *= 2;
+            real_value += 1;
+        }
+        src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
         
         // add the real start point of the new buffer size (don't notify yet)
         dataRateLimit.add( System.currentTimeMillis(), this.bufSize_msec, false );
@@ -214,10 +220,6 @@ public class BottleneckLink extends Link<Router> {
 
     public XYSeries getDataRateLimit() {
         return dataRateLimit;
-    }
-    
-    void setQueueID( byte queueID ) {
-        this.queueID = queueID;
     }
     
     public String toString() {
