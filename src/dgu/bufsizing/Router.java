@@ -38,7 +38,9 @@ public class Router extends Node {
         
         // restore the default paint and draw a border around the object
         gfx.setPaint( PAINT_DEFAULT );
+        gfx.setStroke( Drawable.STROKE_THICK );
         gfx.draw( objForDrawing );
+        gfx.setStroke( Drawable.STROKE_DEFAULT );
     }
 
     public String getTypeString() {

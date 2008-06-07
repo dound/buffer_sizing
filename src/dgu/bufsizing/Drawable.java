@@ -11,6 +11,7 @@ import java.awt.Paint;
  */
 public interface Drawable {
     public static final BasicStroke STROKE_DEFAULT = new BasicStroke( 1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
+    public static final BasicStroke STROKE_THICK   = new BasicStroke( 2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final Color       COLOR_DEFAULT  = Color.BLACK;
     public static final Paint       PAINT_DEFAULT  = COLOR_DEFAULT;
     

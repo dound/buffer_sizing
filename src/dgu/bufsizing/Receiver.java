@@ -16,7 +16,6 @@ public class Receiver extends Node {
     private static final Paint PAINT_RECEIVER = new GradientPaint(  0,  0, Color.YELLOW,
                                                                    50, 50, Color.WHITE,
                                                                    true );
-    public static final BasicStroke STROKE_BORDER = new BasicStroke( 1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER );
     private final Ellipse2D objForDrawing;
     
     
@@ -32,7 +31,9 @@ public class Receiver extends Node {
         
         // restore the default paint and draw a border around the object
         gfx.setPaint( PAINT_DEFAULT );
+        gfx.setStroke( Drawable.STROKE_THICK );
         gfx.draw( objForDrawing );
+        gfx.setStroke( Drawable.STROKE_DEFAULT );
         
         // put its name on top
         drawName( gfx, getX(), getY() - RECEIVER_DIAMETER / 4 );

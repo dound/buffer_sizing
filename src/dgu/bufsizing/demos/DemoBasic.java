@@ -23,14 +23,14 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "LA", 50, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
+        Router la  = new Router( "LA", 100, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
         demo.addRouter( la );
         
         Receiver hou = new Receiver( "HOU", 500, 160 );
         demo.addGenericNode( hou );
         
         // add our traffic generators
-        TrafficGenerator su = new Harpoon( "Stanford",   0,  25 );
+        TrafficGenerator su = new Harpoon( "Stanford",   30,  25 );
         demo.addTrafficGenerator( su );
         
         // add the links between nods
