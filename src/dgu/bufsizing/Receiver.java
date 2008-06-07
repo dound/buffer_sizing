@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
@@ -15,11 +16,13 @@ public class Receiver extends Node {
     private static final Paint PAINT_RECEIVER = new GradientPaint(  0,  0, Color.YELLOW,
                                                                    50, 50, Color.WHITE,
                                                                    true );
+    public static final BasicStroke STROKE_BORDER = new BasicStroke( 1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER );
     private final Ellipse2D objForDrawing;
+    
     
     public Receiver( String name, int x, int y ) {
         super( name, x, y );
-        objForDrawing = new Ellipse2D.Float( x, y, RECEIVER_DIAMETER, RECEIVER_DIAMETER );
+        objForDrawing = new Ellipse2D.Float( x-RECEIVER_DIAMETER/2, y-RECEIVER_DIAMETER/2, RECEIVER_DIAMETER, RECEIVER_DIAMETER );
     }
     
     public void drawNode( Graphics2D gfx ) {
@@ -27,11 +30,12 @@ public class Receiver extends Node {
         gfx.setPaint( PAINT_RECEIVER );
         gfx.fill( objForDrawing );
         
-        // restore the default paint
+        // restore the default paint and draw a border around the object
         gfx.setPaint( PAINT_DEFAULT );
+        gfx.draw( objForDrawing );
         
         // put its name on top
-        drawName( gfx, getX(), getY() + RECEIVER_DIAMETER / 3, RECEIVER_DIAMETER );
+        drawName( gfx, getX(), getY() - RECEIVER_DIAMETER / 4 );
     }
 
     public String getTypeString() {

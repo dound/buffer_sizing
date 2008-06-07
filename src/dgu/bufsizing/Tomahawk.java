@@ -23,7 +23,7 @@ public class Tomahawk extends TrafficGenerator {
     }
     
     public void drawIcon( Graphics2D gfx ) {
-        gfx.drawImage( ICON, getX(), getY(), ICON_WIDTH, ICON_HEIGHT, null );
+        gfx.drawImage( ICON, getX()-ICON_WIDTH/2, getY()-ICON_HEIGHT/2, ICON_WIDTH, ICON_HEIGHT, null );
     }
 
     public String getTrafficTypeString() {

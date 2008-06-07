@@ -23,7 +23,7 @@ public class Router extends Node {
     
     public Router( String name, int x, int y, int commandPort ) {
         super( name, x, y );
-        objForDrawing = new Ellipse2D.Float( x, y, ROUTER_DIAMETER, ROUTER_DIAMETER );
+        objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         controller = new RouterController( commandPort );
     }
     
@@ -34,10 +34,11 @@ public class Router extends Node {
         
         // put its name on top
         gfx.setPaint( Color.WHITE );
-        drawName( gfx, getX(), getY() + ROUTER_DIAMETER / 3, ROUTER_DIAMETER );
+        drawName( gfx, getX(), getY() - ROUTER_DIAMETER / 4 );
         
-        // restore the default paint
+        // restore the default paint and draw a border around the object
         gfx.setPaint( PAINT_DEFAULT );
+        gfx.draw( objForDrawing );
     }
 
     public String getTypeString() {

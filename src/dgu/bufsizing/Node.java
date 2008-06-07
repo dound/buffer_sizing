@@ -31,13 +31,18 @@ public abstract class Node implements Drawable {
     }
     
     public final void draw( Graphics2D gfx ) {
-        for( int i=0; i<numLinks; i++ )
-            link[i].draw( gfx );
-        
-        drawNode( gfx );
+        drawLinks( gfx );
+        drawNode(  gfx );
     }
     
-    protected final void drawName( Graphics2D gfx, int x, int y, int width ) {
+    public final void drawLinks( Graphics2D gfx ) {
+        for( int i=0; i<numLinks; i++ )
+            link[i].draw( gfx );
+    }
+    
+    protected final void drawName( Graphics2D gfx, int x, int y ) {
+        // center the string horizontally
+        x -= gfx.getFontMetrics().stringWidth( name ) / 2;
         gfx.drawString( name, x, y );
     }
 

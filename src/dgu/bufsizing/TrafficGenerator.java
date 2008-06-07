@@ -16,7 +16,7 @@ public abstract class TrafficGenerator extends Node {
     
     public void drawNode( Graphics2D gfx ) {
         drawIcon( gfx );
-        drawName( gfx, getX(), getY() + ICON_HEIGHT, ICON_WIDTH );
+        drawName( gfx, getX(), getY() + ICON_HEIGHT / 2 );
     }
     
     public abstract void drawIcon( Graphics2D gfx );

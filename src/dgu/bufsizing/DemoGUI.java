@@ -11,7 +11,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.util.LinkedList;
+import javax.swing.ImageIcon;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
@@ -32,11 +34,15 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chart;
     public static DemoGUI me;
-    private final Graphics2D gfx;
     private final Demo demo;
     
     public static final XYSeriesCollection collXput = new XYSeriesCollection();
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
+    
+    private static final int CANVAS_WIDTH  = 1028;
+    private static final int CANVAS_HEIGHT =  250;
+    private BufferedImage img = new BufferedImage( CANVAS_WIDTH, CANVAS_HEIGHT, BufferedImage.TYPE_INT_RGB );
+    private final Graphics2D gfx = (Graphics2D)img.getGraphics();   
     
     /** Creates new form DemoGUI */
     public DemoGUI( final Demo d ) {
@@ -47,7 +53,6 @@ public class DemoGUI extends javax.swing.JFrame {
         GUIHelper.setGUIDefaults();
         createChart();
         initComponents();
-        gfx = (Graphics2D)pnlMap.getGraphics();
         prepareBindings();
         setIconImage( icon );
        
@@ -57,11 +62,15 @@ public class DemoGUI extends javax.swing.JFrame {
         // starts a thread to keep the topology map refreshed
         new Thread() {
             public void run() {
-                d.redraw( gfx );
-                try {
-                    Thread.sleep( 250 );
-                } catch( InterruptedException e ) {
-                    // no-op
+                gfx.setBackground( Color.WHITE );
+                while( true ) {
+                    d.redraw( gfx );
+                    lblMap.setIcon( new ImageIcon( img ) );
+                    try {
+                        Thread.sleep( 250 );
+                    } catch( InterruptedException e ) {
+                        // no-op
+                    }
                 }
             }
         }.start();
@@ -262,11 +271,11 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
         pnlMap = new javax.swing.JPanel();
+        lblMap = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
 
-        pnlDetails.setBorder(null);
         pnlDetails.setLayout(null);
 
         lblBufferSize.setAlignment(java.awt.Label.CENTER);
@@ -299,7 +308,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlChart.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnlChart.setLayout(null);
         pnlDetails.add(pnlChart);
-        pnlChart.setBounds(5, 75, 1015, 440);
+        pnlChart.setBounds(5, 75, 1015, 435);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -307,12 +316,12 @@ public class DemoGUI extends javax.swing.JFrame {
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 250, 22);
+        optRuleOfThumb.setBounds(10, 15, 250, 23);
 
         optGroupRule.add(optGuido);
         optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 250, 22);
+        optGuido.setBounds(10, 35, 250, 23);
 
         pnlDetails.add(pnlSizing);
         pnlSizing.setBounds(245, 5, 265, 63);
@@ -338,8 +347,13 @@ public class DemoGUI extends javax.swing.JFrame {
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
 
-        pnlMap.setBorder(null);
         pnlMap.setLayout(null);
+
+        lblMap.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        lblMap.setDoubleBuffered(true);
+        pnlMap.add(lblMap);
+        lblMap.setBounds(0, 0, 1028, 250);
+
         getContentPane().add(pnlMap);
         pnlMap.setBounds(0, 0, 1028, 250);
 
@@ -352,6 +366,7 @@ public class DemoGUI extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblBottleneck;
     private java.awt.Label lblBufferSize;
+    private javax.swing.JLabel lblMap;
     private javax.swing.JLabel lblNode;
     private java.awt.Label lblRateLimit;
     private javax.swing.ButtonGroup optGroupRule;

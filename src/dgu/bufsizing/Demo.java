@@ -49,6 +49,17 @@ public class Demo {
     void redraw(Graphics2D gfx) {
         gfx.clearRect(0, 0, 1028, 250);
         
+        // draw links first
+        for( Node n : genericNodes )
+            n.drawLinks( gfx );
+        
+        for( TrafficGenerator t : trafficGenerators )
+            t.drawLinks( gfx );
+        
+        for( Router r : routers )
+            r.drawLinks( gfx );
+        
+        // then draw nodes
         for( Node n : genericNodes )
             n.drawNode( gfx );
         
