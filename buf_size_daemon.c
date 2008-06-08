@@ -160,6 +160,7 @@ static void* controller_main( void* nil ) {
     if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
         perror( "Error: connect for controller failed" );
         sleep( 5 );
+        close( fd );
         continue;
     }
 
