@@ -156,6 +156,13 @@ public abstract class AbstractDataset implements Dataset,
     protected void fireDatasetChanged() {
         notifyListeners(new DatasetChangeEvent(this, this));
     }
+    
+    /**
+     * Manually notifies all registered listeners that the dataset has changed.
+     */
+    public void manuallyNotifyListeners() {
+        notifyListeners(new DatasetChangeEvent(this, this));
+    }
 
     /**
      * Notifies all registered listeners that the dataset has changed.

@@ -123,6 +123,22 @@ public class XYSeriesCollection extends AbstractIntervalXYDataset
         fireDatasetChanged();
 
     }
+    
+    /**
+     * Adds a series to the collection and sends a {@link DatasetChangeEvent} 
+     * to all registered listeners.
+     *
+     * @param series  the series (<code>null</code> not permitted).
+     */
+    public void addSeries(XYSeries series, boolean notify) {
+
+        if (series == null) {
+            throw new IllegalArgumentException("Null 'series' argument.");
+        }
+        this.data.add(series);
+        series.addChangeListener(this);
+        if( notify ) fireDatasetChanged();
+    }
 
     /**
      * Removes a series from the collection and sends a 
@@ -178,6 +194,23 @@ public class XYSeriesCollection extends AbstractIntervalXYDataset
         // Remove all the series from the collection and notify listeners.
         this.data.clear();
         fireDatasetChanged();
+    }
+    
+    /**
+     * Removes all the series from the collection and sends a 
+     * {@link DatasetChangeEvent} to all registered listeners.
+     */
+    public void removeAllSeries( boolean notify ) {
+        // Unregister the collection as a change listener to each series in 
+        // the collection.
+        for (int i = 0; i < this.data.size(); i++) {
+          XYSeries series = (XYSeries) this.data.get(i);
+          series.removeChangeListener(this);
+        }
+
+        // Remove all the series from the collection and notify listeners.
+        this.data.clear();
+        if( notify ) fireDatasetChanged();
     }
 
     /**
