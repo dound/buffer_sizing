@@ -1,8 +1,6 @@
 package dgu.bufsizing;
 
 import dgu.util.swing.GUIHelper;
-import dgu.util.swing.binding.BindingAdapter;
-import dgu.util.swing.binding.BindingEvent;
 import dgu.util.swing.binding.JComboBoxBound;
 import dgu.util.swing.binding.JSliderBound;
 import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
@@ -110,7 +108,6 @@ public class DemoGUI extends javax.swing.JFrame {
         domain.setTickLabelsVisible(false);
         domain.setTickMarksVisible(false);
         domain.setAutoRange(true);
-        //domain.setFixedAutoRange( 3000 ); // number of milliseconds it takes the window to scroll by
         
         ValueAxis range = plot.getRangeAxis();
         range.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
@@ -119,7 +116,9 @@ public class DemoGUI extends javax.swing.JFrame {
         
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,196,0));
-        renderer.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(1, new Color(128,0,0));
+        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         
@@ -128,12 +127,12 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
         range2.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
         range2.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
-        range2.setAutoRange(false);
+        range2.setAutoRange(true);
         
         XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
         renderer2.setPaint(new Color(196,0,0));
         renderer2.setSeriesStroke(0, new BasicStroke(2f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
-        renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL,10.0f,new float[]{10.0f,5.0f},0.0f));
+        renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(1, renderer2);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         

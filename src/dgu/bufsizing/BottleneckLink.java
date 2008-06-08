@@ -41,7 +41,7 @@ public class BottleneckLink extends Link<Router> {
     private float instantaneousQueueOcc    = 0.0f;
     
     // settings for buffer size and rate limit as set by the user
-    private final XYSeries dataBufSize = new XYSeries("Max Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataBufSize = new XYSeries("Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     
     /** Puts xys into manual notification mode and sets a limit on the number of data points it may track. */
