@@ -19,6 +19,7 @@ public class BottleneckLink extends Link<Router> {
     public static final BasicStroke STROKE_OCC = new BasicStroke( 8.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL ); 
     public static final BasicStroke STROKE_BOTTLENECK = new BasicStroke( 5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final BasicStroke STROKE_BOTTLENECK_OUTLINE = new BasicStroke( 7.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
+    public static final BasicStroke STROKE_BOTTLENECK_SEL_OUTLINE = new BasicStroke( 9.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     
     // don't have JFreeChart worry about sorting data or looking for duplicates (performance!)
     private static final boolean AUTOSORT_SETTING = false;
@@ -29,6 +30,7 @@ public class BottleneckLink extends Link<Router> {
     private int numFlows = 1;
     private int bufSize_msec;
     private int rateLimit_kbps;
+    private boolean selected;
     
     // empirical data collected from the router
     private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -76,6 +78,7 @@ public class BottleneckLink extends Link<Router> {
         // set the initial values
         this.bufSize_msec = bufSize_msec;
         this.rateLimit_kbps = rateLimit_kbps;
+        this.selected = false;
         
         // update the plots appropriately
         forceSet = true;
@@ -95,7 +98,12 @@ public class BottleneckLink extends Link<Router> {
         saturation = queue_usage = temporary_counter;
         
         // draw the outline of the bottleneck link
-        gfx.setStroke( STROKE_BOTTLENECK_OUTLINE );
+        if( selected ) {
+            gfx.setColor( Drawable.COLOR_SELECTED );
+            gfx.setStroke( STROKE_BOTTLENECK_SEL_OUTLINE );
+        }
+        else
+            gfx.setStroke( STROKE_BOTTLENECK_OUTLINE );
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
         
         // draw the inner part of the bottleneck link (redder => less saturated/lower utilization)
@@ -281,6 +289,14 @@ public class BottleneckLink extends Link<Router> {
 
     public XYSeries getDataRateLimit() {
         return dataRateLimit;
+    }
+    
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
     
     public String toString() {

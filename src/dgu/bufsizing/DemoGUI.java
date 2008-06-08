@@ -35,7 +35,7 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chartXput, chartOcc;
     public static DemoGUI me;
-    private final Demo demo;
+    public final Demo demo;
     
     public static final XYSeriesCollection collXput = new XYSeriesCollection();
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
@@ -164,9 +164,14 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     
     BottleneckLink getSelectedBottleneck() {
-        // get the bottleneck which is now selected
+        // get the bottleneck which is now selected (if any)
         Router rtr = (Router)cboBottleneck.getBindingDelegate().getBinding().getBoundItem();
         return rtr.getBottleneckLinkAt( cboBottleneck.getSelectedIndex() );
+    }
+    
+    Node getSelectedNode() {
+        // get the bottleneck which is now selected
+        return (Node)cboBottleneck.getBindingDelegate().getBinding().getBoundItem();
     }
     
     void prepareBindings() {
@@ -180,8 +185,15 @@ public class DemoGUI extends javax.swing.JFrame {
             cboBottleneck.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     try {
+                        if( DemoGUI.me.demo.lastSelectedBottleneckLink != null )
+                            DemoGUI.me.demo.lastSelectedBottleneckLink.setSelected( false );
+                        
                         BottleneckLink b = getSelectedBottleneck();
                         synchronized( b ) {
+                            // tell the link we're looking at it
+                            DemoGUI.me.demo.lastSelectedBottleneckLink = b;
+                            b.setSelected( true );
+                            
                             // select the appropriate radio button for buffer sizing formula
                             if( b.getUseRuleOfThumb() )
                                 optRuleOfThumb.setSelected( true );
@@ -214,9 +226,30 @@ public class DemoGUI extends javax.swing.JFrame {
             d.addBoundComponent( cboBottleneck );
             d.setPrimaryComponent( -2 );
             
+            // designate the selected node on click
+            cboNode.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    try {
+                        if( DemoGUI.me.demo.lastSelectedNode != null )
+                            DemoGUI.me.demo.lastSelectedNode.setSelected( false );
+                        
+                        // tell the node we're looking at it
+                        Node n = getSelectedNode();
+                        DemoGUI.me.demo.lastSelectedNode = n;
+                        n.setSelected( true );
+                    }
+                    catch( Exception e ) {
+                        // node not yet selected
+                    }
+                }
+            });
+            
             d.changeBinding( demo );
             d.load();
             d.setSelectedIndex( 0 );
+            
+            // manually trigger the first selection
+            cboNode.getActionListeners()[0].actionPerformed( null );
         }
     }
     

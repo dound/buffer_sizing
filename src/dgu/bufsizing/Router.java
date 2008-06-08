@@ -36,9 +36,17 @@ public class Router extends Node {
         drawName( gfx, getX(), getNameY(gfx) );
         
         // restore the default paint and draw a border around the object
-        gfx.setPaint( PAINT_DEFAULT );
-        gfx.setStroke( Drawable.STROKE_THICK );
-        gfx.draw( objForDrawing );
+        if( isSelected() ) {
+            gfx.setColor( Drawable.COLOR_SELECTED );
+            gfx.setStroke( Drawable.STROKE_THICK3 );
+            gfx.draw( objForDrawing );
+            gfx.setPaint( PAINT_DEFAULT );
+        }
+        else {
+            gfx.setPaint( PAINT_DEFAULT );
+            gfx.setStroke( Drawable.STROKE_THICK );
+            gfx.draw( objForDrawing );
+        }
         gfx.setStroke( Drawable.STROKE_DEFAULT );
     }
 

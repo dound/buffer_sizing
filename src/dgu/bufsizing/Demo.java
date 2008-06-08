@@ -18,6 +18,9 @@ public class Demo {
     public LinkedList<TrafficGenerator> trafficGenerators = new LinkedList<TrafficGenerator>();
     public LinkedList<Node> genericNodes = new LinkedList<Node>();
     
+    public Node lastSelectedNode = null;
+    public BottleneckLink lastSelectedBottleneckLink = null;
+    
     public void addRouter( Router r ) {
         routers.add( r );
     }

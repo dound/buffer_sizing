@@ -21,11 +21,13 @@ public abstract class Node implements Drawable {
     private final String name;
     private final int x;
     private final int y;
+    private boolean selected;
     
     public Node( String name, int x, int y ) {
         this.name = name;
         this.x = x;
         this.y = y;
+        this.selected = false;
         
         for( int i=0; i<MAX_LINKS; i++ )
             link[i] = null;
@@ -98,6 +100,14 @@ public abstract class Node implements Drawable {
         return y;
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+    
     public String toString() {
         return name + " (" + getTypeString() + ")";
     }
