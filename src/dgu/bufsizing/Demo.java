@@ -1,6 +1,5 @@
 package dgu.bufsizing;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -52,7 +51,7 @@ public class Demo {
     }
 
     void redraw(Graphics2D gfx) {
-        gfx.clearRect(0, 0, 1028, 250);
+        gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, null );
         
         // draw the legend
         String legendLbl = "Increasing Utilization -->";
