@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -52,6 +53,27 @@ public class Demo {
 
     void redraw(Graphics2D gfx) {
         gfx.clearRect(0, 0, 1028, 250);
+        
+        // draw the legend
+        String legendLbl = "Increasing Utilization -->";
+        int paddingX = 5;
+        int paddingY = 2;
+        int legendWidth = gfx.getFontMetrics().stringWidth( legendLbl ) + paddingX * 2;
+        int legendHeight = gfx.getFontMetrics().getHeight() + 2 + paddingY;
+        int legendPosX = 0;
+        int legendPosY = DemoGUI.CANVAS_HEIGHT - legendHeight - 2;
+        float cur = 0.0f;
+        float step = 1.0f / legendWidth;
+        for( int i=0; i<legendWidth; i++ ) {
+            gfx.setColor( BottleneckLink.getCurrentGradientColor(cur).brighter() );
+            cur += step;
+            gfx.drawLine( i + legendPosX, legendPosY, i + legendPosX, legendPosY + legendHeight );
+        }
+        gfx.setPaint( Drawable.PAINT_DEFAULT );
+        gfx.drawString( legendLbl, legendPosX + paddingX, legendPosY + legendHeight - paddingY - 2 );
+        gfx.setStroke( Drawable.STROKE_THICK );
+        gfx.drawRect( legendPosX, legendPosY, legendWidth, legendHeight);
+        gfx.setStroke( Drawable.STROKE_DEFAULT );
         
         // draw links first
         for( Node n : genericNodes )

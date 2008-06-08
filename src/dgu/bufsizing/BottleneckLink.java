@@ -20,6 +20,7 @@ public class BottleneckLink extends Link<Router> {
     public static final BasicStroke STROKE_BOTTLENECK = new BasicStroke( 5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final BasicStroke STROKE_BOTTLENECK_OUTLINE = new BasicStroke( 7.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final BasicStroke STROKE_BOTTLENECK_SEL_OUTLINE = new BasicStroke( 9.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
+    public static final Color COLOR_QUEUE_FILL = new Color( 0xFF, 0xAA, 0x11 );
     
     // don't have JFreeChart worry about sorting data or looking for duplicates (performance!)
     private static final boolean AUTOSORT_SETTING = false;
@@ -87,6 +88,17 @@ public class BottleneckLink extends Link<Router> {
         forceSet = false;
     }
     static float temporary_counter = 0.0f; // xxx temporary
+    
+    /**
+     * Constructs the current gradient color.
+     * @param goodness  1.0 => green, 0.0 => red, between the two => constant hue mix
+     * @return Color based on the current goodness
+     */
+    public static Color getCurrentGradientColor( float goodness ) {
+        float extra = 2.0f * (0.5f - Math.abs( goodness - 0.5f ));
+        return new Color( 1.0f - goodness, goodness, extra );
+    }
+    
     public void draw( Graphics2D gfx ) {
         // get a local copy of the current utilization
         float saturation = instantaneousUtilization;
@@ -107,8 +119,7 @@ public class BottleneckLink extends Link<Router> {
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
         
         // draw the inner part of the bottleneck link (redder => less saturated/lower utilization)
-        float extra = 2.0f * (0.5f - Math.abs( saturation - 0.5f ));
-        gfx.setColor( new Color( 1.0f - saturation, saturation, extra ) );
+        gfx.setColor( getCurrentGradientColor(saturation) );
         gfx.setStroke( STROKE_BOTTLENECK );
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
 
@@ -121,8 +132,7 @@ public class BottleneckLink extends Link<Router> {
         gfx.drawLine( x, y + QUEUE_HEIGHT, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
 
         // fill the queue based on current occupancy
-        extra = 2.0f * (0.5f - Math.abs( queue_usage - 0.5f ));
-        gfx.setColor( new Color( queue_usage, 1.0f - queue_usage, extra ) );
+        gfx.setColor( COLOR_QUEUE_FILL );
         gfx.setStroke( STROKE_OCC );
         int width = (int)(QUEUE_WIDTH * queue_usage);
         int fillX = x + (QUEUE_WIDTH - width);

@@ -40,8 +40,8 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final XYSeriesCollection collXput = new XYSeriesCollection();
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     
-    private static final int CANVAS_WIDTH  = 1028;
-    private static final int CANVAS_HEIGHT =  250;
+    public static final int CANVAS_WIDTH  = 1028;
+    public static final int CANVAS_HEIGHT =  250;
     private BufferedImage img = new BufferedImage( CANVAS_WIDTH, CANVAS_HEIGHT, BufferedImage.TYPE_INT_RGB );
     private final Graphics2D gfx = (Graphics2D)img.getGraphics();   
     
