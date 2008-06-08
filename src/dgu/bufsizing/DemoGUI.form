@@ -100,9 +100,7 @@
         <Container class="org.jfree.chart.ChartPanel" name="pnlChartXput">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                <LineBorder/>
-              </Border>
+              <Border info="null"/>
             </Property>
           </Properties>
           <AuxValues>
@@ -110,7 +108,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="2" y="75" width="507" height="410"/>
+              <AbsoluteConstraints x="0" y="75" width="509" height="415"/>
             </Constraint>
           </Constraints>
 
@@ -232,9 +230,7 @@
         <Container class="org.jfree.chart.ChartPanel" name="pnlChartOcc">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-                <LineBorder/>
-              </Border>
+              <Border info="null"/>
             </Property>
           </Properties>
           <AuxValues>
@@ -242,7 +238,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="511" y="75" width="507" height="410"/>
+              <AbsoluteConstraints x="508" y="75" width="509" height="415"/>
             </Constraint>
           </Constraints>
 

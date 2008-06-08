@@ -14,8 +14,8 @@ public class Tomahawk extends TrafficGenerator {
     
     private final TomahawkController controller;
 
-    public Tomahawk( String name, int x, int y, int commandPort, int numFlows, int output_Mbps ) {
-        super( name, x, y );
+    public Tomahawk( String name, String nameShort, int x, int y, int commandPort, int numFlows, int output_Mbps ) {
+        super( name, nameShort, x, y );
         this.numFlows = numFlows;
         this.output_Mbps = output_Mbps;
         

@@ -9,8 +9,8 @@ import java.awt.Graphics2D;
 public class Harpoon extends TrafficGenerator {
     private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("harpoon.png");
     
-    public Harpoon( String name, int x, int y ) {
-        super( name, x, y );
+    public Harpoon( String name, String nameShort, int x, int y ) {
+        super( name, nameShort, x, y );
     }
     
     public void drawIcon( Graphics2D gfx ) {

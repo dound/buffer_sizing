@@ -21,8 +21,8 @@ public class Router extends Node {
     private final RouterController controller;
     
     
-    public Router( String name, int x, int y, int commandPort ) {
-        super( name, x, y );
+    public Router( String name, String nameShort, int x, int y, int commandPort ) {
+        super( name, nameShort, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         controller = new RouterController( commandPort );
     }

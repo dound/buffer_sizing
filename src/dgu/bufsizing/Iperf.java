@@ -11,8 +11,8 @@ public class Iperf extends TrafficGenerator {
     private boolean useTCP;
     private int output_Mbps;
 
-    public Iperf( String name, int x, int y, boolean useTCP, int output_Mbps ) {
-        super( name, x, y );
+    public Iperf( String name, String nameShort, int x, int y, boolean useTCP, int output_Mbps ) {
+        super( name, nameShort, x, y );
         this.useTCP = useTCP;
         this.output_Mbps = output_Mbps;
     }

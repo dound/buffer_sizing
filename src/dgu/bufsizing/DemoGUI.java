@@ -395,10 +395,10 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(slRateLimit);
         slRateLimit.setBounds(767, 15, 250, 45);
 
-        pnlChartXput.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
         pnlDetails.add(pnlChartXput);
-        pnlChartXput.setBounds(2, 75, 507, 410);
+        pnlChartXput.setBounds(0, 75, 509, 415);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -444,10 +444,10 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(lblNode);
         lblNode.setBounds(5, 10, 80, 25);
 
-        pnlChartOcc.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlChartOcc.setBorder(null);
         pnlChartOcc.setLayout(null);
         pnlDetails.add(pnlChartOcc);
-        pnlChartOcc.setBounds(511, 75, 507, 410);
+        pnlChartOcc.setBounds(508, 75, 509, 415);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);

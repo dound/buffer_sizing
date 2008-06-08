@@ -10,8 +10,8 @@ public abstract class TrafficGenerator extends Node {
     protected static final int ICON_WIDTH  = 50;
     protected static final int ICON_HEIGHT = 50;
     
-    public TrafficGenerator( String name, int x, int y ) {
-        super( name, x, y );
+    public TrafficGenerator( String name, String nameShort, int x, int y ) {
+        super( name, nameShort, x, y );
     }
     
     public void drawNode( Graphics2D gfx ) {

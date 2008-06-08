@@ -18,13 +18,14 @@ public abstract class Node implements Drawable {
     private int numLinks = 0;
     
     // basic properties for GUI stuff
-    private final String name;
+    private final String name, nameShort;
     private final int x;
     private final int y;
     private boolean selected;
     
-    public Node( String name, int x, int y ) {
+    public Node( String name, String nameShort, int x, int y ) {
         this.name = name;
+        this.nameShort = nameShort;
         this.x = x;
         this.y = y;
         this.selected = false;
@@ -92,6 +93,10 @@ public abstract class Node implements Drawable {
         return name;
     }
     
+    public String getNameShort() {
+        return nameShort;
+    }
+    
     public int getX() {
         return x;
     }
@@ -109,6 +114,6 @@ public abstract class Node implements Drawable {
     }
     
     public String toString() {
-        return name + " (" + getTypeString() + ")";
+        return nameShort + " (" + getTypeString() + ")";
     }
 }

@@ -9,8 +9,8 @@ import java.awt.Graphics2D;
 public class PlanetLab extends TrafficGenerator {
     private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("planetlab.png");
     
-    public PlanetLab( String name, int x, int y ) {
-        super( name, x, y );
+    public PlanetLab( String name, String nameShort, int x, int y ) {
+        super( name, nameShort, x, y );
     }
     
     public void drawIcon( Graphics2D gfx ) {

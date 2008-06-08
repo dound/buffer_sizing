@@ -23,17 +23,17 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "Los Angeles", 100, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
+        Router la  = new Router( "Los Angeles", "LA", 100, 125, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
         demo.addRouter( la );
         
-        Receiver hou = new Receiver( "Houston", 500, 200 );
+        Receiver hou = new Receiver( "Houston", "HOU", 500, 200 );
         demo.addGenericNode( hou );
         
-        Receiver ny = new Receiver( "New York", 975, 35 );
+        Receiver ny = new Receiver( "New York", "NY", 975, 35 );
         demo.addGenericNode( ny );
         
         // add our traffic generators
-        TrafficGenerator su = new Harpoon( "Stanford",   30,  25 );
+        TrafficGenerator su = new Harpoon( "Stanford", "SU", 30, 25 );
         demo.addTrafficGenerator( su );
         
         // add the links between nods

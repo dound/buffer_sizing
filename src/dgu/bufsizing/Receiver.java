@@ -19,8 +19,8 @@ public class Receiver extends Node {
     private final Ellipse2D objForDrawing;
     
     
-    public Receiver( String name, int x, int y ) {
-        super( name, x, y );
+    public Receiver( String name, String nameShort, int x, int y ) {
+        super( name, nameShort, x, y );
         objForDrawing = new Ellipse2D.Float( x-RECEIVER_DIAMETER/2, y-RECEIVER_DIAMETER/2, RECEIVER_DIAMETER, RECEIVER_DIAMETER );
     }
     
