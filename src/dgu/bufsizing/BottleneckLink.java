@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.RouterController;
 import dgu.bufsizing.control.RouterController.RouterCmd;
 import dgu.util.IllegalArgValException;
 import dgu.util.swing.GUIHelper;
@@ -21,7 +22,7 @@ public class BottleneckLink extends Link<Router> {
     
     // don't have JFreeChart worry about sorting data or looking for duplicates (performance!)
     private static final boolean AUTOSORT_SETTING = false;
-    private static final boolean ALLOW_DUPS_SETTING = false;
+    private static final boolean ALLOW_DUPS_SETTING = true;
     
     // user-defined variables on this bottleneck link
     private boolean useRuleOfThumb = true;
@@ -186,7 +187,7 @@ public class BottleneckLink extends Link<Router> {
         this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, getBufSize_packets(useRuleOfThumb) );
         
         // refresh the GUI
-        DemoGUI.me.setBufferSizeText( this );
+        if( DemoGUI.me != null ) DemoGUI.me.setBufferSizeText( this );
     }
 
     public synchronized void setBufSize_msec( int bufSize_msec ) {
@@ -217,6 +218,22 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
+        // translate the requested to rate to the register value to get the closest rate
+        int tmp_rate = (int)(rateLimit_kbps * 1.5); // switch at the halfway point
+        byte real_value = 2;
+        while( tmp_rate < 1000 * 1000 ) {
+            tmp_rate *= 2;
+            real_value += 1;
+            
+            // stop at the max value
+            if( real_value == 16 )
+                break;
+        }
+        
+        // translate the requested rate into the closest attainable rate
+        rateLimit_kbps = RouterController.translateRateLimitRegToKilobitsPerSec( real_value );
+        
+        // do nothing if the requested rate hasn't changed since the last request
         if( this.rateLimit_kbps == rateLimit_kbps )
             return;
         
@@ -224,27 +241,21 @@ public class BottleneckLink extends Link<Router> {
         dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
         
         // add the real end point of the previous buffer size (don't notify yet)
-        dataRateLimit.add( System.currentTimeMillis(), this.bufSize_msec, false );
+        dataRateLimit.add( System.currentTimeMillis(), this.rateLimit_kbps, false );
         
         // set the new buffer size
         this.rateLimit_kbps = rateLimit_kbps;
-        DemoGUI.me.setRateLimitText( this );
+        if( DemoGUI.me != null ) DemoGUI.me.setRateLimitText( this );
         updateBufSize();
         
         // tell the router about the new rate limit
-        int tmp_rate = rateLimit_kbps;
-        byte real_value = 2;
-        while( tmp_rate > 1000 * 1000 * 1000 ) {
-            tmp_rate *= 2;
-            real_value += 1;
-        }
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
         
         // add the real start point of the new buffer size (don't notify yet)
-        dataRateLimit.add( System.currentTimeMillis(), this.bufSize_msec, false );
+        dataRateLimit.add( System.currentTimeMillis(), this.rateLimit_kbps, false );
         
         // add a fake endpoint at the end of time and refresh the graph
-        dataRateLimit.add( Long.MAX_VALUE, this.bufSize_msec, notifyOnChange );
+        dataRateLimit.add( Long.MAX_VALUE, this.rateLimit_kbps, notifyOnChange );
     }
 
     public XYSeries getDataThroughput() {

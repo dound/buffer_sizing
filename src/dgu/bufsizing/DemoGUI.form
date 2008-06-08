@@ -82,9 +82,9 @@
         </Component>
         <Component class="dgu.util.swing.binding.JSliderBound" name="slRateLimit">
           <Properties>
-            <Property name="majorTickSpacing" type="int" value="100"/>
-            <Property name="maximum" type="int" value="1000"/>
-            <Property name="minorTickSpacing" type="int" value="50"/>
+            <Property name="majorTickSpacing" type="int" value="100000"/>
+            <Property name="maximum" type="int" value="1000000"/>
+            <Property name="minorTickSpacing" type="int" value="50000"/>
             <Property name="paintTicks" type="boolean" value="true"/>
             <Property name="value" type="int" value="0"/>
           </Properties>

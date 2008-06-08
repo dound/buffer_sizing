@@ -10,6 +10,7 @@ import java.util.LinkedList;
 public class Demo {
     public static final int DEFAULT_ROUTER_CONTROLLER_PORT  = 10272;
     public static final int DEFAULT_TRAFFIC_CONTROLLER_PORT = 10752;
+    public static final int DEFAULT_BUFFER_SIZE_MSEC        = 250;
     public static final int DEFAULT_RATE_LIMIT_KBPS         = 16000;
     public static final int DEFAULT_DATA_POINTS_TO_KEEP     = 10000;
     

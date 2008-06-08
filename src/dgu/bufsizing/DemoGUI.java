@@ -318,9 +318,9 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(lblRateLimit);
         lblRateLimit.setBounds(770, 10, 250, 18);
 
-        slRateLimit.setMajorTickSpacing(100);
-        slRateLimit.setMaximum(1000);
-        slRateLimit.setMinorTickSpacing(50);
+        slRateLimit.setMajorTickSpacing(100000);
+        slRateLimit.setMaximum(1000000);
+        slRateLimit.setMinorTickSpacing(50000);
         slRateLimit.setPaintTicks(true);
         slRateLimit.setValue(0);
         pnlDetails.add(slRateLimit);
