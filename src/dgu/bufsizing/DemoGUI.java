@@ -70,6 +70,14 @@ public class DemoGUI extends javax.swing.JFrame {
                     d.redraw( gfx );
                     lblMap.setIcon( new ImageIcon( img ) );
                     try {
+                        BottleneckLink b = getSelectedBottleneck();
+                        synchronized( b ) {
+                            b.extendUserDataPoints( System.currentTimeMillis() );
+                            DemoGUI.collXput.manuallyNotifyListeners();
+                            DemoGUI.collOcc.manuallyNotifyListeners();
+                        }
+                    } catch( Exception e ) { /* no bottleneck is currently selected */ }
+                    try {
                         Thread.sleep( 250 );
                     } catch( InterruptedException e ) {
                         // no-op
@@ -128,9 +136,9 @@ public class DemoGUI extends javax.swing.JFrame {
         
         XYPlot plot = (XYPlot) chartXput.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
-        renderer.setSeriesPaint(0, new Color(0,196,0));
+        renderer.setSeriesPaint(0, new Color(0,0,128));
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
-        renderer.setSeriesPaint(1, new Color(196,0,0));
+        renderer.setSeriesPaint(1, new Color(128,0,0));
         renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
@@ -138,15 +146,15 @@ public class DemoGUI extends javax.swing.JFrame {
     
     private void createChartOcc() {
         chartOcc = prepareChart(
-            "Queue Occupancy vs. Time",
+            "Buffer Occupancy and Size vs. Time",
             "Time",
-            "Queue Occupancy (packets)",
+            "Size (packets)",
             collOcc
         );    
          
         XYPlot plot = (XYPlot) chartOcc.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
-        renderer.setSeriesPaint(0, new Color(0,196,0));
+        renderer.setSeriesPaint(0, new Color(0,0,128));
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesPaint(1, new Color(128,0,0));
         renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
@@ -172,24 +180,28 @@ public class DemoGUI extends javax.swing.JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     try {
                         BottleneckLink b = getSelectedBottleneck();
-                        
-                        // select the appropriate radio button for buffer sizing formula
-                        if( b.getUseRuleOfThumb() )
-                            optRuleOfThumb.setSelected( true );
-                        else
-                            optGuido.setSelected( true );
-                        
-                        // bind this bottleneck's data to the chart and remove old data
-                        DemoGUI.collXput.removeAllSeries();
-                        DemoGUI.collXput.addSeries( b.getDataThroughput() );
-                        DemoGUI.collXput.addSeries( b.getDataRateLimit() );
-                        DemoGUI.collOcc.removeAllSeries();
-                        DemoGUI.collOcc.addSeries( b.getDataQueueOcc() );
-                        DemoGUI.collOcc.addSeries( b.getDataBufSize() );
-                        
-                        // refresh the text
-                        DemoGUI.me.setRateLimitText( b );
-                        DemoGUI.me.setBufferSizeText( b );
+                        synchronized( b ) {
+                            // select the appropriate radio button for buffer sizing formula
+                            if( b.getUseRuleOfThumb() )
+                                optRuleOfThumb.setSelected( true );
+                            else
+                                optGuido.setSelected( true );
+
+                            // bind this bottleneck's data to the chart and remove old data
+                            DemoGUI.collXput.removeAllSeries( false );
+                            DemoGUI.collXput.addSeries( b.getDataThroughput(), false );
+                            DemoGUI.collXput.addSeries( b.getDataRateLimit(), false );
+                            DemoGUI.collOcc.removeAllSeries( false );
+                            DemoGUI.collOcc.addSeries( b.getDataQueueOcc(), false );
+                            DemoGUI.collOcc.addSeries( b.getDataBufSize(), false );
+
+                            DemoGUI.collXput.manuallyNotifyListeners();
+                            DemoGUI.collOcc.manuallyNotifyListeners();
+
+                            // refresh the text
+                            DemoGUI.me.setRateLimitText( b );
+                            DemoGUI.me.setBufferSizeText( b );
+                        }
                     } catch( Exception bleh ) {
                         //Do nothing, don't yet have a bottleneck
                     }

@@ -41,12 +41,12 @@ public class DemoBasic {
         new Link( la, su, Link.NF2C0  );
         new BottleneckLink( la, hou, Link.NF2C1, 
                 Demo.DEFAULT_BUFFER_SIZE_MSEC, Demo.DEFAULT_RATE_LIMIT_KBPS, 
-                Demo.DEFAULT_DATA_POINTS_TO_KEEP, true  );
+                Demo.DEFAULT_DATA_POINTS_TO_KEEP  );
         new Link( hou, la, Link.NF2C1  );
         
         new BottleneckLink( la, ny, Link.NF2C2, 
                 Demo.DEFAULT_BUFFER_SIZE_MSEC, Demo.DEFAULT_RATE_LIMIT_KBPS, 
-                Demo.DEFAULT_DATA_POINTS_TO_KEEP, true  );
+                Demo.DEFAULT_DATA_POINTS_TO_KEEP  );
         
         return demo;
     }

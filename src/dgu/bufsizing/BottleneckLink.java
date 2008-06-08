@@ -29,7 +29,6 @@ public class BottleneckLink extends Link<Router> {
     private int numFlows = 1;
     private int bufSize_msec;
     private int rateLimit_kbps;
-    private boolean notifyOnChange;
     
     // empirical data collected from the router
     private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -43,6 +42,7 @@ public class BottleneckLink extends Link<Router> {
     // settings for buffer size and rate limit as set by the user
     private final XYSeries dataBufSize = new XYSeries("Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private boolean forceSet;
     
     /** Puts xys into manual notification mode and sets a limit on the number of data points it may track. */
     public static void prepareXYSeries( XYSeries xys, int maxDataPoints ) {
@@ -62,10 +62,9 @@ public class BottleneckLink extends Link<Router> {
      * @throws IllegalArgValException  thrown if too many links already exist from src
      */
     public BottleneckLink( Router src, Node dst, int queueID,
-                           int bufSize_msec, int rateLimit_kbps, int dataPointsToKeep, boolean notifyOnChange ) 
+                           int bufSize_msec, int rateLimit_kbps, int dataPointsToKeep ) 
                            throws IllegalArgValException {
         super( src, dst, queueID );
-        this.notifyOnChange = notifyOnChange;
         
         prepareXYSeries( dataThroughput, dataPointsToKeep );
         prepareXYSeries( dataQueueOcc,   dataPointsToKeep );
@@ -74,17 +73,15 @@ public class BottleneckLink extends Link<Router> {
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
         prepareXYSeries( dataRateLimit, dataPointsToKeep );
         
-        // add an initial bogus data point (mutators require at least one data point to be present)
-        dataBufSize.add(   0, 0, false );
-        dataRateLimit.add( 0, 0, false );
-        
         // set the initial values
         this.bufSize_msec = bufSize_msec;
         this.rateLimit_kbps = rateLimit_kbps;
         
         // update the plots appropriately
+        forceSet = true;
         setBufSize_msec( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
+        forceSet = false;
     }
     static float temporary_counter = 0.0f; // xxx temporary
     public void draw( Graphics2D gfx ) {
@@ -144,9 +141,21 @@ public class BottleneckLink extends Link<Router> {
         else
             instantaneousQueueOcc = 1.0f;
         
-        dataThroughput.add( time_msec, throughput_kbps,  notifyOnChange );
-        dataQueueOcc.add(   time_msec, queueOcc_packets,   notifyOnChange );
-        dataDropRate.add(   time_msec, dropRate_percent, notifyOnChange );
+        dataThroughput.add( time_msec, throughput_kbps,  false );
+        dataQueueOcc.add(   time_msec, queueOcc_packets, false );
+        dataDropRate.add(   time_msec, dropRate_percent, false );
+        
+        extendUserDataPoints( time_msec );
+    }
+    
+    public synchronized void extendUserDataPoints( long time_msec ) {
+        // remove the old temporary endpoints of user-controlled values
+        dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
+        dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
+        
+        // add the new updated endpoints of user-controlled values and refresh the plot
+        dataBufSize.add(   time_msec, this.bufSize_msec,   false );
+        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
     }
     
     public boolean getUseRuleOfThumb() {
@@ -191,14 +200,12 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public synchronized void setBufSize_msec( int bufSize_msec ) {
-        if( this.bufSize_msec == bufSize_msec )
+        if( this.bufSize_msec == bufSize_msec || forceSet )
             return;
         
-        // remove the old fake endpoint (don't notify yet)
-        dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
-        
-        // add the real end point of the previous buffer size (don't notify yet)
-        dataBufSize.add( System.currentTimeMillis(), this.bufSize_msec, false );
+        // add the end point of the old buffer size
+        long time_msec = System.currentTimeMillis();
+        dataBufSize.add( time_msec, this.bufSize_msec, false );
         
         // set the new buffer size
         this.bufSize_msec = bufSize_msec;
@@ -206,11 +213,11 @@ public class BottleneckLink extends Link<Router> {
         // tell the router about the new buffer size in terms of packets
         updateBufSize();
         
-        // add the real start point of the new buffer size (don't notify yet)
-        dataBufSize.add( System.currentTimeMillis(), this.bufSize_msec, false );
+        // add the start point of the new buffer size
+        dataBufSize.add( time_msec, this.bufSize_msec, false );
         
-        // add a fake endpoint at the end of time and refresh the graph
-        dataBufSize.add( Long.MAX_VALUE, this.bufSize_msec, notifyOnChange );
+        // add the temporary start point of the new buffer size
+        dataBufSize.add( time_msec+.01, this.bufSize_msec, false );
     }
 
     public int getRateLimit_kbps() {
@@ -234,14 +241,12 @@ public class BottleneckLink extends Link<Router> {
         rateLimit_kbps = RouterController.translateRateLimitRegToKilobitsPerSec( real_value );
         
         // do nothing if the requested rate hasn't changed since the last request
-        if( this.rateLimit_kbps == rateLimit_kbps )
+        if( this.rateLimit_kbps == rateLimit_kbps || forceSet )
             return;
         
-        // remove the old fake endpoint (don't notify yet)
-        dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
-        
-        // add the real end point of the previous buffer size (don't notify yet)
-        dataRateLimit.add( System.currentTimeMillis(), this.rateLimit_kbps, false );
+        // add the end point of the old rate
+        long time_msec = System.currentTimeMillis();
+        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
         
         // set the new buffer size
         this.rateLimit_kbps = rateLimit_kbps;
@@ -251,11 +256,11 @@ public class BottleneckLink extends Link<Router> {
         // tell the router about the new rate limit
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
         
-        // add the real start point of the new buffer size (don't notify yet)
-        dataRateLimit.add( System.currentTimeMillis(), this.rateLimit_kbps, false );
+        // add the start point of the new rate
+        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
         
-        // add a fake endpoint at the end of time and refresh the graph
-        dataRateLimit.add( Long.MAX_VALUE, this.rateLimit_kbps, notifyOnChange );
+        // add the temporary end point of the new rate
+        dataRateLimit.add( time_msec+0.01, this.rateLimit_kbps, false );
     }
 
     public XYSeries getDataThroughput() {
