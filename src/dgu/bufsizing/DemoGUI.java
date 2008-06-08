@@ -31,7 +31,7 @@ import org.jfree.ui.*;
 public class DemoGUI extends javax.swing.JFrame {
     public static final String VERSION = "v0.01b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
-    private static JFreeChart chart;
+    private static JFreeChart chartXput, chartOcc;
     public static DemoGUI me;
     private final Demo demo;
     
@@ -50,7 +50,8 @@ public class DemoGUI extends javax.swing.JFrame {
         
         setTitle( "Experimenting with Programmable Routers in Real Networks " + VERSION );
         GUIHelper.setGUIDefaults();
-        createChart();
+        createChartXput();
+        createChartOcc();
         initComponents();
         prepareBindings();
         setIconImage( icon );
@@ -78,16 +79,16 @@ public class DemoGUI extends javax.swing.JFrame {
         }.start();
     }
     
-    private void createChart() {
-        chart = ChartFactory.createXYLineChart(
-            "Throughput and Queue Occupancy vs. Time",
-            "Time",
-            "Throughput (kbps)",
-            collXput,
+    private JFreeChart prepareChart( String title, String yAxis, String xAxis, XYSeriesCollection coll ) {
+        JFreeChart chart = ChartFactory.createXYLineChart(
+            title,
+            xAxis,
+            yAxis,
+            coll,
             PlotOrientation.VERTICAL,
-            true, //legend
+            true,  //legend
             false, //tooltips
-            false //URLs
+            false  //URLs
         );    
          
         chart.setBackgroundPaint(GUIHelper.DEFAULT_BG_COLOR);
@@ -114,6 +115,36 @@ public class DemoGUI extends javax.swing.JFrame {
         range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
         range.setAutoRange( true );
         
+        return chart;
+    }
+    
+    private void createChartXput() {
+        chartXput = prepareChart(
+            "Throughput vs. Time",
+            "Time",
+            "Throughput (kbps)",
+            collXput
+        );
+        
+        XYPlot plot = (XYPlot) chartXput.getPlot();
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+        renderer.setSeriesPaint(0, new Color(0,196,0));
+        renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(1, new Color(196,0,0));
+        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        plot.setRenderer(0, renderer);
+        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+    }
+    
+    private void createChartOcc() {
+        chartOcc = prepareChart(
+            "Queue Occupancy vs. Time",
+            "Time",
+            "Queue Occupancy (packets)",
+            collOcc
+        );    
+         
+        XYPlot plot = (XYPlot) chartOcc.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,196,0));
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
@@ -121,23 +152,6 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-        
-        NumberAxis range2 = new NumberAxis("Queue Occupancy (Packets)");
-        plot.setRangeAxis(1, range2);
-        plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
-        range2.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
-        range2.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
-        range2.setAutoRange(true);
-        
-        XYLineAndShapeRenderer renderer2 = new XYLineAndShapeRenderer(true, false);
-        renderer2.setPaint(new Color(196,0,0));
-        renderer2.setSeriesStroke(0, new BasicStroke(2f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
-        renderer2.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
-        plot.setRenderer(1, renderer2);
-        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-        
-        plot.setDataset(1, collOcc);
-        plot.mapDatasetToRangeAxis(1, 1);
     }
     
     BottleneckLink getSelectedBottleneck() {
@@ -281,7 +295,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slBufferSize = new JSliderBound( "bufSize_msec" );
         lblRateLimit = new java.awt.Label();
         slRateLimit = new JSliderBound( "rateLimit_kbps" );
-        pnlChart = new ChartPanel(chart);
+        pnlChartXput = new ChartPanel(chartXput);
         pnlSizing = new javax.swing.JPanel();
         optRuleOfThumb = new javax.swing.JRadioButton();
         optGuido = new javax.swing.JRadioButton();
@@ -290,6 +304,7 @@ public class DemoGUI extends javax.swing.JFrame {
         cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
+        pnlChartOcc = new ChartPanel(chartOcc);
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -325,10 +340,10 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(slRateLimit);
         slRateLimit.setBounds(767, 15, 250, 45);
 
-        pnlChart.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        pnlChart.setLayout(null);
-        pnlDetails.add(pnlChart);
-        pnlChart.setBounds(2, 75, 1015, 410);
+        pnlChartXput.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlChartXput.setLayout(null);
+        pnlDetails.add(pnlChartXput);
+        pnlChartXput.setBounds(2, 75, 507, 410);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -373,6 +388,11 @@ public class DemoGUI extends javax.swing.JFrame {
         lblNode.setText("Node:");
         pnlDetails.add(lblNode);
         lblNode.setBounds(5, 10, 80, 25);
+
+        pnlChartOcc.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlChartOcc.setLayout(null);
+        pnlDetails.add(pnlChartOcc);
+        pnlChartOcc.setBounds(511, 75, 507, 410);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -420,7 +440,8 @@ private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.ButtonGroup optGroupRule;
     private javax.swing.JRadioButton optGuido;
     private javax.swing.JRadioButton optRuleOfThumb;
-    private org.jfree.chart.ChartPanel pnlChart;
+    private org.jfree.chart.ChartPanel pnlChartOcc;
+    private org.jfree.chart.ChartPanel pnlChartXput;
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
     private javax.swing.JPanel pnlSizing;
