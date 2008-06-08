@@ -114,6 +114,6 @@ public abstract class Node implements Drawable {
     }
     
     public String toString() {
-        return nameShort + " (" + getTypeString() + ")";
+        return nameShort;
     }
 }
