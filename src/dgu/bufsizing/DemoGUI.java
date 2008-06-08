@@ -66,7 +66,9 @@ public class DemoGUI extends javax.swing.JFrame {
             public void run() {
                 gfx.setBackground( Color.WHITE );
                 gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+                gfx.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 gfx.setFont( GUIHelper.DEFAULT_FONT_BOLD );
+                gfx.setComposite( Drawable.COMPOSITE_OPAQUE );
                 
                 while( true ) {
                     d.redraw( gfx );

@@ -21,13 +21,13 @@ public class Router extends Node {
     private final RouterController controller;
     
     
-    public Router( String name, String nameShort, int x, int y, int commandPort ) {
-        super( name, nameShort, x, y );
+    public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort ) {
+        super( name, nameShort, importance, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         controller = new RouterController( commandPort );
     }
     
-    public void drawNode( Graphics2D gfx ) {
+    protected void drawNode( Graphics2D gfx ) {
         // draw the router
         gfx.setPaint( PAINT_ROUTER );
         gfx.fill( objForDrawing );

@@ -87,12 +87,12 @@ public class Demo {
         
         // then draw nodes
         for( Node n : genericNodes )
-            n.drawNode( gfx );
+            n.draw( gfx );
         
         for( TrafficGenerator t : trafficGenerators )
-            t.drawNode( gfx );
+            t.draw( gfx );
         
         for( Router r : routers )
-            r.drawNode( gfx );
+            r.draw( gfx );
     }
 }

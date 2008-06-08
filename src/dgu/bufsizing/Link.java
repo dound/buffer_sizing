@@ -37,6 +37,10 @@ public class Link<SOURCE_TYPE extends Node> implements Drawable {
         gfx.drawLine( src.getX(), src.getY(), dst.getX(), dst.getY() );
     }
     
+    public Node getDestination() {
+        return dst;
+    }
+    
     public String toString() {
         return src.toString() + " ===> " + dst.toString();
     }

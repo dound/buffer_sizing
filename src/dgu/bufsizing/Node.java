@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.util.IllegalArgValException;
 import dgu.util.swing.GUIHelper;
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -10,6 +11,12 @@ import java.util.LinkedList;
  * @author David Underhill
  */
 public abstract class Node implements Drawable {
+
+    public enum Importance {
+        NIL,
+        IMPORTANT
+    }
+    
     // connection information
     public static int MAX_LINKS = 4;
     private Link[] link = new Link[MAX_LINKS];
@@ -19,13 +26,15 @@ public abstract class Node implements Drawable {
     
     // basic properties for GUI stuff
     private final String name, nameShort;
+    private final Importance importance;
     private final int x;
     private final int y;
     private boolean selected;
     
-    public Node( String name, String nameShort, int x, int y ) {
+    public Node( String name, String nameShort, Importance importance, int x, int y ) {
         this.name = name;
         this.nameShort = nameShort;
+        this.importance = importance;
         this.x = x;
         this.y = y;
         this.selected = false;
@@ -34,21 +43,45 @@ public abstract class Node implements Drawable {
             link[i] = null;
     }
     
-    public final void draw( Graphics2D gfx ) {
-        drawLinks( gfx );
-        drawNode(  gfx );
+    /** draws the node itself (but not its links) */
+    public void draw( Graphics2D gfx ) {
+        // fade out the component and it is not important
+        Composite compositeOriginal = null;
+        if( importance != Importance.IMPORTANT ) {
+            compositeOriginal = gfx.getComposite();
+            gfx.setComposite( Drawable.COMPOSITE_HALF );
+        }
+        
+        drawNode( gfx );
+        
+        // restore the original compositing object if we changed it
+        if( compositeOriginal != null )
+            gfx.setComposite( compositeOriginal );
     }
     
+    /** draws only a node's links */
     public final void drawLinks( Graphics2D gfx ) {
-        for( int i=0; i<numLinks; i++ )
+        for( int i=0; i<numLinks; i++ ) {
+            // fade out the component and its endpoints are not both important
+            Composite compositeOriginal = null;
+            if( importance != Importance.IMPORTANT || link[i].getDestination().getImportance() != Importance.IMPORTANT ) {
+                compositeOriginal = gfx.getComposite();
+                gfx.setComposite( Drawable.COMPOSITE_HALF );
+            }
+            
             link[i].draw( gfx );
+            
+            // restore the original compositing object if we changed it
+            if( compositeOriginal != null )
+                gfx.setComposite( compositeOriginal );
+        }
     }
     
     protected final void drawName( Graphics2D gfx, int x, int y ) {
         GUIHelper.drawCeneteredString( name, gfx, x, y );
     }
 
-    public abstract void drawNode( Graphics2D gfx );
+    protected abstract void drawNode( Graphics2D gfx );
 
     public abstract String getTypeString();
 
@@ -95,6 +128,10 @@ public abstract class Node implements Drawable {
     
     public String getNameShort() {
         return nameShort;
+    }
+    
+    public Importance getImportance() {
+        return importance;
     }
     
     public int getX() {

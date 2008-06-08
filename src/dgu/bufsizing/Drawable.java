@@ -1,7 +1,9 @@
 package dgu.bufsizing;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 
@@ -16,6 +18,8 @@ public interface Drawable {
     public static final Color       COLOR_DEFAULT  = Color.BLACK;
     public static final Color       COLOR_SELECTED = Color.ORANGE;
     public static final Paint       PAINT_DEFAULT  = COLOR_DEFAULT;
+    public static final Composite   COMPOSITE_OPAQUE = AlphaComposite.getInstance( AlphaComposite.SRC_OVER, 1.0f );
+    public static final Composite   COMPOSITE_HALF = AlphaComposite.getInstance( AlphaComposite.SRC_OVER, 0.5f );
     
     public abstract void draw( Graphics2D gfx );
 }
