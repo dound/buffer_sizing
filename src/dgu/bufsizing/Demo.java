@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -51,7 +52,14 @@ public class Demo {
     }
 
     void redraw(Graphics2D gfx) {
+        // clear the drawing space
+        gfx.clearRect( 0, 0, DemoGUI.CANVAS_WIDTH, DemoGUI.CANVAS_HEIGHT );
+        
+        // draw the background image
+        Composite compositeOriginal = gfx.getComposite();
+        gfx.setComposite( Drawable.COMPOSITE_HALF );
         gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, null );
+        gfx.setComposite( compositeOriginal );
         
         // draw the legend
         String legendLbl = "Increasing Utilization -->";
