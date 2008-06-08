@@ -324,12 +324,12 @@ public class DemoGUI extends javax.swing.JFrame {
         slRateLimit.setPaintTicks(true);
         slRateLimit.setValue(0);
         pnlDetails.add(slRateLimit);
-        slRateLimit.setBounds(770, 15, 250, 45);
+        slRateLimit.setBounds(767, 15, 250, 45);
 
         pnlChart.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnlChart.setLayout(null);
         pnlDetails.add(pnlChart);
-        pnlChart.setBounds(5, 75, 1015, 435);
+        pnlChart.setBounds(2, 75, 1015, 410);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -383,12 +383,10 @@ public class DemoGUI extends javax.swing.JFrame {
         lblMap.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblMap.setDoubleBuffered(true);
         pnlMap.add(lblMap);
-        lblMap.setBounds(0, 0, 1028, 250);
+        lblMap.setBounds(0, 0, 1018, 250);
 
         getContentPane().add(pnlMap);
         pnlMap.setBounds(0, 0, 1028, 250);
-
-        pack();
     }// </editor-fold>//GEN-END:initComponents
 
 private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
