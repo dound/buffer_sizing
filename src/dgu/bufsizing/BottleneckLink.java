@@ -200,7 +200,7 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public synchronized void setBufSize_msec( int bufSize_msec ) {
-        if( this.bufSize_msec == bufSize_msec || forceSet )
+        if( this.bufSize_msec == bufSize_msec && !forceSet )
             return;
         
         // add the end point of the old buffer size
@@ -217,7 +217,7 @@ public class BottleneckLink extends Link<Router> {
         dataBufSize.add( time_msec, this.bufSize_msec, false );
         
         // add the temporary start point of the new buffer size
-        dataBufSize.add( time_msec+.01, this.bufSize_msec, false );
+        dataBufSize.add( time_msec, this.bufSize_msec, false );
     }
 
     public int getRateLimit_kbps() {
@@ -241,7 +241,7 @@ public class BottleneckLink extends Link<Router> {
         rateLimit_kbps = RouterController.translateRateLimitRegToKilobitsPerSec( real_value );
         
         // do nothing if the requested rate hasn't changed since the last request
-        if( this.rateLimit_kbps == rateLimit_kbps || forceSet )
+        if( this.rateLimit_kbps == rateLimit_kbps && !forceSet )
             return;
         
         // add the end point of the old rate
@@ -260,7 +260,7 @@ public class BottleneckLink extends Link<Router> {
         dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
         
         // add the temporary end point of the new rate
-        dataRateLimit.add( time_msec+0.01, this.rateLimit_kbps, false );
+        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
     }
 
     public XYSeries getDataThroughput() {

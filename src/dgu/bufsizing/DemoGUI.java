@@ -29,6 +29,8 @@ import org.jfree.ui.*;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
+    public static final int TIME_BETWEEN_REFRESHES = 250;
+    
     public static final String VERSION = "v0.01b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chartXput, chartOcc;
@@ -69,16 +71,15 @@ public class DemoGUI extends javax.swing.JFrame {
                 while( true ) {
                     d.redraw( gfx );
                     lblMap.setIcon( new ImageIcon( img ) );
-                    try {
-                        BottleneckLink b = getSelectedBottleneck();
+                    BottleneckLink b = getSelectedBottleneck();
+                    if( b != null ) {
                         synchronized( b ) {
                             b.extendUserDataPoints( System.currentTimeMillis() );
-                            DemoGUI.collXput.manuallyNotifyListeners();
-                            DemoGUI.collOcc.manuallyNotifyListeners();
+                            DemoGUI.me.refreshCharts();
                         }
-                    } catch( Exception e ) { /* no bottleneck is currently selected */ }
+                    }
                     try {
-                        Thread.sleep( 250 );
+                        Thread.sleep( TIME_BETWEEN_REFRESHES );
                     } catch( InterruptedException e ) {
                         // no-op
                     }
@@ -87,7 +88,7 @@ public class DemoGUI extends javax.swing.JFrame {
         }.start();
     }
     
-    private JFreeChart prepareChart( String title, String yAxis, String xAxis, XYSeriesCollection coll ) {
+    private JFreeChart prepareChart( String title, String xAxis, String yAxis, XYSeriesCollection coll ) {
         JFreeChart chart = ChartFactory.createXYLineChart(
             title,
             xAxis,
@@ -195,9 +196,8 @@ public class DemoGUI extends javax.swing.JFrame {
                             DemoGUI.collOcc.addSeries( b.getDataQueueOcc(), false );
                             DemoGUI.collOcc.addSeries( b.getDataBufSize(), false );
 
-                            DemoGUI.collXput.manuallyNotifyListeners();
-                            DemoGUI.collOcc.manuallyNotifyListeners();
-
+                            DemoGUI.me.refreshCharts();
+                            
                             // refresh the text
                             DemoGUI.me.setRateLimitText( b );
                             DemoGUI.me.setBufferSizeText( b );
@@ -218,6 +218,16 @@ public class DemoGUI extends javax.swing.JFrame {
             d.load();
             d.setSelectedIndex( 0 );
         }
+    }
+    
+    /**
+     * Refreshses the charts.  This should be called while the current 
+     * bottleneck link's lock is held to prevent it data from changing during 
+     * the refresh this induces.
+     */
+    private void refreshCharts() {
+        DemoGUI.collXput.manuallyNotifyListeners();
+        DemoGUI.collOcc.manuallyNotifyListeners();
     }
     
     public static class StringPair {
