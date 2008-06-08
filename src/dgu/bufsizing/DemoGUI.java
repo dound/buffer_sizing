@@ -141,6 +141,12 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.mapDatasetToRangeAxis(1, 1);
     }
     
+    BottleneckLink getSelectedBottleneck() {
+        // get the bottleneck which is now selected
+        Router rtr = (Router)cboBottleneck.getBindingDelegate().getBinding().getBoundItem();
+        return rtr.getBottleneckLinkAt( cboBottleneck.getSelectedIndex() );
+    }
+    
     void prepareBindings() {
         {
             ListBasedComponentDelegate d = cboBottleneck.getBindingDelegate();
@@ -148,13 +154,11 @@ public class DemoGUI extends javax.swing.JFrame {
             d.addBoundComponent( slRateLimit );
             d.setPrimaryComponent( -2 );
             
-            // manual actions to take once the binding data has been loaded
-            d.addBindingListener( new BindingAdapter() {
-                public void bindingLoaded( BindingEvent e ) {
+            // manually populate the options whenever the combo box for bottlenecks is clicked
+            cboBottleneck.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
                     try {
-                        // get the bottleneck which is now selected
-                        LinkedList<BottleneckLink> links = (LinkedList<BottleneckLink>)e.getBinding().getBoundItem();
-                        BottleneckLink b = links.get( e.getBinding().getIndexAt() );
+                        BottleneckLink b = getSelectedBottleneck();
                         
                         // select the appropriate radio button for buffer sizing formula
                         if( b.getUseRuleOfThumb() )
@@ -332,11 +336,21 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
+        optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optRuleOfThumbActionPerformed(evt);
+            }
+        });
         pnlSizing.add(optRuleOfThumb);
         optRuleOfThumb.setBounds(10, 15, 250, 22);
 
         optGroupRule.add(optGuido);
         optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
+        optGuido.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optGuidoActionPerformed(evt);
+            }
+        });
         pnlSizing.add(optGuido);
         optGuido.setBounds(10, 35, 250, 22);
 
@@ -376,6 +390,26 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
+    try {
+        BottleneckLink b = getSelectedBottleneck();
+        if( !b.getUseRuleOfThumb() )
+            b.setUseRuleOfThumb( true );
+    } catch( Exception bleh ) {
+        //Do nothing, don't yet have a bottleneck
+    }
+}//GEN-LAST:event_optRuleOfThumbActionPerformed
+
+private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optGuidoActionPerformed
+    try {
+        BottleneckLink b = getSelectedBottleneck();
+        if( b.getUseRuleOfThumb() )
+            b.setUseRuleOfThumb( false );
+    } catch( Exception bleh ) {
+        //Do nothing, don't yet have a bottleneck
+    }
+}//GEN-LAST:event_optGuidoActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;

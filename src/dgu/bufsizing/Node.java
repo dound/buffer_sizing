@@ -82,6 +82,10 @@ public abstract class Node implements Drawable {
         return (BottleneckLink)link[i];
     }
     
+    public BottleneckLink getBottleneckLinkAt( int i ) {
+        return bottlenecks.get( i );
+    }
+    
     public String getName() {
         return name;
     }
