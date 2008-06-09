@@ -166,10 +166,20 @@ public class BottleneckLink extends Link<Router> {
         extendUserDataPoints( time_msec );
     }
     
+    public synchronized void clearData() {
+        dataThroughput.clear( false );
+        dataQueueOcc.clear(   false );
+        dataDropRate.clear(   false );
+        dataBufSize.clear(    false );
+        dataRateLimit.clear(  false );
+    }
+    
     public synchronized void extendUserDataPoints( long time_msec ) {
         // remove the old temporary endpoints of user-controlled values
-        dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
-        dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
+        if( dataBufSize.getItemCount() > 0 ) {
+            dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
+            dataRateLimit.remove( dataRateLimit.getItemCount() - 1, false );
+        }
         
         // add the new updated endpoints of user-controlled values and refresh the plot
         dataBufSize.add(   time_msec, this.bufSize_msec,   false );

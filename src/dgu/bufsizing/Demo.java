@@ -34,6 +34,12 @@ public class Demo {
         genericNodes.add( n );
     }
     
+    public void clearData() {
+        for( Router r : routers )
+            for( BottleneckLink b : r.getBottlenecks() )
+                b.clearData();
+    }
+    
     public void runDemo() {
         final Demo demo = this;
         java.awt.EventQueue.invokeLater(new Runnable() {

@@ -362,6 +362,8 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
         pnlChartOcc = new ChartPanel(chartOcc);
+        btnClearAllData = new javax.swing.JButton();
+        btnClearThisData = new javax.swing.JButton();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -373,29 +375,31 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBufferSize.setAlignment(java.awt.Label.CENTER);
         lblBufferSize.setText("Buffer = 1000ms");
         pnlDetails.add(lblBufferSize);
-        lblBufferSize.setBounds(510, 10, 250, 18);
+        lblBufferSize.setBounds(452, 10, 220, 18);
         lblBufferSize.getAccessibleContext().setAccessibleName("Buffer = 1000ms !(1000kB / 512pkt)! vs. (1000 / 512))");
 
+        slBufferSize.setBorder(null);
         slBufferSize.setMajorTickSpacing(100);
         slBufferSize.setMaximum(500);
         slBufferSize.setMinorTickSpacing(25);
         slBufferSize.setPaintTicks(true);
         slBufferSize.setValue(0);
         pnlDetails.add(slBufferSize);
-        slBufferSize.setBounds(510, 15, 250, 45);
+        slBufferSize.setBounds(452, 15, 220, 45);
 
         lblRateLimit.setAlignment(java.awt.Label.CENTER);
         lblRateLimit.setText("Rate Limit = 100Mb/s");
         pnlDetails.add(lblRateLimit);
-        lblRateLimit.setBounds(770, 10, 250, 18);
+        lblRateLimit.setBounds(675, 10, 220, 18);
 
+        slRateLimit.setBorder(null);
         slRateLimit.setMajorTickSpacing(100000);
         slRateLimit.setMaximum(1000000);
         slRateLimit.setMinorTickSpacing(50000);
         slRateLimit.setPaintTicks(true);
         slRateLimit.setValue(0);
         pnlDetails.add(slRateLimit);
-        slRateLimit.setBounds(767, 15, 250, 45);
+        slRateLimit.setBounds(675, 15, 220, 45);
 
         pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
@@ -406,6 +410,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
+        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -413,9 +418,10 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 250, 22);
+        optRuleOfThumb.setBounds(10, 15, 220, 22);
 
         optGroupRule.add(optGuido);
+        optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -423,18 +429,18 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 250, 22);
+        optGuido.setBounds(10, 35, 220, 22);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(245, 5, 265, 63);
+        pnlSizing.setBounds(220, 5, 225, 63);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 
         pnlDetails.add(cboNode);
-        cboNode.setBounds(90, 10, 150, 25);
+        cboNode.setBounds(90, 10, 130, 25);
 
         pnlDetails.add(cboBottleneck);
-        cboBottleneck.setBounds(90, 40, 150, 25);
+        cboBottleneck.setBounds(90, 40, 130, 25);
 
         lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblBottleneck.setText("Bottleneck:");
@@ -450,6 +456,24 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlChartOcc.setLayout(null);
         pnlDetails.add(pnlChartOcc);
         pnlChartOcc.setBounds(508, 75, 509, 415);
+
+        btnClearAllData.setText("Clear All Data");
+        btnClearAllData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearAllDataActionPerformed(evt);
+            }
+        });
+        pnlDetails.add(btnClearAllData);
+        btnClearAllData.setBounds(900, 35, 115, 20);
+
+        btnClearThisData.setText("Clear Data");
+        btnClearThisData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearThisDataActionPerformed(evt);
+            }
+        });
+        pnlDetails.add(btnClearThisData);
+        btnClearThisData.setBounds(900, 10, 115, 20);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -485,7 +509,19 @@ private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     }
 }//GEN-LAST:event_optGuidoActionPerformed
 
+private void btnClearAllDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearAllDataActionPerformed
+    demo.clearData();
+}//GEN-LAST:event_btnClearAllDataActionPerformed
+
+private void btnClearThisDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearThisDataActionPerformed
+    BottleneckLink b = getSelectedBottleneck();
+    if( b != null )
+        b.clearData();
+}//GEN-LAST:event_btnClearThisDataActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnClearAllData;
+    private javax.swing.JButton btnClearThisData;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
     private dgu.util.swing.binding.JComboBoxBound cboNode;
     private javax.swing.JSeparator jSeparator1;
