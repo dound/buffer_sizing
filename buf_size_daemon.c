@@ -19,6 +19,9 @@
 #include "nf2util.h"
 #include "reg_defines_bsr.h"
 
+/** SEND_STATS, if defined, will poll stats and send them to the server (don't use this and eventcap) */
+/* #define SEND_STATS */
+
 #define STR_VERSION "0.02b"
 
 #define STR_USAGE "\
@@ -33,11 +36,11 @@ Buffer Size Reporting Daemon v%s\n\
 #define UPDATE_INTERVAL_NSEC (1000 * 1000) /* one per millisecond */
 
 /** port to contact the server on */
-#define DEFAULT_PORT 60308
+#define DEFAULT_PORT 10272
 
 /** encapsulates a message to a client's controller */
 typedef struct {
-#ifdef _BIG_ENDIAN_
+#ifdef _LITTLE_ENDIAN_
     byte code:6;
     byte queue:2;
 #else
@@ -70,9 +73,9 @@ static void inform_server_loop();
 static uint32_t get_rate_limit( int queue );
 static void set_rate_limit( int queue, uint32_t shift );
 static uint32_t get_bytes_sent();
-static uint32_t get_buffer_size( int queue );
-static void set_buffer_size( int queue, uint32_t size );
-static uint32_t get_queue_occupancy( int queue );
+static uint32_t get_buffer_size_packets( int queue );
+static void set_buffer_size_packets( int queue, uint32_t size );
+static uint32_t get_queue_occupancy_packets( int queue );
 
 int main( int argc, char** argv ) {
     server_ip = 0;
@@ -131,7 +134,9 @@ int main( int argc, char** argv ) {
     }
 
     /* tell the server what is going on from time to time */
+#if SEND_STATS
     inform_server_loop();
+#endif
 
     /* cleanup */
     closeDescriptor( &nf2 );
@@ -186,12 +191,12 @@ static void* controller_main( void* nil ) {
                 break;
 
             case CODE_GET_BUF_SIZE:
-                packet.val = htonl( get_buffer_size(packet.queue) );
+                packet.val = htonl( get_buffer_size_packets(packet.queue) );
                 ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_BUF_SIZE:
-                set_buffer_size( packet.queue, packet.val );
+                set_buffer_size_packets( packet.queue, packet.val );
                 break;
 
             default:
@@ -249,7 +254,7 @@ static void inform_server_loop() {
         update.sec        = htonl( now.tv_sec );
         update.usec       = htonl( now.tv_usec );
         update.bytes_sent = htonl( get_bytes_sent() );
-        update.queue_occ  = htonl( get_queue_occupancy(1) );
+        update.queue_occ  = htonl( get_queue_occupancy_packets(1) );
         /* note: still have 2B before we hit min Eth payload (incl overheads) */
 
         /* reuse sin as server addr */
@@ -307,7 +312,7 @@ static uint32_t get_bytes_sent( int queue ) {
     return val;
 }
 
-static inline unsigned get_buffer_size_reg( int queue ) {
+static inline unsigned get_buffer_size_packets_reg( int queue ) {
     unsigned reg;
     switch( queue ) {
     case 0: reg = OQ_MAX_PKTS_IN_Q_REG_0; break;
@@ -318,17 +323,17 @@ static inline unsigned get_buffer_size_reg( int queue ) {
     return reg;
 }
 
-static uint32_t get_buffer_size( int queue ) {
+static uint32_t get_buffer_size_packets( int queue ) {
     uint32_t val;
-    readReg( &nf2, get_buffer_size_reg(queue), &val );
+    readReg( &nf2, get_buffer_size_packets_reg(queue), &val );
     return val;
 }
 
-static void set_buffer_size( int queue, uint32_t size ) {
-    writeReg( &nf2, get_buffer_size_reg(queue), size );
+static void set_buffer_size_packets( int queue, uint32_t size ) {
+    writeReg( &nf2, get_buffer_size_packets_reg(queue), size );
 }
 
-static uint32_t get_queue_occupancy( int queue ) { /* in 8B words */
+static uint32_t get_queue_occupancy_packets( int queue ) {
     unsigned reg;
     switch( queue ) {
     case 0: reg = OQ_NUM_PKTS_IN_Q_REG_0; break;
