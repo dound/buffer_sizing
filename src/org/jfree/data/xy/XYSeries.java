@@ -449,6 +449,17 @@ public class XYSeries extends Series implements Cloneable, Serializable {
             fireSeriesChanged();
         }
     }
+    
+    /**
+     * Removes all data items from the series.  Only fires an event if notify 
+     * is true.
+     */
+    public void clear( boolean notify ) {
+        if (this.data.size() > 0) {
+            this.data.clear();
+            if( notify ) fireSeriesChanged();
+        }
+    }
 
     /**
      * Return the data item with the specified index.
