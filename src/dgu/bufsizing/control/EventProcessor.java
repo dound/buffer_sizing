@@ -183,7 +183,7 @@ public class EventProcessor extends Thread {
                 //System.err.println( "    got bytes for shorty: " + Integer.toHexString(val) );
                 int queue_id = (val & 0x38000000) >> 27;           
                 int plen_bytes = ((val & 0x07F80000) >> 19) * 8 - 8; /* - 8 to not include NetFPGA overhead */
-                timestamp_adjusted_8ns = timestamp_8ns + (val & 0x0007FFFF);
+                timestamp_adjusted_8ns = (timestamp_8ns & 0xFFFFFFFFFFF80000L) | (val & 0x0007FFFF);
                 index += 4;
                 
                 debug_println( "     got short event " + type + " (" + plen_bytes + "B) at timestamp " + timestamp_adjusted_8ns + " for queue " + queue_id );
@@ -193,12 +193,17 @@ public class EventProcessor extends Thread {
                     continue;
                 }
                 
-                if( type == EventType.TYPE_ARRIVE.type )
+                if( type == EventType.TYPE_ARRIVE.type ) {
+                    debug_println( "arrival => " + (b.getQueueOcc_bytes() + plen_bytes) );
                     b.arrival( timestamp_adjusted_8ns, plen_bytes );
-                else if( type == EventType.TYPE_DEPART.type )
+                }
+                else if( type == EventType.TYPE_DEPART.type ) {
+                    debug_println( "departure => " + (b.getQueueOcc_bytes() - plen_bytes) );
                     b.departure( timestamp_adjusted_8ns, plen_bytes );
+                }
                 else
-                    b.dropped( timestamp_adjusted_8ns, plen_bytes );
+                    System.err.println( "dropped " + plen_bytes );
+                //    b.dropped( timestamp_adjusted_8ns, plen_bytes );
             }
         }
         

@@ -14,9 +14,9 @@ import org.jfree.data.xy.XYSeries;
  * @author David Underhill
  */
 public class BottleneckLink extends Link<Router> {
-    private static final int QUEUE_WIDTH  = 50;
-    private static final int QUEUE_HEIGHT = 12;
-    public static final BasicStroke STROKE_OCC = new BasicStroke( 8.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL ); 
+    private static final int QUEUE_WIDTH  = 100;
+    private static final int QUEUE_HEIGHT = 24;
+    public static final BasicStroke STROKE_OCC = new BasicStroke( QUEUE_HEIGHT*0.75f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL ); 
     public static final BasicStroke STROKE_BOTTLENECK = new BasicStroke( 5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final BasicStroke STROKE_BOTTLENECK_OUTLINE = new BasicStroke( 7.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
     public static final BasicStroke STROKE_BOTTLENECK_SEL_OUTLINE = new BasicStroke( 9.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER ); 
@@ -86,7 +86,7 @@ public class BottleneckLink extends Link<Router> {
     }
      
     private void addDataPointToBufferSizeData( long time_ns8 ) {
-        dataBufSize.add( time_ns8, bytesToSizeRangeUnits(getBufSize_bytes(this.useRuleOfThumb)), false  );
+        //dataBufSize.add( time_ns8, bytesToSizeRangeUnits(getBufSize_bytes(this.useRuleOfThumb)), false  );
     }
     
     private void addDataPointToQueueOccData( long time_ns8 ) {
@@ -224,6 +224,10 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void dropped( long rtr_time_ns8, int num_bytes ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
+    }
+    
+    public int getQueueOcc_bytes() {
+        return queueOcc_bytes;
     }
     
     //public static long c_pkts = 0, c_bytes = 0;
