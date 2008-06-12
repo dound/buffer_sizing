@@ -20,12 +20,16 @@ public class Router extends Node {
     private final Ellipse2D objForDrawing;
     
     private final RouterController controller;
+    private final int statsPort;
     
     public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort, int statsPort ) {
         super( name, nameShort, importance, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         controller = new RouterController( commandPort );
-        
+        this.statsPort = statsPort;
+    }
+    
+    public void startStatsListener() {
         if( statsPort != 0 )
             new EventProcessor( statsPort ).start();
     }

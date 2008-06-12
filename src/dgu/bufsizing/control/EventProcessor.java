@@ -78,22 +78,41 @@ public class EventProcessor extends Thread {
     
     /** reads byte i to i+3 to form an int */
     private static int extractInt( byte[] buf, int i ) {
-        int ret = 0;
-        ret  = (buf[i]   & 0x000000FF) << 24;
-        ret += (buf[i+1] & 0x0000FF00) << 16;
-        ret += (buf[i+2] & 0x00FF0000) << 8;
-        ret += (buf[i+3] & 0xFF000000);
-        return ret;
+        // convert to signed ints, clearing any bits set due to sign extension
+        int a = buf[i]   & 0x000000FF;
+        int b = buf[i+1] & 0x000000FF;
+        int c = buf[i+2] & 0x000000FF;
+        int d = buf[i+3] & 0x000000FF;
+        
+        // create the int
+        return a<<24 | b<<16 | c<<8 | d;
     }
     
     /** reads byte i to i+3 to form a long (use for unsigned ints which may use the MSB) */
     private static long extractUintAsLong( byte[] buf, int i ) {
         long ret = 0;
-        ret  = (buf[i]   & 0x000000FF) << 24;
-        ret += (buf[i+1] & 0x0000FF00) << 16;
-        ret += (buf[i+2] & 0x00FF0000) << 8;
-        ret += (buf[i+3] & 0xFF000000);
-        return ret;
+        
+        // convert to signed ints, clearing any bits set due to sign extension
+        int a = buf[i]   & 0x000000FF;
+        int b = buf[i+1] & 0x000000FF;
+        int c = buf[i+2] & 0x000000FF;
+        int d = buf[i+3] & 0x000000FF;
+        
+        // create the int
+        ret = ((long)a)<<24 | b<<16 | c<<8 | d;
+        
+        // clear any sign extended bits
+        return ret & 0x00000000FFFFFFFFL;
+    }
+    
+    private static long extractTimestamp( byte[] buf, int i ) {
+        long upper = extractUintAsLong(buf, i);
+        long lower = extractUintAsLong(buf, i+4);
+        return upper<<32L | lower;
+    }
+    
+    private static final void debug_println( String s ) {
+        //System.err.println( s );
     }
     
     /**
@@ -102,8 +121,6 @@ public class EventProcessor extends Thread {
      * @param buf          datagram containing an event capture payload
      */
     public static void handleEventCapPacket( int routerIndex, byte[] buf ) {
-        System.err.println( "got packet of length " + buf.length );
-        
         // always assume first bottleneck for now
         BottleneckLink b = DemoGUI.me.demo.getRouters().get(routerIndex).getBottleneckLinkAt(0);
         
@@ -113,17 +130,22 @@ public class EventProcessor extends Thread {
         index += 1;
         
         // skip the sequence number
+        debug_println( "seq = " + extractInt(buf, index) );
         index += 4;
         
         // get the timestamp before the queue data
-        long timestamp_8ns = extractUintAsLong(buf, index+NUM_QUEUES*8)<<32L + extractUintAsLong(buf,index+4);
-        if( !b.prepareForUpdate( timestamp_8ns ) )
+        long timestamp_8ns = extractTimestamp( buf, 70 );
+        if( !b.prepareForUpdate( timestamp_8ns ) ) {
+            debug_println( "old timestamp (ignoring) " + timestamp_8ns );
             return; // old, out-of-order packet
+        }
+        else
+            debug_println( "got new timestamp " + timestamp_8ns );
         
         // get queue occupancy data
         for( int i=0; i<NUM_QUEUES; i++ ) {
             // update the queue with its new absolute value
-            if( index == 2 ) // only handle NF2C1 for now
+            if( i == 2 ) // only handle NF2C1 for now
                 b.setOccupancy( timestamp_8ns, 8 * extractInt(buf, index) );
             index += 4;
             
@@ -136,20 +158,30 @@ public class EventProcessor extends Thread {
         
         // process each event
         long timestamp_adjusted_8ns = timestamp_8ns;
-        for( int i=0; i<num_events; i++ ) {
-            int type = buf[index] & 0xFF;
-            if( type == EventType.TYPE_TS.type )
-                timestamp_8ns = extractUintAsLong(buf, index+NUM_QUEUES*8)<<32L + extractUintAsLong(buf,index+4);  
+        for( int i=0; i<num_events; i++ ) {            
+            int type = (buf[index] & 0xC0) >> 6;
+            debug_println( "  got type = " + Integer.toHexString(type) );
+            
+            if( type == EventType.TYPE_TS.type ) {
+                timestamp_8ns = extractTimestamp( buf, index );
+                index += 8;
+                debug_println( "    got timestamp " + timestamp_8ns );
+            }
             else {
                 // determine the # of bytes involved and the offset
                 int val = extractInt( buf, index );
-                int queue_id = (val & 0x0000001C) >> 2;
+                //System.err.println( "    got bytes for shorty: " + Integer.toHexString(val) );
+                int queue_id = (val & 0x38000000) >> 27;           
+                int plen_bytes = ((val & 0x07F80000) >> 19) * 8 - 8; /* - 8 to not include NetFPGA overhead */
+                timestamp_adjusted_8ns = timestamp_8ns + (val & 0x0007FFFF);
+                index += 4;
+                
+                debug_println( "     got short event " + type + " (" + plen_bytes + "B) at timestamp " + timestamp_adjusted_8ns + " for queue " + queue_id );
                 if( queue_id != 2 ) {
                     // only pay attention to NF2C1 for now
+                    debug_println( "    ignoring event for queue " + queue_id );
                     continue;
-                }                
-                int plen_bytes = ((val & 0x00001FE0) >> 5) * 8;
-                timestamp_adjusted_8ns = timestamp_8ns + ((val & 0xFFFFE000) >> 13);
+                }
                 
                 if( type == EventType.TYPE_ARRIVE.type )
                     b.arrival( timestamp_adjusted_8ns, plen_bytes );

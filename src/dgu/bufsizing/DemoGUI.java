@@ -88,6 +88,10 @@ public class DemoGUI extends javax.swing.JFrame {
                 }
             }
         }.start();
+        
+        // start the stats listener threads
+        for( Router r : demo.getRouters() )
+            r.startStatsListener();
     }
     
     private JFreeChart prepareChart( String title, String xAxis, String yAxis, XYSeriesCollection coll ) {
