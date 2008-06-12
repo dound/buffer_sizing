@@ -133,7 +133,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartXput = prepareChart(
             "Throughput vs. Time",
             "Time",
-            "Throughput (bps)",
+            "Throughput (kbps)",
             collXput
         );
         
@@ -151,7 +151,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartOcc = prepareChart(
             "Buffer Occupancy and Size vs. Time",
             "Time",
-            "Size (bytes)",
+            "Size (kB)",
             collOcc
         );    
          
@@ -313,20 +313,16 @@ public class DemoGUI extends javax.swing.JFrame {
         synchronized( l ) {
             int size_msec        = l.getBufSize_msec();
             int size_old_bytes   = l.getBufSize_bytes(true);
-            int size_old_packets = l.getBufSize_packets(true);
             int size_new_bytes   = l.getBufSize_bytes(false);
-            int size_new_packets = l.getBufSize_packets(false);
             
             String str_size_old_bytes = formatBits(size_old_bytes*8,true,UnitTime.TIME_NONE).both();
             String str_size_new_bytes = formatBits(size_new_bytes*8,true,UnitTime.TIME_NONE).both();
             
             this.lblBufferSize.setText( "Buffer = " + size_msec + "ms" );
             this.optRuleOfThumb.setText( "Rule of Thumb = " 
-                                         + str_size_old_bytes
-                                         + " / " + size_old_packets + " pkts" );
+                                         + str_size_old_bytes );
             this.optGuido.setText( "Flow-Sensitive = " 
-                                         + str_size_new_bytes
-                                         + " / " + size_new_packets + " pkts" );
+                                         + str_size_new_bytes );
         }
     }
     
