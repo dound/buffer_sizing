@@ -371,7 +371,7 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBufferSize.setAlignment(java.awt.Label.CENTER);
         lblBufferSize.setText("Buffer = 1000ms");
         pnlDetails.add(lblBufferSize);
-        lblBufferSize.setBounds(452, 10, 220, 18);
+        lblBufferSize.setBounds(435, 10, 220, 18);
         lblBufferSize.getAccessibleContext().setAccessibleName("Buffer = 1000ms !(1000kB / 512pkt)! vs. (1000 / 512))");
 
         slBufferSize.setBorder(null);
@@ -381,12 +381,12 @@ public class DemoGUI extends javax.swing.JFrame {
         slBufferSize.setPaintTicks(true);
         slBufferSize.setValue(0);
         pnlDetails.add(slBufferSize);
-        slBufferSize.setBounds(452, 15, 220, 45);
+        slBufferSize.setBounds(435, 15, 220, 45);
 
         lblRateLimit.setAlignment(java.awt.Label.CENTER);
         lblRateLimit.setText("Rate Limit = 100Mb/s");
         pnlDetails.add(lblRateLimit);
-        lblRateLimit.setBounds(675, 10, 220, 18);
+        lblRateLimit.setBounds(670, 10, 220, 18);
 
         slRateLimit.setBorder(null);
         slRateLimit.setMajorTickSpacing(100000);
@@ -395,7 +395,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slRateLimit.setPaintTicks(true);
         slRateLimit.setValue(0);
         pnlDetails.add(slRateLimit);
-        slRateLimit.setBounds(675, 15, 220, 45);
+        slRateLimit.setBounds(670, 15, 220, 45);
 
         pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
@@ -407,28 +407,28 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        optRuleOfThumb.setText("Rule of Thumb = 1000kB / 512pkt");
+        optRuleOfThumb.setText("Rule of Thumb = 1000kB");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optRuleOfThumbActionPerformed(evt);
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 220, 22);
+        optRuleOfThumb.setBounds(10, 15, 165, 22);
 
         optGroupRule.add(optGuido);
         optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        optGuido.setText("Flow-Sensitive = 1000kB / 512pkt");
+        optGuido.setText("Flow-Sensitive = 1000kB");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optGuidoActionPerformed(evt);
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 220, 22);
+        optGuido.setBounds(10, 35, 165, 22);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(220, 5, 225, 63);
+        pnlSizing.setBounds(240, 5, 180, 63);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 

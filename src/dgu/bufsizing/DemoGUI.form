@@ -48,7 +48,7 @@
           </AccessibilityProperties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="452" y="10" width="220" height="18"/>
+              <AbsoluteConstraints x="435" y="10" width="220" height="18"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -68,7 +68,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="452" y="15" width="220" height="45"/>
+              <AbsoluteConstraints x="435" y="15" width="220" height="45"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -79,7 +79,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="675" y="10" width="220" height="18"/>
+              <AbsoluteConstraints x="670" y="10" width="220" height="18"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -99,7 +99,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="675" y="15" width="220" height="45"/>
+              <AbsoluteConstraints x="670" y="15" width="220" height="45"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -132,7 +132,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="220" y="5" width="225" height="63"/>
+              <AbsoluteConstraints x="240" y="5" width="180" height="63"/>
             </Constraint>
           </Constraints>
 
@@ -148,14 +148,14 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Arial" size="12" style="0"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Rule of Thumb = 1000kB / 512pkt"/>
+                <Property name="text" type="java.lang.String" value="Rule of Thumb = 1000kB"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optRuleOfThumbActionPerformed"/>
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="220" height="-1"/>
+                  <AbsoluteConstraints x="10" y="15" width="165" height="-1"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -167,14 +167,14 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Arial" size="12" style="0"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Flow-Sensitive = 1000kB / 512pkt"/>
+                <Property name="text" type="java.lang.String" value="Flow-Sensitive = 1000kB"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optGuidoActionPerformed"/>
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="35" width="220" height="-1"/>
+                  <AbsoluteConstraints x="10" y="35" width="165" height="-1"/>
                 </Constraint>
               </Constraints>
             </Component>
