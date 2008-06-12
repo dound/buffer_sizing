@@ -145,8 +145,11 @@ public class EventProcessor extends Thread {
         // get queue occupancy data
         for( int i=0; i<NUM_QUEUES; i++ ) {
             // update the queue with its new absolute value
-            if( i == 2 ) // only handle NF2C1 for now
-                b.setOccupancy( timestamp_8ns, 8 * extractInt(buf, index) );
+            if( i == 2 ) { // only handle NF2C1 for now
+                int num_bytes = 8 * extractInt(buf, index);
+                b.setOccupancy( timestamp_8ns, num_bytes );
+                debug_println( "queue 2 set to " + num_bytes + "B" );
+            }
             index += 4;
             
             //skip size in packets
@@ -185,7 +188,7 @@ public class EventProcessor extends Thread {
                 
                 if( type == EventType.TYPE_ARRIVE.type )
                     b.arrival( timestamp_adjusted_8ns, plen_bytes );
-                if( type == EventType.TYPE_ARRIVE.type )
+                else if( type == EventType.TYPE_DEPART.type )
                     b.departure( timestamp_adjusted_8ns, plen_bytes );
                 else
                     b.dropped( timestamp_adjusted_8ns, plen_bytes );
