@@ -219,11 +219,15 @@ public class BottleneckLink extends Link<Router> {
     public synchronized void departure( long rtr_time_ns8, int num_bytes ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
         bytes_sent_since_last_update += num_bytes;
+        //c_bytes += num_bytes;
     }
     
     public synchronized void dropped( long rtr_time_ns8, int num_bytes ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
     }
+    
+    //public static long c_pkts = 0, c_bytes = 0;
+    private float cont_throughput_bps = 0;
     
     public synchronized void refreshInstantaneousValues( long rtr_time_ns8 ) {
         // don't compute instantaneous values until we have received > 1 packet
@@ -233,9 +237,16 @@ public class BottleneckLink extends Link<Router> {
             return;
         }
         
+        //c_pkts += 1;
+        //System.err.println( "==> " + c_pkts + " / " + c_bytes );
+        
         // compute xput b/w end of last update and now (+1 to avoid div by 0 ... 8ns won't matter)
         float time_passed_ns8 = rtr_time_ns8 - prev_time_offset_end_ns8 + 1;
-        float throughput_bps = (bytes_sent_since_last_update * SEC_DIV_8NS) / time_passed_ns8;
+        float throughput_bps = (8 * bytes_sent_since_last_update * SEC_DIV_8NS) / time_passed_ns8;
+        
+        throughput_bps = cont_throughput_bps = cont_throughput_bps*0.5f + throughput_bps*0.5f;
+        bytes_sent_since_last_update = 0;
+        prev_time_offset_end_ns8 = rtr_time_ns8;
         
         // set new instantaneous utilizatoin value
         int rateLimit_bps = rateLimit_kbps * 1000;

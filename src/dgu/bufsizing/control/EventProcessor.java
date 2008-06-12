@@ -55,7 +55,7 @@ public class EventProcessor extends Thread {
                 dsocket.receive(packet);
 
                 /* extract the stats (assume router 0) */
-                EventProcessor.handleEventCapPacket( 0, buf );
+                EventProcessor.handleEventCapPacket( 0, buf, packet.getLength() );
             } catch( IOException e ) {
                 System.err.println( "Error: UDP stats receive failed: " + e.getMessage() );
                 System.exit( 1 );
@@ -120,7 +120,12 @@ public class EventProcessor extends Thread {
      * @param routerIndex  index of the router the data belongs to
      * @param buf          datagram containing an event capture payload
      */
-    public static void handleEventCapPacket( int routerIndex, byte[] buf ) {
+    public static void handleEventCapPacket( int routerIndex, byte[] buf, int len ) {
+        if( len < 78 ) {
+            debug_println( "Ignoring packet which is too small (" + len + "B)" );
+            return;
+        }
+        
         // always assume first bottleneck for now
         BottleneckLink b = DemoGUI.me.demo.getRouters().get(routerIndex).getBottleneckLinkAt(0);
         
@@ -161,11 +166,13 @@ public class EventProcessor extends Thread {
         
         // process each event
         long timestamp_adjusted_8ns = timestamp_8ns;
-        for( int i=0; i<num_events; i++ ) {            
+        while( index + 4 < len ) {
             int type = (buf[index] & 0xC0) >> 6;
             debug_println( "  got type = " + Integer.toHexString(type) );
             
             if( type == EventType.TYPE_TS.type ) {
+                if( index + 8 >= len ) break;
+                
                 timestamp_8ns = extractTimestamp( buf, index );
                 index += 8;
                 debug_println( "    got timestamp " + timestamp_8ns );
