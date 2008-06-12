@@ -25,7 +25,7 @@ public class RouterController extends Controller {
         return "Router";
     }
     
-    public static int translateRateLimitRegToKilobitsPerSec( int reg ) {
+    public static int translateRateLimitRegToBitsPerSec( int reg ) {
         // cap it to reasonable values
         if( reg < 2 )
             reg = 2;
@@ -33,7 +33,7 @@ public class RouterController extends Controller {
             reg = 16;
             
         // determine how much to divide the base rate by based on the bit
-        int div = 1000; /* bits to kilobits for a RATE so 1000 not 1024 */
+        int div = 1;
         while( reg-- > 2 )
             div *= 2;
 
@@ -65,7 +65,7 @@ public class RouterController extends Controller {
                 ret +=  in.read();
                 
                 if( cmd.code == RouterCmd.CMD_GET_RATE.code ) {
-                    return translateRateLimitRegToKilobitsPerSec( ret );
+                    return translateRateLimitRegToBitsPerSec( ret );
                 }
             } catch( IOException e ) {
                 System.err.println( "command " + cmd.code + " / " + value + " => failed: " + e.getMessage() );

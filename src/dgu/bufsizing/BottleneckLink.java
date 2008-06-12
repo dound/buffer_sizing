@@ -254,7 +254,7 @@ public class BottleneckLink extends Link<Router> {
         
         // add the new updated endpoints of user-controlled values and refresh the plot
         dataBufSize.add(   time_ns, getBufSize_bytes(this.useRuleOfThumb), false );
-        dataRateLimit.add( time_ns, this.rateLimit_kbps, false );
+        dataRateLimit.add( time_ns, this.rateLimit_bps, false );
     }
     
     public boolean getUseRuleOfThumb() {
@@ -283,11 +283,11 @@ public class BottleneckLink extends Link<Router> {
     }
     
     public int getBufSize_bytes( boolean useRuleOfThumb ) {
-        return bufSize_msec * rateLimit_kbps / (8 * (useRuleOfThumb ? 1 : numFlows));
+        return bufSize_msec * rateLimit_bps * 1000 / (8 * (useRuleOfThumb ? 1 : numFlows));
     }
     
     public int getBufSize_packets( boolean useRuleOfThumb ) {
-        return bufSize_msec * rateLimit_kbps / (8 * 1500 * (useRuleOfThumb ? 1 : numFlows));
+        return bufSize_msec * rateLimit_bps * 1000 / (8 * 1500 * (useRuleOfThumb ? 1 : numFlows));
     }
     
     private void updateBufSize() {
@@ -320,14 +320,14 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public int getRateLimit_kbps() {
-        return rateLimit_kbps;
+        return rateLimit_bps * 1000;
     }
 
     public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
         // translate the requested to rate to the register value to get the closest rate
-        int tmp_rate = (int)(rateLimit_bps * 1.5); // switch at the halfway point
+        int tmp_rate = (int)(rateLimit_kbps * 1.5); // switch at the halfway point
         byte real_value = 2;
-        while( tmp_rate < 1000 * 1000 * 1000) {
+        while( tmp_rate < 1000 * 1000) {
             tmp_rate *= 2;
             real_value += 1;
             
@@ -337,15 +337,15 @@ public class BottleneckLink extends Link<Router> {
         }
         
         // translate the requested rate into the closest attainable rate
-        rateLimit_bps = RouterController.translateRateLimitRegToBitsPerSec( real_value );
+        rateLimit_kbps = RouterController.translateRateLimitRegToBitsPerSec( real_value ) / 1000;
         
         // do nothing if the requested rate hasn't changed since the last request
-        if( this.rateLimit_bps == rateLimit_bps && !forceSet )
+        if( this.rateLimit_bps == rateLimit_kbps * 1000 && !forceSet )
             return;
         
         // add the end point of the old rate
         long t = currentTime8ns();
-        dataRateLimit.add( t, this.rateLimit_kbps, false  );
+        dataRateLimit.add( t, this.rateLimit_bps, false  );
         
         // set the new buffer size
         this.rateLimit_bps = rateLimit_kbps * 1000;
@@ -356,10 +356,10 @@ public class BottleneckLink extends Link<Router> {
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
         
         // add the start point of the new rate
-        dataRateLimit.add( t, this.rateLimit_kbps, false  );
+        dataRateLimit.add( t, this.rateLimit_bps, false  );
         
         // add the temporary end point of the new rate
-        dataRateLimit.add( t, this.rateLimit_kbps, false  );
+        dataRateLimit.add( t, this.rateLimit_bps, false  );
     }
 
     public XYSeries getDataThroughput() {
