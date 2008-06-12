@@ -133,7 +133,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartXput = prepareChart(
             "Throughput vs. Time",
             "Time",
-            "Throughput (kbps)",
+            "Throughput (bps)",
             collXput
         );
         
@@ -151,7 +151,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartOcc = prepareChart(
             "Buffer Occupancy and Size vs. Time",
             "Time",
-            "Size (packets)",
+            "Size (bytes)",
             collOcc
         );    
          

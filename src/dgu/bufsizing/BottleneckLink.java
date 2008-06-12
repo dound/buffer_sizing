@@ -30,8 +30,17 @@ public class BottleneckLink extends Link<Router> {
     private boolean useRuleOfThumb = true;
     private int numFlows = 1;
     private int bufSize_msec;
-    private int rateLimit_kbps;
+    private int rateLimit_bps;
     private boolean selected;
+    
+    // recently collected data
+    private long time_offset_ns8 = 0;
+    private long prev_time_offset_begin_ns8 = 0;
+    private long prev_time_offset_end_ns8 = 0;
+    private long bytes_sent_since_last_update = 0;
+    private int  queueOcc_bytes = -1;
+    private static final int SEC_DIV_8NS  = 125000000;
+    private static final int MSEC_DIV_8NS = 125000;
     
     // empirical data collected from the router
     private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -46,6 +55,11 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataBufSize = new XYSeries("Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private boolean forceSet;
+    
+    /** Returns the current time in units of 8ns (with millisecond resolution) */
+    public static final long currentTime8ns() {
+        return System.currentTimeMillis() * MSEC_DIV_8NS;
+    }
     
     /** Puts xys into manual notification mode and sets a limit on the number of data points it may track. */
     public static void prepareXYSeries( XYSeries xys, int maxDataPoints ) {
@@ -78,7 +92,7 @@ public class BottleneckLink extends Link<Router> {
         
         // set the initial values
         this.bufSize_msec = bufSize_msec;
-        this.rateLimit_kbps = rateLimit_kbps;
+        this.rateLimit_bps = rateLimit_kbps * 1000;
         this.selected = false;
         
         // update the plots appropriately
@@ -147,23 +161,80 @@ public class BottleneckLink extends Link<Router> {
         GUIHelper.drawCeneteredString( dst.getName(), gfx, x + QUEUE_WIDTH / 2, fillY + 4 );
     }
     
-    public synchronized void addDataPoint( long time_msec, int throughput_kbps, long queueOcc_packets, float dropRate_percent ) {
-        if( throughput_kbps < rateLimit_kbps )
-            instantaneousUtilization = throughput_kbps / (float)rateLimit_kbps;
+    /**
+     * Synchronizes the approximate offset between our time domain and the 
+     * router's timestamps.  It uses current time and doesn't do anything smart 
+     * about incorporating round trip times as small differences here will not
+     * matter in the long run.  We just need something "reasonably close."  This
+     * method will only have an effect the first time it is called.
+     * 
+     * @param rtr_time_ns8  the router time in units of 8ns
+     * @return true if the update is not older than the most recent update
+     */
+    public synchronized boolean prepareForUpdate( long rtr_time_ns8 ) {
+        // initialize the offset if not already done
+        if( time_offset_ns8 == 0 ) {
+            // convert millis to units of 8ns
+            time_offset_ns8 = currentTime8ns() - rtr_time_ns8;
+        }
+        
+        // update 
+        if( prev_time_offset_end_ns8 <= rtr_time_ns8 ) {
+            prev_time_offset_begin_ns8 = rtr_time_ns8;
+            return true;
+        }
+        else
+            return false;
+    }
+    
+    public synchronized void setOccupancy( long rtr_time_ns8, int num_bytes ) {
+        //add the new data point
+        queueOcc_bytes = num_bytes;
+        dataQueueOcc.add( rtr_time_ns8 + time_offset_ns8, queueOcc_bytes );
+    }
+    
+    public synchronized void arrival( long rtr_time_ns8, int num_bytes ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes + num_bytes );
+    }
+    
+    public synchronized void departure( long rtr_time_ns8, int num_bytes ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
+        bytes_sent_since_last_update += num_bytes;
+    }
+    
+    public synchronized void dropped( long rtr_time_ns8, int num_bytes ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
+    }
+    
+    public synchronized void refreshInstantaneousValues( long rtr_time_ns8 ) {
+        // don't compute instantaneous values until we have received > 1 packet
+        if( prev_time_offset_end_ns8 == 0 ) {
+            prev_time_offset_end_ns8 = rtr_time_ns8;
+            bytes_sent_since_last_update = 0;
+            return;
+        }
+        
+        // compute xput b/w end of last update and now (+1 to avoid div by 0 ... 8ns won't matter)
+        float time_passed_ns8 = rtr_time_ns8 - prev_time_offset_end_ns8 + 1;
+        float throughput_bps = (bytes_sent_since_last_update * SEC_DIV_8NS) / time_passed_ns8;
+        
+        // set new instantaneous utilizatoin value
+        if( throughput_bps < rateLimit_bps )
+            instantaneousUtilization = throughput_bps / (float)rateLimit_bps;
         else
             instantaneousUtilization = 1.0f;
         
-        int bufSize_packets = getBufSize_packets(useRuleOfThumb);
-        if( queueOcc_packets < bufSize_packets )
-            instantaneousQueueOcc = queueOcc_packets / (float)bufSize_packets;
+        // compute the new instantaneous queue occupancy
+        int bufSize_bytes = getBufSize_bytes(useRuleOfThumb);
+        if( queueOcc_bytes < bufSize_bytes )
+            instantaneousQueueOcc = queueOcc_bytes / (float)bufSize_bytes;
         else
             instantaneousQueueOcc = 1.0f;
         
-        dataThroughput.add( time_msec, throughput_kbps,  false );
-        dataQueueOcc.add(   time_msec, queueOcc_packets, false );
-        dataDropRate.add(   time_msec, dropRate_percent, false );
-        
-        extendUserDataPoints( time_msec );
+        // plot the new throughput value
+        long t = rtr_time_ns8 + time_offset_ns8;
+        dataThroughput.add( t, throughput_bps, false );
+        extendUserDataPoints( t );
     }
     
     public synchronized void clearData() {
@@ -174,7 +245,7 @@ public class BottleneckLink extends Link<Router> {
         dataRateLimit.clear(  false );
     }
     
-    public synchronized void extendUserDataPoints( long time_msec ) {
+    public synchronized void extendUserDataPoints( long time_ns ) {
         // remove the old temporary endpoints of user-controlled values
         if( dataBufSize.getItemCount() > 0 ) {
             dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
@@ -182,8 +253,8 @@ public class BottleneckLink extends Link<Router> {
         }
         
         // add the new updated endpoints of user-controlled values and refresh the plot
-        dataBufSize.add(   time_msec, this.bufSize_msec,   false );
-        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
+        dataBufSize.add(   time_ns, getBufSize_bytes(this.useRuleOfThumb), false );
+        dataRateLimit.add( time_ns, this.rateLimit_kbps, false );
     }
     
     public boolean getUseRuleOfThumb() {
@@ -232,8 +303,8 @@ public class BottleneckLink extends Link<Router> {
             return;
         
         // add the end point of the old buffer size
-        long time_msec = System.currentTimeMillis();
-        dataBufSize.add( time_msec, this.bufSize_msec, false );
+        long t = currentTime8ns();
+        dataBufSize.add( t, getBufSize_bytes(this.useRuleOfThumb), false  );
         
         // set the new buffer size
         this.bufSize_msec = bufSize_msec;
@@ -242,10 +313,10 @@ public class BottleneckLink extends Link<Router> {
         updateBufSize();
         
         // add the start point of the new buffer size
-        dataBufSize.add( time_msec, this.bufSize_msec, false );
+        dataBufSize.add( t, this.getBufSize_bytes(this.useRuleOfThumb), false  );
         
         // add the temporary start point of the new buffer size
-        dataBufSize.add( time_msec, this.bufSize_msec, false );
+        dataBufSize.add( t, this.getBufSize_bytes(this.useRuleOfThumb), false  );
     }
 
     public int getRateLimit_kbps() {
@@ -254,9 +325,9 @@ public class BottleneckLink extends Link<Router> {
 
     public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
         // translate the requested to rate to the register value to get the closest rate
-        int tmp_rate = (int)(rateLimit_kbps * 1.5); // switch at the halfway point
+        int tmp_rate = (int)(rateLimit_bps * 1.5); // switch at the halfway point
         byte real_value = 2;
-        while( tmp_rate < 1000 * 1000 ) {
+        while( tmp_rate < 1000 * 1000 * 1000) {
             tmp_rate *= 2;
             real_value += 1;
             
@@ -266,18 +337,18 @@ public class BottleneckLink extends Link<Router> {
         }
         
         // translate the requested rate into the closest attainable rate
-        rateLimit_kbps = RouterController.translateRateLimitRegToKilobitsPerSec( real_value );
+        rateLimit_bps = RouterController.translateRateLimitRegToBitsPerSec( real_value );
         
         // do nothing if the requested rate hasn't changed since the last request
-        if( this.rateLimit_kbps == rateLimit_kbps && !forceSet )
+        if( this.rateLimit_bps == rateLimit_bps && !forceSet )
             return;
         
         // add the end point of the old rate
-        long time_msec = System.currentTimeMillis();
-        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
+        long t = currentTime8ns();
+        dataRateLimit.add( t, this.rateLimit_kbps, false  );
         
         // set the new buffer size
-        this.rateLimit_kbps = rateLimit_kbps;
+        this.rateLimit_bps = rateLimit_kbps * 1000;
         if( DemoGUI.me != null ) DemoGUI.me.setRateLimitText( this );
         updateBufSize();
         
@@ -285,10 +356,10 @@ public class BottleneckLink extends Link<Router> {
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
         
         // add the start point of the new rate
-        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
+        dataRateLimit.add( t, this.rateLimit_kbps, false  );
         
         // add the temporary end point of the new rate
-        dataRateLimit.add( time_msec, this.rateLimit_kbps, false );
+        dataRateLimit.add( t, this.rateLimit_kbps, false  );
     }
 
     public XYSeries getDataThroughput() {
