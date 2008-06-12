@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.EventProcessor;
 import dgu.bufsizing.control.RouterController;
 import java.awt.Color;
 import java.awt.GradientPaint;
@@ -20,11 +21,13 @@ public class Router extends Node {
     
     private final RouterController controller;
     
-    
-    public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort ) {
+    public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort, int statsPort ) {
         super( name, nameShort, importance, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         controller = new RouterController( commandPort );
+        
+        if( statsPort != 0 )
+            new EventProcessor( statsPort ).start();
     }
     
     protected void drawNode( Graphics2D gfx ) {

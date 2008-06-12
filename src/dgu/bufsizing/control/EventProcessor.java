@@ -12,6 +12,9 @@ import java.net.SocketException;
  * @author David Underhill
  */
 public class EventProcessor extends Thread {
+    /** default event capture port */
+    public static final int DEFAULT_EVCAP_PORT = 27033;
+    
     /** maximum length of a datagram */
     private static final int MAX_PACKET_LEN = 1500;
     
@@ -19,12 +22,12 @@ public class EventProcessor extends Thread {
     private static final int NUM_QUEUES = 8;
     
     /** the port to listen on for event capture packets */
-    int port;
+    private int port;
     
     /** socket to use for listening */
-    DatagramSocket dsocket;
+    private DatagramSocket dsocket;
     
-    EventProcessor( int port ) {
+    public EventProcessor( int port ) {
         this.port = port;
         
         /* establish a socket for the stats port */
@@ -99,8 +102,10 @@ public class EventProcessor extends Thread {
      * @param buf          datagram containing an event capture payload
      */
     public static void handleEventCapPacket( int routerIndex, byte[] buf ) {
+        System.err.println( "got packet of length " + buf.length );
+        
         // always assume first bottleneck for now
-        BottleneckLink b = DemoGUI.me.demo.getRouters().get(routerIndex).getBottleneckLink(0);
+        BottleneckLink b = DemoGUI.me.demo.getRouters().get(routerIndex).getBottleneckLinkAt(0);
         
         // start processing at byte 1 (byte 0 isn't too interesting)
         int index = 1;

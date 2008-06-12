@@ -2,6 +2,7 @@ package dgu.bufsizing.demos;
 
 import dgu.bufsizing.*;
 import dgu.bufsizing.Node.Importance;
+import dgu.bufsizing.control.EventProcessor;
 import dgu.util.IllegalArgValException;
 
 /**
@@ -24,7 +25,7 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 80, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT );
+        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 80, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
         demo.addRouter( la );
         
         Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, 530, 220 );
