@@ -45,6 +45,8 @@ public class DemoGUI extends javax.swing.JFrame {
     private BufferedImage img = new BufferedImage( CANVAS_WIDTH, CANVAS_HEIGHT, BufferedImage.TYPE_INT_RGB );
     private final Graphics2D gfx = (Graphics2D)img.getGraphics();   
     
+    public static boolean freezeCharts = false;
+    
     /** Creates new form DemoGUI */
     public DemoGUI( final Demo d ) {
         me = this;
@@ -77,7 +79,8 @@ public class DemoGUI extends javax.swing.JFrame {
                     if( b != null ) {
                         synchronized( b ) {
                             b.extendUserDataPoints( BottleneckLink.currentTime8ns() );
-                            DemoGUI.me.refreshCharts();
+                            if( !freezeCharts )
+                                DemoGUI.me.refreshCharts();
                         }
                     }
                     try {
@@ -410,7 +413,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
-        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12));
         optRuleOfThumb.setText("Rule of Thumb = 1000kB");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -421,7 +424,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optRuleOfThumb.setBounds(10, 15, 165, 22);
 
         optGroupRule.add(optGuido);
-        optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optGuido.setFont(new java.awt.Font("Arial", 0, 12));
         optGuido.setText("Flow-Sensitive = 1000kB");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -453,6 +456,11 @@ public class DemoGUI extends javax.swing.JFrame {
         lblNode.setBounds(5, 10, 80, 25);
 
         pnlChartOcc.setBorder(null);
+        pnlChartOcc.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pnlChartOccMouseClicked(evt);
+            }
+        });
         pnlChartOcc.setLayout(null);
         pnlDetails.add(pnlChartOcc);
         pnlChartOcc.setBounds(508, 75, 509, 415);
@@ -518,6 +526,10 @@ private void btnClearThisDataActionPerformed(java.awt.event.ActionEvent evt) {//
     if( b != null )
         b.clearData();
 }//GEN-LAST:event_btnClearThisDataActionPerformed
+
+private void pnlChartOccMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlChartOccMouseClicked
+    freezeCharts = !freezeCharts;
+}//GEN-LAST:event_pnlChartOccMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearAllData;

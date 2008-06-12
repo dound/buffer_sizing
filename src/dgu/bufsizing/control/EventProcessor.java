@@ -12,6 +12,8 @@ import java.net.SocketException;
  * @author David Underhill
  */
 public class EventProcessor extends Thread {
+    public static final boolean USE_PACKETS = false;
+    
     /** default event capture port */
     public static final int DEFAULT_EVCAP_PORT = 27033;
     
@@ -150,14 +152,19 @@ public class EventProcessor extends Thread {
         // get queue occupancy data
         for( int i=0; i<NUM_QUEUES; i++ ) {
             // update the queue with its new absolute value
-            if( i == 2 ) { // only handle NF2C1 for now
+            if( !USE_PACKETS && i == 2 ) { // only handle NF2C1 for now
                 int num_bytes = 8 * extractInt(buf, index);
                 b.setOccupancy( timestamp_8ns, num_bytes );
                 debug_println( "queue 2 set to " + num_bytes + "B" );
             }
             index += 4;
             
-            //skip size in packets
+            // size in packets
+            if( USE_PACKETS && i == 2 ) { // only handle NF2C1 for now
+                int num_packets = extractInt(buf, index);
+                b.setOccupancy( timestamp_8ns, num_packets );
+                debug_println( "queue 2 set to " + num_packets + " packets" );
+            }
             index += 4;
         }
         
@@ -194,12 +201,20 @@ public class EventProcessor extends Thread {
                 }
                 
                 if( type == EventType.TYPE_ARRIVE.type ) {
-                    debug_println( "arrival => " + (b.getQueueOcc_bytes() + plen_bytes) );
-                    b.arrival( timestamp_adjusted_8ns, plen_bytes );
+                    if( USE_PACKETS )
+                        b.arrival( timestamp_adjusted_8ns, 1 );
+                    else
+                        b.arrival( timestamp_adjusted_8ns, plen_bytes );
+                    
+                    debug_println( "arrival => " + b.getQueueOcc_bytes() );
                 }
                 else if( type == EventType.TYPE_DEPART.type ) {
-                    debug_println( "departure => " + (b.getQueueOcc_bytes() - plen_bytes) );
-                    b.departure( timestamp_adjusted_8ns, plen_bytes );
+                    if( USE_PACKETS )
+                        b.departure( timestamp_adjusted_8ns, 1 );
+                    else
+                        b.departure( timestamp_adjusted_8ns, plen_bytes );
+                    
+                    debug_println( "departure => " + b.getQueueOcc_bytes() );
                 }
                 else
                     System.err.println( "dropped " + plen_bytes );

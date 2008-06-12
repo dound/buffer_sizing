@@ -90,7 +90,10 @@ public class BottleneckLink extends Link<Router> {
     }
     
     private void addDataPointToQueueOccData( long time_ns8 ) {
-        dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
+        if( dgu.bufsizing.control.EventProcessor.USE_PACKETS )
+            dataQueueOcc.add( time_ns8, queueOcc_bytes );
+        else
+            dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
     }
     
     private void addDataPointToXputData( long time_ns8, int xput_bps ) {
@@ -114,7 +117,7 @@ public class BottleneckLink extends Link<Router> {
         super( src, dst, queueID );
         
         prepareXYSeries( dataThroughput, dataPointsToKeep );
-        prepareXYSeries( dataQueueOcc,   dataPointsToKeep );
+        prepareXYSeries( dataQueueOcc,   1000 );
         prepareXYSeries( dataDropRate,   dataPointsToKeep );
         
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
@@ -207,6 +210,9 @@ public class BottleneckLink extends Link<Router> {
     }
     
     public synchronized void setOccupancy( long rtr_time_ns8, int num_bytes ) {
+        // add the old data point
+        addDataPointToQueueOccData( routerTimeToLocalTime8ns(rtr_time_ns8) );
+        
         //add the new data point
         queueOcc_bytes = num_bytes;
         addDataPointToQueueOccData( routerTimeToLocalTime8ns(rtr_time_ns8) );
