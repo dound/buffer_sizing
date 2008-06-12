@@ -123,7 +123,8 @@ public class EventProcessor extends Thread {
         // get queue occupancy data
         for( int i=0; i<NUM_QUEUES; i++ ) {
             // update the queue with its new absolute value
-            b.setOccupancy( timestamp_8ns, 8 * extractInt(buf, index) );
+            if( index == 2 ) // only handle NF2C1 for now
+                b.setOccupancy( timestamp_8ns, 8 * extractInt(buf, index) );
             index += 4;
             
             //skip size in packets
