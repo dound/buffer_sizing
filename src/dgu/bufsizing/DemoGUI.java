@@ -76,7 +76,7 @@ public class DemoGUI extends javax.swing.JFrame {
                     BottleneckLink b = getSelectedBottleneck();
                     if( b != null ) {
                         synchronized( b ) {
-                            b.extendUserDataPoints( System.currentTimeMillis() );
+                            b.extendUserDataPoints( BottleneckLink.currentTime8ns() );
                             DemoGUI.me.refreshCharts();
                         }
                     }

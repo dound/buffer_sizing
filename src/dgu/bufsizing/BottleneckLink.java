@@ -283,11 +283,11 @@ public class BottleneckLink extends Link<Router> {
     }
     
     public int getBufSize_bytes( boolean useRuleOfThumb ) {
-        return bufSize_msec * rateLimit_bps * 1000 / (8 * (useRuleOfThumb ? 1 : numFlows));
+        return bufSize_msec * (rateLimit_bps / 1000) / (8 * (useRuleOfThumb ? 1 : numFlows));
     }
     
     public int getBufSize_packets( boolean useRuleOfThumb ) {
-        return bufSize_msec * rateLimit_bps * 1000 / (8 * 1500 * (useRuleOfThumb ? 1 : numFlows));
+        return bufSize_msec * (rateLimit_bps / 1000) / (8 * 1500 * (useRuleOfThumb ? 1 : numFlows));
     }
     
     private void updateBufSize() {
@@ -320,7 +320,7 @@ public class BottleneckLink extends Link<Router> {
     }
 
     public int getRateLimit_kbps() {
-        return rateLimit_bps * 1000;
+        return rateLimit_bps / 1000;
     }
 
     public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
@@ -347,6 +347,9 @@ public class BottleneckLink extends Link<Router> {
         long t = currentTime8ns();
         dataRateLimit.add( t, this.rateLimit_bps, false  );
         
+        // add the end point for the old buffer size
+        dataBufSize.add( t, getBufSize_bytes(this.useRuleOfThumb), false  );
+        
         // set the new buffer size
         this.rateLimit_bps = rateLimit_kbps * 1000;
         if( DemoGUI.me != null ) DemoGUI.me.setRateLimitText( this );
@@ -360,6 +363,12 @@ public class BottleneckLink extends Link<Router> {
         
         // add the temporary end point of the new rate
         dataRateLimit.add( t, this.rateLimit_bps, false  );
+        
+        // add the start point for the new buffer size
+        dataBufSize.add( t, getBufSize_bytes(this.useRuleOfThumb), false  );
+        
+        // add the start point for the new buffer size
+        dataBufSize.add( t, getBufSize_bytes(this.useRuleOfThumb), false  );
     }
 
     public XYSeries getDataThroughput() {
