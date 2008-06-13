@@ -21,8 +21,10 @@ cmd_la="$cmd_la && pushd $SW_DIR && make && ./sr_go.sh && popd"
 #   3) Setup event capture
 cmd_la="$cmd_la && ./$EC_SETUP_SCRIPT"
 
-#   4) Launch the router controller
-cmd_la="$cmd_la && pushd tomahawk && make && ./daemon_go.sh $gui_ip $GUI_EC_PORT && popd"
+#   4) Launch the router controller if the GUI is going to be used
+if [ $gui_ip != "nogui" ]; then
+    cmd_la="$cmd_la && pushd tomahawk && make && ./daemon_go.sh $gui_ip $GUI_EC_PORT && popd"
+fi
 
 # install cleanup handling (catch HUP, INT, TERM)
 trap 'echo "cleaning up, please WAIT!" && ./demo_cleanup.sh; exit 0' 1 2 15
@@ -38,8 +40,12 @@ ssh root@$TGEN_IP "cd $DEMO_ROOT/lkm_ipip_dgu && make um && make im || make im"
 
 
 # IV) Setup: GUI (local machine)
-echo "running the GUI ..."
-java -jar BufferSizingGUI.jar &
+if [ $gui_ip = "nogui" ]; then
+    echo "will not run the GUI ..."
+else
+    echo "running the GUI ..."
+    java -jar BufferSizingGUI.jar &
+fi
 
 
 # setup la1 (the daemon command isn't returning for some reason ...)
