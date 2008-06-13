@@ -6,9 +6,12 @@ I) Setup: Los Angeles
 
   1) Install the router buffer sizing bitfile with the corrected Event Capture
   packet format from 11-June-2008 (thanks Jad!).  You can find the bitfile on
-  the Los Angeles machine at: /home/dgu/router_buffer_sizing-2008-06-11.bit
+  the Los Angeles machine at: /root/demo/latest-router_buffer_sizing.bit.  This
+  is a symlink to the actual latest ... so please update where it points instead
+  of replacing it (so the scripts can always rely on the symlink knowing what to
+  download).
 
-  2) Fire up the software component of the router located in /home/dgu/decap_sw.
+  2) Fire up the software component of the router located in /root/demo/decap_sw.
   Build it with "make" and then run it as root.  It takes care of ARP,
   decapsulation, and IP/MAC address setup so it really is required!
 
@@ -40,7 +43,7 @@ II) Setup: Houston
 III) Setup: Traffic Generator (on nf-test5)
 
   1) Setup encapsulation to Houston (64.57.23.37).  Go to
-  /home/nbehesht/i2/lkm_ipip_dgu.  Build the kernel module which handles
+  /root/demo/lkm_ipip_dgu.  Build the kernel module which handles
   encapsulation with "make" and then install it with "make im".  Do "make um"
   when you're done to stop it!
 
@@ -66,3 +69,7 @@ IV) Setup: GUI (anywhere)
   4) Using the GUI.  Click on the bottom-right graph to freeze/unfreeze both
   graphs.  Use the rate limiter slider to adjust the bottleneck's throughput.
   Adjusting buffer size just adjusts the maximum number of packets.
+
+
+Another important route in houston may be:
+64.57.23.32     *               255.255.255.248 U     0      0        0 nf2c1
