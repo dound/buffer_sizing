@@ -12,6 +12,7 @@ import java.net.SocketException;
  * @author David Underhill
  */
 public class EventProcessor extends Thread {
+    private static final int DEFAULT_QUEUE_TO_MONITOR = 2;
     public static final boolean USE_PACKETS = false;
     
     /** default event capture port */
@@ -152,7 +153,7 @@ public class EventProcessor extends Thread {
         // get queue occupancy data
         for( int i=0; i<NUM_QUEUES; i++ ) {
             // update the queue with its new absolute value
-            if( !USE_PACKETS && i == 2 ) { // only handle NF2C1 for now
+            if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { // only handle NF2C1 for now
                 int num_bytes = 8 * extractInt(buf, index);
                 b.setOccupancy( timestamp_8ns, num_bytes );
                 debug_println( "queue 2 set to " + num_bytes + "B" );
@@ -160,7 +161,7 @@ public class EventProcessor extends Thread {
             index += 4;
             
             // size in packets
-            if( USE_PACKETS && i == 2 ) { // only handle NF2C1 for now
+            if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { // only handle NF2C1 for now
                 int num_packets = extractInt(buf, index);
                 b.setOccupancy( timestamp_8ns, num_packets );
                 debug_println( "queue 2 set to " + num_packets + " packets" );
@@ -194,7 +195,7 @@ public class EventProcessor extends Thread {
                 index += 4;
                 
                 debug_println( "     got short event " + type + " (" + plen_bytes + "B) at timestamp " + timestamp_adjusted_8ns + " for queue " + queue_id );
-                if( queue_id != 2 ) {
+                if( queue_id != DEFAULT_QUEUE_TO_MONITOR ) {
                     // only pay attention to NF2C1 for now
                     debug_println( "    ignoring event for queue " + queue_id );
                     continue;
