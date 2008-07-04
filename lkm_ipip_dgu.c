@@ -12,7 +12,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 
-/* #define _LKM_IPIP_DEBUG_ */ /* debug prints on and encap loopback traffic too */
+#define _LKM_IPIP_DEBUG_  /* debug prints on and encap loopback traffic too */
 /* #define _LKM_IPIP_DO_DECAP_ */ /* decap IP-IP and Bolouki IP-IP packets */
 
 /** The number of bytes to put between the inner and outer IP headers. */
@@ -37,8 +37,13 @@
 #define IP_ADDR_HBO_NF_POWER_2 0xAB184A6A /* 172.24.74.106 */
 #define IP_ADDR_HBO_LOOPBACK   0x7F000001 /* 127.0.0.1 */
 
+#define IP_ADDR_HBO_POWER3_E1  0xC00A0101 /* 192.10.1.1 */
+#define IP_ADDR_HBO_POWER4_E1  0xC00A0201 /* 192.10.2.1 */
+#define IP_ADDR_HBO_POWER4_N1  0xC00A020A /* 192.10.2.10 */
+#define IP_ADDR_HBO_POWER4_N0  0xC00A010A /* 192.10.1.10 */
+
 /** who we want to address the encapsulation packet to (outer header) */
-#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_LA_1
+#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_POWER4_N0
 
 static struct nf_hook_ops netfilter_encap;
 #ifdef _LKM_IPIP_DO_DECAP_
@@ -75,6 +80,33 @@ static __u16 checksum( __u16* buf, unsigned len ) {
     return answer;
 }
 
+/**
+ * Computes the transport-layer checksum for UDP and TCP packets.
+ * src_ip and dst_ip are network-ordered fields, while len is a
+ * host-ordered field which specifies the length of xport_packet in
+ * bytes.  len must be no greater than 1502 bytes.
+ *
+ * Note: this could be more sophisticated and not memcpy xport_packet
+ *       and just do the checksum in place
+ */
+uint16_t checksum_xport( __u32 src_ip, __u32 dst_ip, __u8 proto, __u8* xport_packet, __u16 len )
+{
+    __u8 buf[1514];
+    if( unlikely(len > 1502) )
+        return 0;
+
+    /* create the pseudo-header */
+    memcpy( buf,   &src_ip, sizeof(src_ip) );
+    memcpy( buf+4, &dst_ip, sizeof(dst_ip) );
+    buf[8] = 0x00;
+    buf[9] = proto;
+    *((__u16*)&buf[10]) = htons(len);
+
+    /* copy the transport header and payload into the buffer to compute the checksum on */
+    memcpy( &buf[12], xport_packet, len );
+    return checksum( (__u16*)buf, 12 + len );
+}
+
 #ifdef _LKM_IPIP_DEBUG_
 /**
  * Prints an IP address in dotted-decimal format with printk.
@@ -106,7 +138,7 @@ static void skb_flag_as_changed( struct sk_buff* skb ) {
 static int skb_resize( struct sk_buff *skb, int extra_bytes ) {
     skb_orphan(skb);
 
-    if (pskb_expand_head(skb, extra_bytes, 0, GFP_ATOMIC)) {
+    if (pskb_expand_head(skb, 0, extra_bytes, GFP_ATOMIC)) {
         printk( "*** failed to expand skb!" );
         return -1;
     }
@@ -131,6 +163,10 @@ static int skb_late_reserve( struct sk_buff* skb, unsigned len ) {
 
     /* make sure we have enough space */
     if( unlikely(skb->tail + len > skb->end) ) {
+#if 1
+    printk( "RDROP\n" );
+    return -1;
+#endif
         if( skb_resize( skb, len ) != 0 )
             return -1;
         else {
@@ -197,9 +233,13 @@ unsigned int decap_hook( unsigned int hooknum,
                          int (*okfn)(struct sk_buff*) ) {
     struct sk_buff* skb;
     unsigned extra_len;
+    skb = *pp_skb;
+
+    printk( "POSS: considering " );
+    printk_ip( skb->nh.iph->saddr );
+    printk( " (proto=%u)\n", skb->nh.iph->protocol );    
 
     /* ignore packets with no data or IP header */
-    skb = *pp_skb;
     if( !skb || !skb->nh.iph )
         return NF_ACCEPT;
 
@@ -236,6 +276,27 @@ unsigned int decap_hook( unsigned int hooknum,
 }
 #endif
 
+#include "debug_id.h"
+static int count = 0;
+void print_skb( const char* what, struct sk_buff* skb ) {
+#if 0
+    static int reps = 0;
+    int i;
+    const char* extra1 = (reps!=0 ? "" : "{");
+    printk("\nDGU %s /* #%d => **%d** %s: */ char ip_%s[1500] = { ", extra1, count, DEBUG_ID, what, what);
+    for( i=0; i<ntohs(skb->nh.iph->tot_len); i++ ) {
+        if( i ) printk( ", " );
+        printk( "0x%0X", *(((unsigned char*)skb->nh.iph)+i) );
+    }
+    printk(" };");
+    if( reps == 2 ) {
+      printk("validate(ip_before,ip_after_all+24,%d); }",count);
+    }
+    printk("\n");
+    reps = (reps + 1) % 3;
+#endif
+}
+
 unsigned int encap_hook( unsigned int hooknum,
                          struct sk_buff **pp_skb,
                          const struct net_device *in,
@@ -245,6 +306,12 @@ unsigned int encap_hook( unsigned int hooknum,
     struct iphdr* outer_ip_hdr;
     struct iphdr* inner_ip_hdr;
     unsigned i, extra_len;
+    __u8* ptr_xport;
+    __u8 proto;
+    __u16* ptr_csum;
+    __u16 csum_orig;
+    __u16 csum_comp;
+    __u16 xport_len;
 
     /* ignore packets with no data or IP header */
     skb = *pp_skb;
@@ -259,12 +326,16 @@ unsigned int encap_hook( unsigned int hooknum,
     case IP_ADDR_HBO_LA_2:
     case IP_ADDR_HBO_NF_POWER_1:
     case IP_ADDR_HBO_NF_POWER_2:
+    case IP_ADDR_HBO_POWER4_E1:
 #ifdef _LKM_IPIP_DEBUG_
     case IP_ADDR_HBO_LOOPBACK:
         /* encapsulate the target ... I hope there's room in the SKB ... */
         printk( "LKM ENCAP: will encap this packet to " );
         printk_ip( skb->nh.iph->daddr );
         printk( "\n" );
+
+	count += 1;
+	print_skb( "before", skb );
 #endif
         break;
 
@@ -276,6 +347,29 @@ unsigned int encap_hook( unsigned int hooknum,
         printk( "\n" );
 #endif
         return NF_ACCEPT;
+    }
+
+    /* compute the checksum field for UDP/TCP packets since they otherwise aren't done yet */
+    proto = skb->nh.iph->protocol;
+    if( (proto==0x11 || proto==0x06) && ntohs(skb->nh.iph->tot_len)>20 ) {
+        /* get a pointer to the start of the xport layer and determine its length */
+        ptr_xport = ((__u8*)skb->nh.iph) + 20;
+	xport_len = ntohs(skb->nh.iph->tot_len) - 20;
+
+	/* get the original checksum and zero it so we can compute what it should be */
+        ptr_csum = (__u16*)(ptr_xport + (proto==0x11 ? 6 : 16));
+        csum_orig = *ptr_csum;
+	*ptr_csum = 0;
+
+	/* compute and set the final checksum */
+        csum_comp = checksum_xport( skb->nh.iph->saddr, skb->nh.iph->daddr, proto, ptr_xport, xport_len );
+        *ptr_csum = unlikely(csum_comp==0x00 && proto==0x11) ? 0xFF : csum_comp; /* UDP checksum 0x00 => 0xFF */
+#ifdef _LKM_IPIP_DEBUG_
+        if( csum_orig != csum_comp )
+	    printk( "Checksum error: was 0x%0X, computed 0x%0X\n", ntohs(csum_orig), ntohs(csum_comp) );
+        else
+	    printk( "Checksum CORRECT" );
+#endif
     }
 
     skb_flag_as_changed( skb );
@@ -308,7 +402,7 @@ unsigned int encap_hook( unsigned int hooknum,
     outer_ip_hdr->ihl = 5;
     outer_ip_hdr->tos = inner_ip_hdr->tos;
     outer_ip_hdr->tot_len = htons( skb->len );
-    outer_ip_hdr->frag_off = 0;
+    outer_ip_hdr->frag_off = 4;
     outer_ip_hdr->id = inner_ip_hdr->id;
     outer_ip_hdr->ttl = inner_ip_hdr->ttl;
     outer_ip_hdr->protocol = LKM_IPIP_PROTO;
@@ -318,11 +412,15 @@ unsigned int encap_hook( unsigned int hooknum,
     /* compute the checksum for the new IP header */
     outer_ip_hdr->check = 0;
     outer_ip_hdr->check = checksum( (__u16*)outer_ip_hdr, sizeof(struct iphdr) );
+ 
+    print_skb( "after", skb );
 
     /* update the skb checksum */
     skb->csum = csum_partial( (char *)outer_ip_hdr,
                               sizeof(struct iphdr) + PADDING_BW_IP_HEADERS,
                               skb->csum);
+
+    print_skb( "after_all", skb );
 
     /* ok, give it back to the kernel */
     return NF_ACCEPT;
