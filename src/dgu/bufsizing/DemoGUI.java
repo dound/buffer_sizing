@@ -4,15 +4,11 @@ import dgu.util.swing.GUIHelper;
 import dgu.util.swing.binding.JComboBoxBound;
 import dgu.util.swing.binding.JSliderBound;
 import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
-import javax.swing.ImageIcon;
+import javax.swing.*;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
@@ -31,7 +27,7 @@ import org.jfree.ui.*;
 public class DemoGUI extends javax.swing.JFrame {
     public static final int TIME_BETWEEN_REFRESHES = 250;
     
-    public static final String VERSION = "v0.01b";
+    public static final String VERSION = "v0.02b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
     private static JFreeChart chartXput, chartOcc;
     public static DemoGUI me;
@@ -57,6 +53,7 @@ public class DemoGUI extends javax.swing.JFrame {
         createChartXput();
         createChartOcc();
         initComponents();
+        initPopup();
         prepareBindings();
         setIconImage( icon );
        
@@ -95,6 +92,54 @@ public class DemoGUI extends javax.swing.JFrame {
         // start the stats listener threads
         for( Router r : demo.getRouters() )
             r.startStatsListener();
+    }
+    
+    public static final int RATE_LIM_VALUE_COUNT = 17;
+    private static final long RATE_LIM_MAX_RATE = 4L * 1000L * 1000L * 1000L;
+    private static final long RATE_LIM_MAX_RATE_ALLOWED = 1000L * 1000L * 1000L;
+    public static final int RATE_LIM_MIN_REG_VAL = 2;
+    JMenu mnuRateLim = new JMenu("Rate Limit");
+    JMenuItem[] mnuRateLimVal = new JMenuItem[RATE_LIM_VALUE_COUNT];
+    void initPopup() {
+        // create the popup menu
+        final JPopupMenu mnuPopup = new JPopupMenu();
+        
+        // add rate limit submenu to the popup menu
+        mnuPopup.add( mnuRateLim );
+        
+        // add choices in the rate limit submenu
+        long rate = RATE_LIM_MAX_RATE;
+        for( int i=0; i<RATE_LIM_VALUE_COUNT; i++ ) {
+            final int index = i;
+            mnuRateLimVal[i] = new JMenuItem( this.formatBits(rate, false, UnitTime.TIME_SEC).both() );
+            mnuRateLimVal[i].addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
+                    if( bl != null )
+                        bl.setRateLimitReg(index);
+                }
+            });
+            
+            // don't enable invalid choices
+            if( rate > RATE_LIM_MAX_RATE_ALLOWED )
+                mnuRateLimVal[i].setEnabled(false);
+            
+            mnuRateLim.add( mnuRateLimVal[i] );
+            rate /= 2;
+        }
+        
+        // attach the popup to other components
+        MouseAdapter pl = new MouseAdapter() {
+            public void mousePressed(MouseEvent e) { showPopupIfTriggered(e); }
+            public void mouseReleased(MouseEvent e) { showPopupIfTriggered(e); }
+
+            /** listens for mouse clicks and fires the popup menu when appropriate */
+            private void showPopupIfTriggered(MouseEvent e) {
+                if( e.isPopupTrigger() )
+                    mnuPopup.show( e.getComponent(), e.getX(), e.getY() );
+            }
+        };
+        lblMap.addMouseListener( pl );
     }
     
     private JFreeChart prepareChart( String title, String xAxis, String yAxis, XYSeriesCollection coll ) {

@@ -372,8 +372,21 @@ public class BottleneckLink extends Link<Router> {
                 break;
         }
         
+        setRateLimitReg(real_value);
+    }
+        
+    public synchronized void setRateLimitReg(int regValue) {
+        if( regValue < DemoGUI.RATE_LIM_MIN_REG_VAL ) {
+            System.err.println( "setRateLimitReg Error: " + regValue + " is too small of a register value (e.g. too high of a rate)" );
+            return;
+        }
+        else if( regValue >= DemoGUI.RATE_LIM_VALUE_COUNT ) {
+            System.err.println( "setRateLimitReg Error: " + regValue + " is too big of a register value (e.g. too low of a rate)" );
+            return;
+        }
+        
         // translate the requested rate into the closest attainable rate
-        rateLimit_kbps = RouterController.translateRateLimitRegToBitsPerSec( real_value ) / 1000;
+        rateLimit_kbps = RouterController.translateRateLimitRegToBitsPerSec( regValue ) / 1000;
         
         // do nothing if the requested rate hasn't changed since the last request
         if( this.rateLimit_kbps == rateLimit_kbps && !forceSet )
@@ -389,7 +402,7 @@ public class BottleneckLink extends Link<Router> {
         updateBufSize();
         
         // tell the router about the new rate limit
-        src.getController().command( RouterCmd.CMD_SET_RATE, queueID, real_value );
+        src.getController().command( RouterCmd.CMD_SET_RATE, queueID, regValue );
         
         // add the start point of the new rate and buffer size
         addDataPointToRateAndBufferSizeData(t);
