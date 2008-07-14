@@ -27,10 +27,12 @@ public class BottleneckLink extends Link<Router> {
     private static final boolean ALLOW_DUPS_SETTING = true;
     
     // user-defined variables on this bottleneck link
-    private boolean useRuleOfThumb = true;
+    private BufferSizeRule bufSizeRule = BufferSizeRule.RULE_OF_THUMB;
     private int numFlows = 1;
-    private int bufSize_msec;
+    private int rtt_ms;
     private int rateLimit_kbps;
+    private int customBufSize_bytes;
+    private int lastBufSize_bytes = -1;
     private boolean selected;
     
     // recently collected data
@@ -80,13 +82,17 @@ public class BottleneckLink extends Link<Router> {
         return num_bytes / 1024;
     }
     
-    private void addDataPointToRateAndBufferSizeData( long time_ns8 ) {
-        dataRateLimit.add( time_ns8, bitsToRateRangeUnits(this.rateLimit_kbps*1000), false  );
-        addDataPointToBufferSizeData( time_ns8 );
+    private void addDataPointToRateData( long time_ns8 ) {
+        dataRateLimit.add( time_ns8, bitsToRateRangeUnits(this.rateLimit_kbps*1000), false );
     }
-     
-    private void addDataPointToBufferSizeData( long time_ns8 ) {
-        //dataBufSize.add( time_ns8, bytesToSizeRangeUnits(getBufSize_bytes(this.useRuleOfThumb)), false  );
+    
+    private void addDataPointToBufferSizeData( long time_ns8, int curBufSize_bytes ) {
+        dataBufSize.add( time_ns8, bytesToSizeRangeUnits(curBufSize_bytes), false );
+    }
+    
+    private void addDataPointToRateAndBufferSizeData( long time_ns8, int curBufSize_bytes ) {
+        addDataPointToRateData(time_ns8);
+        addDataPointToBufferSizeData(time_ns8, curBufSize_bytes);
     }
     
     private void addDataPointToQueueOccData( long time_ns8 ) {
@@ -124,13 +130,13 @@ public class BottleneckLink extends Link<Router> {
         prepareXYSeries( dataRateLimit, dataPointsToKeep );
         
         // set the initial values
-        this.bufSize_msec = 0;
+        this.rtt_ms = 0;
         this.rateLimit_kbps = 0;
         this.selected = false;
         
         // update the plots appropriately
         forceSet = true;
-        setBufSize_msec( bufSize_msec );
+        setRTT_ms( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
         forceSet = false;
     }
@@ -180,7 +186,7 @@ public class BottleneckLink extends Link<Router> {
         int fillY = y + QUEUE_HEIGHT / 2;
         gfx.drawLine( fillX, fillY, fillX + width, fillY );
         
-        // restore defaults
+        // restore defaultsAndBufferSize
         gfx.setPaint( Drawable.PAINT_DEFAULT );
         gfx.setStroke( Drawable.STROKE_DEFAULT );
         
@@ -266,7 +272,7 @@ public class BottleneckLink extends Link<Router> {
             instantaneousUtilization = 1.0f;
         
         // compute the new instantaneous queue occupancy
-        int bufSize_bytes = getBufSize_bytes(useRuleOfThumb);
+        int bufSize_bytes = getActualBufSize();
         if( queueOcc_bytes < bufSize_bytes )
             instantaneousQueueOcc = queueOcc_bytes / (float)bufSize_bytes;
         else
@@ -284,6 +290,12 @@ public class BottleneckLink extends Link<Router> {
         dataDropRate.clear(   false );
         dataBufSize.clear(    false );
         dataRateLimit.clear(  false );
+        
+        // re-start the graphs with the thresholds
+        long time_ns8 = currentTime8ns();
+        int curBufSize = getActualBufSize();
+        addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
+        addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
     }
     
     public synchronized void extendUserDataPoints( long time_ns ) {
@@ -294,19 +306,20 @@ public class BottleneckLink extends Link<Router> {
         }
         
         // add the new updated endpoints of user-controlled values and refresh the plot
-        addDataPointToRateAndBufferSizeData(time_ns);
+        addDataPointToRateData(time_ns);
+        addDataPointToBufferSizeData(time_ns, lastBufSize_bytes);
     }
     
-    public boolean getUseRuleOfThumb() {
-        return useRuleOfThumb;
+    public BufferSizeRule getBufSizeRule() {
+        return bufSizeRule;
     }
 
-    public synchronized void setUseRuleOfThumb( boolean useRuleOfThumb ) {
-        if( this.useRuleOfThumb == useRuleOfThumb )
+    public synchronized void setBufSizeRule( BufferSizeRule bufSizeRule ) {
+        if( this.bufSizeRule == bufSizeRule )
             return;
         
-        this.useRuleOfThumb = useRuleOfThumb;
-        updateBufSize();
+        this.bufSizeRule = bufSizeRule;
+        updateActualBufSize();
     }
     
     public int getNumFlows() {
@@ -315,44 +328,79 @@ public class BottleneckLink extends Link<Router> {
 
     public synchronized void adjustNumFlows( int adjust ) {
         this.numFlows += adjust;
-        updateBufSize();
+        updateActualBufSize();
     }
     
-    public int getBufSize_msec() {
-        return bufSize_msec;
+    /**
+     * Returns the current buffer size.
+     */
+    public synchronized int getActualBufSize() {
+        return getActualBufSize(bufSizeRule);
     }
     
-    public int getBufSize_bytes( boolean useRuleOfThumb ) {
-        return bufSize_msec * rateLimit_kbps / (8 * (useRuleOfThumb ? 1 : numFlows));
+    /**
+     * Returns the buffer size which would be specified by bufSizeRule with the 
+     * current parameters.
+     */
+    public synchronized int getActualBufSize( BufferSizeRule bufSizeRule ) {
+        switch( bufSizeRule ) {
+            case RULE_OF_THUMB:  return rtt_ms * rateLimit_kbps / 8;
+            case FLOW_SENSITIVE: return rtt_ms * rateLimit_kbps / (8 * numFlows);
+            case CUSTOM:         return customBufSize_bytes;
+            default:             throw( new Error("Error: unknown rule: " + bufSizeRule) );
+        }
     }
     
-    private void updateBufSize() {
+    private synchronized void updateActualBufSize() {
+        long t = currentTime8ns();
+        int curBufSize_bytes = getActualBufSize();
+        if( lastBufSize_bytes == curBufSize_bytes )
+            return; /* no change */
+        
+        // add endpoint if last has a meaningful value
+        if( lastBufSize_bytes >= 0 )
+            addDataPointToBufferSizeData(t, lastBufSize_bytes);
+        
+        // and start point for new buffer size
+        addDataPointToBufferSizeData(t, curBufSize_bytes);
+        addDataPointToBufferSizeData(t, curBufSize_bytes);
+        lastBufSize_bytes = curBufSize_bytes;
+        
         // tell the router about the new buffer size in terms of packets
-        this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, getBufSize_bytes(useRuleOfThumb) / 1500 );
+        this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, curBufSize_bytes / 1000 );
         
         // refresh the GUI
         if( DemoGUI.me != null ) DemoGUI.me.setBufferSizeText( this );
     }
 
-    public synchronized void setBufSize_msec( int bufSize_msec ) {
-        if( this.bufSize_msec == bufSize_msec && !forceSet )
+    public synchronized int getCustomBufSize() {
+        return customBufSize_bytes;
+    }
+    
+    public synchronized void setCustomBufSize(int numBytes) {
+        if( customBufSize_bytes != numBytes ) {
+            customBufSize_bytes = numBytes;
+            if( bufSizeRule == BufferSizeRule.CUSTOM )
+                updateActualBufSize();
+            else
+                if( DemoGUI.me != null ) DemoGUI.me.setBufferSizeText( this );
+        }
+    }
+    
+    public int getRTT_ms() {
+        return rtt_ms;
+    }
+    
+    public synchronized void setRTT_ms( int rtt_ms  ) {
+        if( this.rtt_ms == rtt_ms && !forceSet )
             return;
         
-        // add the end point of the old buffer size
-        long t = currentTime8ns();
-        addDataPointToBufferSizeData(t);
-        
         // set the new buffer size
-        this.bufSize_msec = bufSize_msec;
+        this.rtt_ms = rtt_ms;
+        DemoGUI.me.mnuSetRTT.setText( "Set RTT (" + rtt_ms + "ms)" );
         
         // tell the router about the new buffer size in terms of packets
-        updateBufSize();
-        
-        // add the start point of the new buffer size
-        addDataPointToBufferSizeData(t);
-        
-        // add the temporary start point of the new buffer size
-        addDataPointToBufferSizeData(t);
+        updateActualBufSize();
     }
 
     public int getRateLimit_kbps() {
@@ -386,29 +434,27 @@ public class BottleneckLink extends Link<Router> {
         }
         
         // translate the requested rate into the closest attainable rate
-        rateLimit_kbps = RouterController.translateRateLimitRegToBitsPerSec( regValue ) / 1000;
+        int new_rateLimit_kbps = RouterController.translateRateLimitRegToBitsPerSec( regValue ) / 1000;
         
         // do nothing if the requested rate hasn't changed since the last request
-        if( this.rateLimit_kbps == rateLimit_kbps && !forceSet )
+        if( rateLimit_kbps == new_rateLimit_kbps && !forceSet )
             return;
         
         // add the end point of the old rate
         long t = currentTime8ns();
-        addDataPointToRateAndBufferSizeData(t);
+        addDataPointToRateData(t);
         
         // set the new buffer size
-        this.rateLimit_kbps = rateLimit_kbps;
+        rateLimit_kbps = new_rateLimit_kbps;
         if( DemoGUI.me != null ) DemoGUI.me.setRateLimitText( this );
-        updateBufSize();
+        updateActualBufSize();
         
         // tell the router about the new rate limit
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, regValue );
         
         // add the start point of the new rate and buffer size
-        addDataPointToRateAndBufferSizeData(t);
-        
-        // add the temporary end point of the new rate and buffer size
-        addDataPointToRateAndBufferSizeData(t);
+        addDataPointToRateData(t);
+        addDataPointToRateData(t);
     }
     
     public XYSeries getDataThroughput() {

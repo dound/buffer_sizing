@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.util.StringOps;
 import dgu.util.swing.GUIHelper;
 import dgu.util.swing.binding.JComboBoxBound;
 import dgu.util.swing.binding.JSliderBound;
@@ -7,7 +8,6 @@ import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.LinkedList;
 import javax.swing.*;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
@@ -25,6 +25,7 @@ import org.jfree.ui.*;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
+    public static final int DEFAULT_RTT = 75;
     public static final int TIME_BETWEEN_REFRESHES = 250;
     
     public static final String VERSION = "v0.02b";
@@ -128,8 +129,21 @@ public class DemoGUI extends javax.swing.JFrame {
             rate /= 2;
         }
         
+        // add a delay / RTT submenu
+        mnuSetRTT.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
+                if( bl != null ) {
+                    int rtt = GUIHelper.getIntFromUser("What should the value of RTT be statically set to (ms)?", 
+                                                       0, bl.getRTT_ms(), 1000);
+                    bl.setRTT_ms(rtt);
+                }
+            }
+        });
+        mnuPopup.add(mnuSetRTT);
+        
         // attach the popup to other components
-        MouseAdapter pl = new MouseAdapter() {
+        final MouseAdapter pl = new MouseAdapter() {
             public void mousePressed(MouseEvent e) { showPopupIfTriggered(e); }
             public void mouseReleased(MouseEvent e) { showPopupIfTriggered(e); }
 
@@ -231,7 +245,7 @@ public class DemoGUI extends javax.swing.JFrame {
     void prepareBindings() {
         {
             ListBasedComponentDelegate d = cboBottleneck.getBindingDelegate();
-            d.addBoundComponent( slBufferSize );
+            d.addBoundComponent( slCustomBufferSize  );
             d.addBoundComponent( slRateLimit );
             d.setPrimaryComponent( -2 );
             
@@ -249,10 +263,12 @@ public class DemoGUI extends javax.swing.JFrame {
                             b.setSelected( true );
                             
                             // select the appropriate radio button for buffer sizing formula
-                            if( b.getUseRuleOfThumb() )
-                                optRuleOfThumb.setSelected( true );
-                            else
-                                optGuido.setSelected( true );
+                            switch(b.getBufSizeRule()) {
+                                case RULE_OF_THUMB:  optRuleOfThumb.setSelected(true); break;
+                                case FLOW_SENSITIVE: optGuido.setSelected(true);       break;
+                                case CUSTOM:         optCustom.setSelected(true);      break;
+                                default:             throw( new Error("Bad case in cboBottleneck's actionPerformed") );
+                            }
 
                             // bind this bottleneck's data to the chart and remove old data
                             DemoGUI.collXput.removeAllSeries( false );
@@ -363,18 +379,18 @@ public class DemoGUI extends javax.swing.JFrame {
     
     public synchronized void setBufferSizeText( BottleneckLink l ) {
         synchronized( l ) {
-            int size_msec        = l.getBufSize_msec();
-            int size_old_bytes   = l.getBufSize_bytes(true);
-            int size_new_bytes   = l.getBufSize_bytes(false);
+            int size_msec        = l.getRTT_ms();
+            int sizeROT_bytes    = l.getActualBufSize(BufferSizeRule.RULE_OF_THUMB);
+            int sizeFS_bytes     = l.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE);
+            int sizeCustom_bytes = l.getActualBufSize(BufferSizeRule.CUSTOM);
             
-            String str_size_old_bytes = formatBits(size_old_bytes*8,true,UnitTime.TIME_NONE).both();
-            String str_size_new_bytes = formatBits(size_new_bytes*8,true,UnitTime.TIME_NONE).both();
+            String strROT    = formatBits(sizeROT_bytes*8,    true, UnitTime.TIME_NONE).both();
+            String strFS     = formatBits(sizeFS_bytes*8,     true, UnitTime.TIME_NONE).both();
+            String strCustom = formatBits(sizeCustom_bytes*8, true, UnitTime.TIME_NONE).both();
             
-            this.lblBufferSize.setText( "Buffer = " + size_msec + "ms" );
-            this.optRuleOfThumb.setText( "Rule of Thumb = " 
-                                         + str_size_old_bytes );
-            this.optGuido.setText( "Flow-Sensitive = " 
-                                         + str_size_new_bytes );
+            this.lblRuleOfThumb.setText( strROT );
+            this.lblGuido.setText( strFS );
+            this.lblCustom.setText( strCustom );
         }
     }
     
@@ -396,14 +412,17 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule = new javax.swing.ButtonGroup();
         pnlDetails = new javax.swing.JPanel();
-        lblBufferSize = new java.awt.Label();
-        slBufferSize = new JSliderBound( "bufSize_msec" );
         lblRateLimit = new java.awt.Label();
         slRateLimit = new JSliderBound( "rateLimit_kbps" );
         pnlChartXput = new ChartPanel(chartXput);
         pnlSizing = new javax.swing.JPanel();
         optRuleOfThumb = new javax.swing.JRadioButton();
+        optCustom = new javax.swing.JRadioButton();
+        slCustomBufferSize = new JSliderBound( "customBufSize" );
         optGuido = new javax.swing.JRadioButton();
+        lblCustom = new javax.swing.JLabel();
+        lblRuleOfThumb = new javax.swing.JLabel();
+        lblGuido = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         cboNode = new JComboBoxBound( "getRouters", "" );
         cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
@@ -419,21 +438,6 @@ public class DemoGUI extends javax.swing.JFrame {
         getContentPane().setLayout(null);
 
         pnlDetails.setLayout(null);
-
-        lblBufferSize.setAlignment(java.awt.Label.CENTER);
-        lblBufferSize.setText("Buffer = 1000ms");
-        pnlDetails.add(lblBufferSize);
-        lblBufferSize.setBounds(435, 10, 220, 18);
-        lblBufferSize.getAccessibleContext().setAccessibleName("Buffer = 1000ms !(1000kB / 512pkt)! vs. (1000 / 512))");
-
-        slBufferSize.setBorder(null);
-        slBufferSize.setMajorTickSpacing(100);
-        slBufferSize.setMaximum(500);
-        slBufferSize.setMinorTickSpacing(25);
-        slBufferSize.setPaintTicks(true);
-        slBufferSize.setValue(0);
-        pnlDetails.add(slBufferSize);
-        slBufferSize.setBounds(435, 15, 220, 45);
 
         lblRateLimit.setAlignment(java.awt.Label.CENTER);
         lblRateLimit.setText("Rate Limit = 100Mb/s");
@@ -452,35 +456,78 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
         pnlDetails.add(pnlChartXput);
-        pnlChartXput.setBounds(0, 75, 509, 415);
+        pnlChartXput.setBounds(0, 85, 509, 405);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12));
-        optRuleOfThumb.setText("Rule of Thumb = 1000kB");
+        optRuleOfThumb.setText("Rule of Thumb");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optRuleOfThumbActionPerformed(evt);
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 165, 22);
+        optRuleOfThumb.setBounds(10, 15, 120, 15);
+
+        optGroupRule.add(optCustom);
+        optCustom.setFont(new java.awt.Font("Arial", 0, 12));
+        optCustom.setText("Custom");
+        optCustom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optCustomActionPerformed(evt);
+            }
+        });
+        pnlSizing.add(optCustom);
+        optCustom.setBounds(10, 55, 120, 15);
+
+        slCustomBufferSize.setBorder(null);
+        slCustomBufferSize.setMajorTickSpacing(10485760);
+        slCustomBufferSize.setMaximum(104857600);
+        slCustomBufferSize.setMinorTickSpacing(5242880);
+        slCustomBufferSize.setPaintTicks(true);
+        slCustomBufferSize.setValue(0);
+        pnlSizing.add(slCustomBufferSize);
+        slCustomBufferSize.setBounds(205, 35, 220, 40);
 
         optGroupRule.add(optGuido);
         optGuido.setFont(new java.awt.Font("Arial", 0, 12));
-        optGuido.setText("Flow-Sensitive = 1000kB");
+        optGuido.setText("Flow-Sensitive");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optGuidoActionPerformed(evt);
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 165, 22);
+        optGuido.setBounds(10, 35, 120, 15);
+
+        lblCustom.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
+        lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblCustom.setText("1000kB");
+        lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblCustomMouseClicked(evt);
+            }
+        });
+        pnlSizing.add(lblCustom);
+        lblCustom.setBounds(130, 55, 60, 15);
+
+        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12));
+        lblRuleOfThumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblRuleOfThumb.setText("10kB");
+        pnlSizing.add(lblRuleOfThumb);
+        lblRuleOfThumb.setBounds(130, 15, 60, 15);
+
+        lblGuido.setFont(new java.awt.Font("Courier", 0, 12));
+        lblGuido.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblGuido.setText("100MB");
+        pnlSizing.add(lblGuido);
+        lblGuido.setBounds(130, 35, 60, 15);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(240, 5, 180, 63);
+        pnlSizing.setBounds(240, 5, 430, 80);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 
@@ -508,7 +555,7 @@ public class DemoGUI extends javax.swing.JFrame {
         });
         pnlChartOcc.setLayout(null);
         pnlDetails.add(pnlChartOcc);
-        pnlChartOcc.setBounds(508, 75, 509, 415);
+        pnlChartOcc.setBounds(508, 85, 509, 405);
 
         btnClearAllData.setText("Clear All Data");
         btnClearAllData.addActionListener(new java.awt.event.ActionListener() {
@@ -542,25 +589,20 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlMap.setBounds(0, 0, 1028, 250);
     }// </editor-fold>//GEN-END:initComponents
 
+
+private void setBufSizeOption( BufferSizeRule rule ) {
+    BottleneckLink b = getSelectedBottleneck();
+    if( b != null && b.getBufSizeRule() != rule )
+        b.setBufSizeRule( rule );
+}
+    
 private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
-    try {
-        BottleneckLink b = getSelectedBottleneck();
-        if( !b.getUseRuleOfThumb() )
-            b.setUseRuleOfThumb( true );
-    } catch( Exception bleh ) {
-        //Do nothing, don't yet have a bottleneck
-    }
+    setBufSizeOption( BufferSizeRule.RULE_OF_THUMB );
 }//GEN-LAST:event_optRuleOfThumbActionPerformed
 
-private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optGuidoActionPerformed
-    try {
-        BottleneckLink b = getSelectedBottleneck();
-        if( b.getUseRuleOfThumb() )
-            b.setUseRuleOfThumb( false );
-    } catch( Exception bleh ) {
-        //Do nothing, don't yet have a bottleneck
-    }
-}//GEN-LAST:event_optGuidoActionPerformed
+private void optCustomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optCustomActionPerformed
+    setBufSizeOption( BufferSizeRule.CUSTOM );
+}//GEN-LAST:event_optCustomActionPerformed
 
 private void btnClearAllDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearAllDataActionPerformed
     demo.clearData();
@@ -576,6 +618,29 @@ private void pnlChartOccMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
     freezeCharts = !freezeCharts;
 }//GEN-LAST:event_pnlChartOccMouseClicked
 
+private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optGuidoActionPerformed
+    setBufSizeOption( BufferSizeRule.FLOW_SENSITIVE );
+}//GEN-LAST:event_optGuidoActionPerformed
+
+private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCustomMouseClicked
+    long numBits;
+    do {
+        String input = GUIHelper.getInput("What should the custom buffer size be?", 
+                                          formatBits(8*slCustomBufferSize.getValue(), true, UnitTime.TIME_NONE).both());
+        if( input == null )
+            return;
+        
+        try {
+            numBits = StringOps.strToBits(input);
+        }
+        catch( NumberFormatException e ) {
+            numBits = -1;
+        }
+    }
+    while( numBits < 0 );
+    slCustomBufferSize.setValue( (int)(numBits / 8) );
+}//GEN-LAST:event_lblCustomMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearAllData;
     private javax.swing.JButton btnClearThisData;
@@ -583,10 +648,13 @@ private void pnlChartOccMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
     private dgu.util.swing.binding.JComboBoxBound cboNode;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblBottleneck;
-    private java.awt.Label lblBufferSize;
+    private javax.swing.JLabel lblCustom;
+    private javax.swing.JLabel lblGuido;
     private javax.swing.JLabel lblMap;
     private javax.swing.JLabel lblNode;
     private java.awt.Label lblRateLimit;
+    private javax.swing.JLabel lblRuleOfThumb;
+    private javax.swing.JRadioButton optCustom;
     private javax.swing.ButtonGroup optGroupRule;
     private javax.swing.JRadioButton optGuido;
     private javax.swing.JRadioButton optRuleOfThumb;
@@ -595,16 +663,8 @@ private void pnlChartOccMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
     private javax.swing.JPanel pnlSizing;
-    private dgu.util.swing.binding.JSliderBound slBufferSize;
+    private dgu.util.swing.binding.JSliderBound slCustomBufferSize;
     private dgu.util.swing.binding.JSliderBound slRateLimit;
     // End of variables declaration//GEN-END:variables
-    
-    /** Listens for radio button clicks and updates the rule of thumb setting appropriately. */
-    private ActionListener varRadio = new ActionListener(){  
-        public void actionPerformed(ActionEvent e) {
-            LinkedList<BottleneckLink> c = (LinkedList<BottleneckLink>)cboBottleneck.getBindingDelegate().getBinding().getValue();
-            BottleneckLink b = c.get( cboBottleneck.getBindingDelegate().getSelectedIndex() );
-            b.setUseRuleOfThumb( e.getActionCommand().equals("rot") );
-        }
-    };
+    static final JMenuItem mnuSetRTT = new JMenuItem("Set RTT");
 }
