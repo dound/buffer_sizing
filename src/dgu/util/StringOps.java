@@ -10,6 +10,48 @@ import java.util.LinkedList;
  */
 public abstract class StringOps {
 
+    /** Converts a string specifying a number of bytes into bits. */
+    public static long strToBits(String input) throws NumberFormatException {
+        // determine the multiplier due to metric prefix, if any
+        long multiplier = 1;
+        if( input.length() > 2 ) {
+            String units = input.substring(input.length()-2);
+            switch(units.charAt(0)) {
+                case 'k': multiplier = 1024; break;
+                case 'M': multiplier = 1024*1024; break;
+                case 'G': multiplier = 1024*1024*1024; break;
+            }
+            
+            // cut out the multiplier (e.g. k, M, ...)
+            if( multiplier != 1 )
+                input = input.substring(0, input.length()-2) + input.charAt(input.length()-1);
+        }
+        
+        // determine the bits/bytes multiplier
+        if( input.length() > 1 ) {
+            boolean more = false;
+            char c = input.charAt(input.length()-1);
+            if( c == 'B' ) {
+                multiplier *= 8;
+                more = true;
+            }
+            else if ( c == 'b' )
+                more = true;
+            else
+                multiplier *= 8; /* assume bytes otherwise */
+         
+            // cut out the bits/bytes field
+            if( more )
+                input = input.substring(0, input.length()-1);
+        }
+        
+        // convert the remainder to a string
+        long base = Long.valueOf(input);
+        
+        // conversion worked, add the multiplier to get the final value
+        return base * multiplier;
+    }
+    
   /**
    * Checks to see if name contains anything other than alphanumeric characters, underscores,
    * or spaces.
