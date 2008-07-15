@@ -9,9 +9,11 @@ import java.awt.Graphics2D;
 public abstract class TrafficGenerator extends Node {
     protected static final int ICON_WIDTH  = 50;
     protected static final int ICON_HEIGHT = 50;
+    protected final String dstIP;
     
-    public TrafficGenerator( String name, String nameShort, Importance importance, int x, int y ) {
+    public TrafficGenerator( String dstIP, String name, String nameShort, Importance importance, int x, int y ) {
         super( name, nameShort, importance, x, y );
+        this.dstIP = dstIP;
     }
     
     protected void drawNode( Graphics2D gfx ) {
@@ -22,6 +24,10 @@ public abstract class TrafficGenerator extends Node {
     public abstract void drawIcon( Graphics2D gfx );
     
     public abstract String getTrafficTypeString();
+    
+    public void setNumFlows(int n) {
+        System.err.println("Warning: " + getTrafficTypeString() + "::setNumFlows not yet implemented");
+    }
     
     public String getTypeString() {
         return "Traffic Generator [" + getTrafficTypeString() + "]";

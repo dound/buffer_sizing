@@ -35,6 +35,9 @@ public class BottleneckLink extends Link<Router> {
     private int lastBufSize_bytes = -1;
     private boolean selected;
     
+    // the traffic generator responsible for handling flows over this link
+    private TrafficGenerator tgen;
+    
     // recently collected data
     private long time_offset_ns8 = 0;
     private long prev_time_offset_end_ns8 = 0;
@@ -134,6 +137,7 @@ public class BottleneckLink extends Link<Router> {
         this.rateLimit_kbps = 0;
         this.numFlows = 0;
         this.selected = false;
+        this.tgen = new Iperf("64.57.23.37");
         
         // update the plots appropriately
         forceSet = true;
@@ -333,6 +337,8 @@ public class BottleneckLink extends Link<Router> {
         updateActualBufSize();
         if( DemoGUI.me != null )
             DemoGUI.me.setNumFlowsText(this);
+        
+        tgen.setNumFlows(n);
     }
 
     public synchronized void adjustNumFlows( int adjust ) {

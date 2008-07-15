@@ -14,8 +14,8 @@ public class Tomahawk extends TrafficGenerator {
     
     private final TomahawkController controller;
 
-    public Tomahawk( String name, String nameShort, Importance importance, int x, int y, int commandPort, int numFlows, int output_Mbps ) {
-        super( name, nameShort, importance, x, y );
+    public Tomahawk( String dstIP, String name, String nameShort, Importance importance, int x, int y, int commandPort, int numFlows, int output_Mbps ) {
+        super( dstIP, name, nameShort, importance, x, y );
         this.numFlows = numFlows;
         this.output_Mbps = output_Mbps;
         
@@ -29,12 +29,13 @@ public class Tomahawk extends TrafficGenerator {
     public String getTrafficTypeString() {
         return "Tomahawk";
     }
-
+    
     public int getNumFlows() {
         return numFlows;
     }
 
-    public void setNumFlows( int numFlows ) {
+    public void setNumFlows(int numFlows) {
+        System.err.println("Warning: " + getTrafficTypeString() + "::setNumFlows not yet implemented");
         this.numFlows = numFlows;
     }
 

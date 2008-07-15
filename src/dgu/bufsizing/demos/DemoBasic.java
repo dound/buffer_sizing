@@ -38,7 +38,7 @@ public class DemoBasic {
         demo.addGenericNode( dc );
         
         // add our traffic generators
-        TrafficGenerator su = new Harpoon( "Stanford", "SU", Importance.IMPORTANT, 30, 100 );
+        TrafficGenerator su = new Harpoon( "64.57.23.37", "Stanford", "SU", Importance.IMPORTANT, 30, 100 );
         demo.addTrafficGenerator( su );
         
         // add the links between nodes

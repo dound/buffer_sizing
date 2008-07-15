@@ -9,8 +9,8 @@ import java.awt.Graphics2D;
 public class PlanetLab extends TrafficGenerator {
     private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("planetlab.png");
     
-    public PlanetLab( String name, String nameShort, Importance importance, int x, int y ) {
-        super( name, nameShort, importance, x, y );
+    public PlanetLab( String dstIP, String name, String nameShort, Importance importance, int x, int y ) {
+        super( dstIP, name, nameShort, importance, x, y );
     }
     
     public void drawIcon( Graphics2D gfx ) {
@@ -19,5 +19,9 @@ public class PlanetLab extends TrafficGenerator {
 
     public String getTrafficTypeString() {
         return "PlanetLab";
+    }
+    
+    public void setNumFlows(int n) {
+        System.err.println("Warning: " + getTrafficTypeString() + "::setNumFlows not yet implemented");
     }
 }
