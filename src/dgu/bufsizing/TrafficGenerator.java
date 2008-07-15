@@ -32,4 +32,8 @@ public abstract class TrafficGenerator extends Node {
     public String getTypeString() {
         return "Traffic Generator [" + getTrafficTypeString() + "]";
     }
+    
+    public void setXput_bps(int bps) {
+        /* no-op by default */
+    }
 }

@@ -461,6 +461,9 @@ public class BottleneckLink extends Link<Router> {
         if( rateLimit_kbps == new_rateLimit_kbps && !forceSet )
             return;
         
+        // tell our traffic generator what to do if needs to know
+        tgen.setXput_bps(new_rateLimit_kbps * 1000);
+        
         // add the end point of the old rate
         long t = currentTime8ns();
         addDataPointToRateData(t);
