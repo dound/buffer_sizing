@@ -325,10 +325,15 @@ public class BottleneckLink extends Link<Router> {
     public int getNumFlows() {
         return numFlows;
     }
+    
+    public synchronized void setNumFlows(int n) {
+        this.numFlows = n;
+        updateActualBufSize();
+        DemoGUI.me.setNumFlowsText(this);
+    }
 
     public synchronized void adjustNumFlows( int adjust ) {
-        this.numFlows += adjust;
-        updateActualBufSize();
+        setNumFlows( this.numFlows + adjust );
     }
     
     /**
@@ -407,20 +412,27 @@ public class BottleneckLink extends Link<Router> {
         return rateLimit_kbps;
     }
 
-    public synchronized void setRateLimit_kbps(int rateLimit_kbps) {
+    public int getRateLimit_regValue() {
+        return getRateLimit_regValue(rateLimit_kbps*1000);
+    }
+    
+    public int getRateLimit_regValue(int rate) {
         // translate the requested to rate to the register value to get the closest rate
-        int tmp_rate = (int)(rateLimit_kbps * 1.5); // switch at the halfway point
-        byte real_value = 2;
-        while( tmp_rate < 1000 * 1000) {
-            tmp_rate *= 2;
-            real_value += 1;
+        byte regValue = 0;
+        while( rate < DemoGUI.RATE_LIM_MAX_RATE ) {
+            rate *= 2;
+            regValue += 1;
             
             // stop at the max value
-            if( real_value == 16 )
+            if( regValue == DemoGUI.RATE_LIM_VALUE_COUNT - 1 )
                 break;
         }
         
-        setRateLimitReg(real_value);
+        return regValue;
+    }
+    
+    public synchronized void setRateLimit_kbps(int rate_kbps) {
+        setRateLimitReg( getRateLimit_regValue(rate_kbps) );
     }
         
     public synchronized void setRateLimitReg(int regValue) {

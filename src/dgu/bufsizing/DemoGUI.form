@@ -38,34 +38,21 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
       <SubComponents>
-        <Component class="java.awt.Label" name="lblRateLimit">
-          <Properties>
-            <Property name="alignment" type="int" value="1"/>
-            <Property name="text" type="java.lang.String" value="Rate Limit = 100Mb/s"/>
-          </Properties>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="670" y="10" width="220" height="18"/>
-            </Constraint>
-          </Constraints>
-        </Component>
-        <Component class="dgu.util.swing.binding.JSliderBound" name="slRateLimit">
+        <Component class="dgu.util.swing.binding.JSliderBound" name="slNumFlows">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
-            <Property name="majorTickSpacing" type="int" value="100000"/>
-            <Property name="maximum" type="int" value="1000000"/>
-            <Property name="minorTickSpacing" type="int" value="50000"/>
-            <Property name="paintTicks" type="boolean" value="true"/>
-            <Property name="value" type="int" value="0"/>
+            <Property name="majorTickSpacing" type="int" value="250"/>
+            <Property name="minimum" type="int" value="1"/>
+            <Property name="minorTickSpacing" type="int" value="100"/>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JSliderBound( &quot;rateLimit_kbps&quot; )"/>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JSliderBound( &quot;numFlows&quot; )"/>
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="670" y="15" width="220" height="45"/>
+              <AbsoluteConstraints x="470" y="25" width="220" height="16"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -80,7 +67,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="0" y="85" width="509" height="405"/>
+              <AbsoluteConstraints x="0" y="93" width="509" height="397"/>
             </Constraint>
           </Constraints>
 
@@ -98,7 +85,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="240" y="5" width="430" height="80"/>
+              <AbsoluteConstraints x="240" y="5" width="200" height="90"/>
             </Constraint>
           </Constraints>
 
@@ -146,13 +133,9 @@
             </Component>
             <Component class="dgu.util.swing.binding.JSliderBound" name="slCustomBufferSize">
               <Properties>
-                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                  <Border info="null"/>
-                </Property>
                 <Property name="majorTickSpacing" type="int" value="10485760"/>
                 <Property name="maximum" type="int" value="104857600"/>
                 <Property name="minorTickSpacing" type="int" value="5242880"/>
-                <Property name="paintTicks" type="boolean" value="true"/>
                 <Property name="value" type="int" value="0"/>
               </Properties>
               <AuxValues>
@@ -160,7 +143,7 @@
               </AuxValues>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="205" y="35" width="220" height="40"/>
+                  <AbsoluteConstraints x="30" y="70" width="165" height="16"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -248,7 +231,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="90" y="10" width="130" height="25"/>
+              <AbsoluteConstraints x="80" y="10" width="130" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -263,7 +246,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="90" y="40" width="130" height="25"/>
+              <AbsoluteConstraints x="80" y="40" width="130" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -274,7 +257,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="5" y="40" width="80" height="25"/>
+              <AbsoluteConstraints x="5" y="40" width="70" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -285,7 +268,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="5" y="10" width="80" height="25"/>
+              <AbsoluteConstraints x="5" y="10" width="70" height="25"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -303,7 +286,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="508" y="85" width="509" height="405"/>
+              <AbsoluteConstraints x="508" y="93" width="509" height="397"/>
             </Constraint>
           </Constraints>
 
@@ -311,19 +294,6 @@
             <Property name="useNullLayout" type="boolean" value="true"/>
           </Layout>
         </Container>
-        <Component class="javax.swing.JButton" name="btnClearAllData">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Clear All Data"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnClearAllDataActionPerformed"/>
-          </Events>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="900" y="35" width="115" height="20"/>
-            </Constraint>
-          </Constraints>
-        </Component>
         <Component class="javax.swing.JButton" name="btnClearThisData">
           <Properties>
             <Property name="text" type="java.lang.String" value="Clear Data"/>
@@ -333,7 +303,19 @@
           </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="900" y="10" width="115" height="20"/>
+              <AbsoluteConstraints x="5" y="70" width="205" height="20"/>
+            </Constraint>
+          </Constraints>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblNumFlows">
+          <Properties>
+            <Property name="horizontalAlignment" type="int" value="0"/>
+            <Property name="text" type="java.lang.String" value="Number of Flows = x"/>
+            <Property name="opaque" type="boolean" value="true"/>
+          </Properties>
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+              <AbsoluteConstraints x="470" y="5" width="220" height="18"/>
             </Constraint>
           </Constraints>
         </Component>

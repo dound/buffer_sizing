@@ -96,11 +96,11 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     
     public static final int RATE_LIM_VALUE_COUNT = 17;
-    private static final long RATE_LIM_MAX_RATE = 4L * 1000L * 1000L * 1000L;
+    public static final long RATE_LIM_MAX_RATE = 4L * 1000L * 1000L * 1000L;
     private static final long RATE_LIM_MAX_RATE_ALLOWED = 1000L * 1000L * 1000L;
     public static final int RATE_LIM_MIN_REG_VAL = 2;
     JMenu mnuRateLim = new JMenu("Rate Limit");
-    JMenuItem[] mnuRateLimVal = new JMenuItem[RATE_LIM_VALUE_COUNT];
+    javax.swing.JCheckBoxMenuItem[] mnuRateLimVal = new JCheckBoxMenuItem[RATE_LIM_VALUE_COUNT];
     void initPopup() {
         // create the popup menu
         final JPopupMenu mnuPopup = new JPopupMenu();
@@ -112,7 +112,8 @@ public class DemoGUI extends javax.swing.JFrame {
         long rate = RATE_LIM_MAX_RATE;
         for( int i=0; i<RATE_LIM_VALUE_COUNT; i++ ) {
             final int index = i;
-            mnuRateLimVal[i] = new JMenuItem( this.formatBits(rate, false, UnitTime.TIME_SEC).both() );
+            mnuRateLimVal[i] = new JCheckBoxMenuItem( this.formatBits(rate, false, UnitTime.TIME_SEC).both() );
+            mnuRateLimVal[i].setSelected(false);
             mnuRateLimVal[i].addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
@@ -167,8 +168,7 @@ public class DemoGUI extends javax.swing.JFrame {
             false, //tooltips
             false  //URLs
         );    
-         
-        chart.setBackgroundPaint(GUIHelper.DEFAULT_BG_COLOR);
+        
         chart.setBorderVisible(false);
         chart.setAntiAlias(false);
         chart.setTextAntiAlias(true);
@@ -246,7 +246,7 @@ public class DemoGUI extends javax.swing.JFrame {
         {
             ListBasedComponentDelegate d = cboBottleneck.getBindingDelegate();
             d.addBoundComponent( slCustomBufferSize  );
-            d.addBoundComponent( slRateLimit );
+            d.addBoundComponent( slNumFlows  );
             d.setPrimaryComponent( -2 );
             
             // manually populate the options whenever the combo box for bottlenecks is clicked
@@ -395,10 +395,14 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     
     public synchronized void setRateLimitText( BottleneckLink l ) {
-        synchronized( l ) {
-            this.lblRateLimit.setText( "Rate Limit = " 
-                    + formatBits(1000*l.getRateLimit_kbps(), false, UnitTime.TIME_SEC) );
-        }
+        int selectedIndex = l.getRateLimit_regValue();
+        for( int i=0; i<RATE_LIM_VALUE_COUNT; i++ )
+            mnuRateLimVal[i].setSelected(i == selectedIndex);
+    }
+    
+    public synchronized void setNumFlowsText( BottleneckLink l ) {
+        int numFlows = l.getNumFlows();
+        this.lblNumFlows.setText( "Number of Flows = " + numFlows );
     }
 
     /** This method is called from within the constructor to
@@ -412,8 +416,7 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule = new javax.swing.ButtonGroup();
         pnlDetails = new javax.swing.JPanel();
-        lblRateLimit = new java.awt.Label();
-        slRateLimit = new JSliderBound( "rateLimit_kbps" );
+        slNumFlows = new JSliderBound( "numFlows" );
         pnlChartXput = new ChartPanel(chartXput);
         pnlSizing = new javax.swing.JPanel();
         optRuleOfThumb = new javax.swing.JRadioButton();
@@ -429,8 +432,8 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
         pnlChartOcc = new ChartPanel(chartOcc);
-        btnClearAllData = new javax.swing.JButton();
         btnClearThisData = new javax.swing.JButton();
+        lblNumFlows = new javax.swing.JLabel();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -439,24 +442,17 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlDetails.setLayout(null);
 
-        lblRateLimit.setAlignment(java.awt.Label.CENTER);
-        lblRateLimit.setText("Rate Limit = 100Mb/s");
-        pnlDetails.add(lblRateLimit);
-        lblRateLimit.setBounds(670, 10, 220, 18);
-
-        slRateLimit.setBorder(null);
-        slRateLimit.setMajorTickSpacing(100000);
-        slRateLimit.setMaximum(1000000);
-        slRateLimit.setMinorTickSpacing(50000);
-        slRateLimit.setPaintTicks(true);
-        slRateLimit.setValue(0);
-        pnlDetails.add(slRateLimit);
-        slRateLimit.setBounds(670, 15, 220, 45);
+        slNumFlows.setBorder(null);
+        slNumFlows.setMajorTickSpacing(250);
+        slNumFlows.setMinimum(1);
+        slNumFlows.setMinorTickSpacing(100);
+        pnlDetails.add(slNumFlows);
+        slNumFlows.setBounds(470, 25, 220, 16);
 
         pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
         pnlDetails.add(pnlChartXput);
-        pnlChartXput.setBounds(0, 85, 509, 405);
+        pnlChartXput.setBounds(0, 93, 509, 397);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -483,14 +479,12 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(optCustom);
         optCustom.setBounds(10, 55, 120, 15);
 
-        slCustomBufferSize.setBorder(null);
         slCustomBufferSize.setMajorTickSpacing(10485760);
         slCustomBufferSize.setMaximum(104857600);
         slCustomBufferSize.setMinorTickSpacing(5242880);
-        slCustomBufferSize.setPaintTicks(true);
         slCustomBufferSize.setValue(0);
         pnlSizing.add(slCustomBufferSize);
-        slCustomBufferSize.setBounds(205, 35, 220, 40);
+        slCustomBufferSize.setBounds(30, 70, 165, 16);
 
         optGroupRule.add(optGuido);
         optGuido.setFont(new java.awt.Font("Arial", 0, 12));
@@ -527,25 +521,25 @@ public class DemoGUI extends javax.swing.JFrame {
         lblGuido.setBounds(130, 35, 60, 15);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(240, 5, 430, 80);
+        pnlSizing.setBounds(240, 5, 200, 90);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 
         pnlDetails.add(cboNode);
-        cboNode.setBounds(90, 10, 130, 25);
+        cboNode.setBounds(80, 10, 130, 25);
 
         pnlDetails.add(cboBottleneck);
-        cboBottleneck.setBounds(90, 40, 130, 25);
+        cboBottleneck.setBounds(80, 40, 130, 25);
 
         lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblBottleneck.setText("Bottleneck:");
         pnlDetails.add(lblBottleneck);
-        lblBottleneck.setBounds(5, 40, 80, 25);
+        lblBottleneck.setBounds(5, 40, 70, 25);
 
         lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblNode.setText("Node:");
         pnlDetails.add(lblNode);
-        lblNode.setBounds(5, 10, 80, 25);
+        lblNode.setBounds(5, 10, 70, 25);
 
         pnlChartOcc.setBorder(null);
         pnlChartOcc.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -555,16 +549,7 @@ public class DemoGUI extends javax.swing.JFrame {
         });
         pnlChartOcc.setLayout(null);
         pnlDetails.add(pnlChartOcc);
-        pnlChartOcc.setBounds(508, 85, 509, 405);
-
-        btnClearAllData.setText("Clear All Data");
-        btnClearAllData.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearAllDataActionPerformed(evt);
-            }
-        });
-        pnlDetails.add(btnClearAllData);
-        btnClearAllData.setBounds(900, 35, 115, 20);
+        pnlChartOcc.setBounds(508, 93, 509, 397);
 
         btnClearThisData.setText("Clear Data");
         btnClearThisData.addActionListener(new java.awt.event.ActionListener() {
@@ -573,7 +558,13 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlDetails.add(btnClearThisData);
-        btnClearThisData.setBounds(900, 10, 115, 20);
+        btnClearThisData.setBounds(5, 70, 205, 20);
+
+        lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblNumFlows.setText("Number of Flows = x");
+        lblNumFlows.setOpaque(true);
+        pnlDetails.add(lblNumFlows);
+        lblNumFlows.setBounds(470, 5, 220, 18);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -603,10 +594,6 @@ private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GE
 private void optCustomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optCustomActionPerformed
     setBufSizeOption( BufferSizeRule.CUSTOM );
 }//GEN-LAST:event_optCustomActionPerformed
-
-private void btnClearAllDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearAllDataActionPerformed
-    demo.clearData();
-}//GEN-LAST:event_btnClearAllDataActionPerformed
 
 private void btnClearThisDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearThisDataActionPerformed
     BottleneckLink b = getSelectedBottleneck();
@@ -642,7 +629,6 @@ private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 }//GEN-LAST:event_lblCustomMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnClearAllData;
     private javax.swing.JButton btnClearThisData;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
     private dgu.util.swing.binding.JComboBoxBound cboNode;
@@ -652,7 +638,7 @@ private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JLabel lblGuido;
     private javax.swing.JLabel lblMap;
     private javax.swing.JLabel lblNode;
-    private java.awt.Label lblRateLimit;
+    private javax.swing.JLabel lblNumFlows;
     private javax.swing.JLabel lblRuleOfThumb;
     private javax.swing.JRadioButton optCustom;
     private javax.swing.ButtonGroup optGroupRule;
@@ -664,7 +650,7 @@ private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JPanel pnlMap;
     private javax.swing.JPanel pnlSizing;
     private dgu.util.swing.binding.JSliderBound slCustomBufferSize;
-    private dgu.util.swing.binding.JSliderBound slRateLimit;
+    private dgu.util.swing.binding.JSliderBound slNumFlows;
     // End of variables declaration//GEN-END:variables
     static final JMenuItem mnuSetRTT = new JMenuItem("Set RTT");
 }
