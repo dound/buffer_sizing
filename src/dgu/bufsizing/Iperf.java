@@ -65,6 +65,11 @@ public class Iperf extends TrafficGenerator {
                 procs.pop().destroy();
         }
     }
+    
+    public void destroy() {
+        // destroy all our iperf connections
+        setNumFlows(0);
+    }
 
     public boolean getUseTCP() {
         return useTCP;

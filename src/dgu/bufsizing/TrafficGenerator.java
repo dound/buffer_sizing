@@ -36,4 +36,8 @@ public abstract class TrafficGenerator extends Node {
     public void setXput_bps(int bps) {
         /* no-op by default */
     }
+
+    public void destroy() {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 }

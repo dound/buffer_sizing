@@ -13,6 +13,11 @@ public class Tomahawk extends TrafficGenerator {
     private int xput_bps = 0;
     private final TomahawkController controller;
 
+    /** sets up a Tomahawk traffic generator operating over the default controller port */
+    public Tomahawk( String dstIP ) {
+        this( dstIP, "Tomahawk", "Tomahawk", Importance.IMPORTANT, 0, 0, Demo.DEFAULT_TRAFFIC_CONTROLLER_PORT );
+    }
+    
     public Tomahawk( String dstIP, String name, String nameShort, Importance importance, int x, int y, int commandPort ) {
         super( dstIP, name, nameShort, importance, x, y );    
         controller = new TomahawkController( commandPort );
@@ -29,6 +34,10 @@ public class Tomahawk extends TrafficGenerator {
     public void setNumFlows(int numFlows) {
         System.err.println("Warning: " + getTrafficTypeString() + "::setNumFlows not yet implemented");
         controller.command(TomahawkCmd.CMD_FLOWS, numFlows);
+    }
+    
+    public void destroy() {
+        controller.command(TomahawkCmd.CMD_EXIT, 0);
     }
 
     public int getXput_bps() {

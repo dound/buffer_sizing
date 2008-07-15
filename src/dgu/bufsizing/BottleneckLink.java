@@ -137,7 +137,8 @@ public class BottleneckLink extends Link<Router> {
         this.rateLimit_kbps = 0;
         this.numFlows = 0;
         this.selected = false;
-        this.tgen = new Iperf("64.57.23.37");
+        this.tgen = null;
+        setTGen( Iperf.class );
         
         // update the plots appropriately
         forceSet = true;
@@ -479,6 +480,22 @@ public class BottleneckLink extends Link<Router> {
         // add the start point of the new rate and buffer size
         addDataPointToRateData(t);
         addDataPointToRateData(t);
+    }
+
+    public Class getTGen() {
+        return tgen.getClass();
+    }
+    
+    public void setTGen( Class cls ) {
+        if( tgen != null )
+            tgen.destroy();
+            
+        if( cls == Iperf.class ) 
+            tgen = new Iperf(Demo.DEFAULT_DST_IP);
+        else if( cls == Tomahawk.class )
+            tgen = new Tomahawk(Demo.DEFAULT_DST_IP);
+        else
+            throw( new Error("BottleneckLink::setTGen does not yet support " + tgen.getClass().getName()) );
     }
     
     public XYSeries getDataThroughput() {

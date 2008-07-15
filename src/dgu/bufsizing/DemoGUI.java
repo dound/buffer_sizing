@@ -461,6 +461,7 @@ public class DemoGUI extends javax.swing.JFrame {
     private void initComponents() {
 
         optGroupRule = new javax.swing.ButtonGroup();
+        optGroupTGen = new javax.swing.ButtonGroup();
         pnlDetails = new javax.swing.JPanel();
         slNumFlows = new JSliderBound( "numFlows" );
         pnlChartXput = new ChartPanel(chartXput);
@@ -480,6 +481,11 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlChartOcc = new ChartPanel(chartOcc);
         btnClearThisData = new javax.swing.JButton();
         lblNumFlows = new javax.swing.JLabel();
+        pnlTGen = new javax.swing.JPanel();
+        optIperf = new javax.swing.JRadioButton();
+        optHarpoon = new javax.swing.JRadioButton();
+        optTomahawk = new javax.swing.JRadioButton();
+        optPlanetLab = new javax.swing.JRadioButton();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -543,7 +549,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(optGuido);
         optGuido.setBounds(10, 35, 120, 15);
 
-        lblCustom.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
+        lblCustom.setFont(new java.awt.Font("Courier", 0, 12));
         lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCustom.setText("1000kB");
         lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -612,6 +618,60 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(lblNumFlows);
         lblNumFlows.setBounds(470, 5, 220, 18);
 
+        pnlTGen.setBorder(javax.swing.BorderFactory.createTitledBorder("Traffic Generator"));
+        pnlTGen.setLayout(null);
+
+        optGroupTGen.add(optIperf);
+        optIperf.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optIperf.setSelected(true);
+        optIperf.setText("Iperf");
+        optIperf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optIperfActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optIperf);
+        optIperf.setBounds(10, 15, 110, 15);
+
+        optGroupTGen.add(optHarpoon);
+        optHarpoon.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optHarpoon.setText("Harpoon");
+        optHarpoon.setEnabled(false);
+        optHarpoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optHarpoonActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optHarpoon);
+        optHarpoon.setBounds(10, 53, 110, 15);
+
+        optGroupTGen.add(optTomahawk);
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optTomahawk.setText("Tomahawk");
+        optTomahawk.setEnabled(false);
+        optTomahawk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optTomahawkActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optTomahawk);
+        optTomahawk.setBounds(10, 34, 110, 15);
+
+        optGroupTGen.add(optPlanetLab);
+        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optPlanetLab.setText("Planet Lab");
+        optPlanetLab.setEnabled(false);
+        optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optPlanetLabActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optPlanetLab);
+        optPlanetLab.setBounds(10, 72, 110, 15);
+
+        pnlDetails.add(pnlTGen);
+        pnlTGen.setBounds(725, 5, 120, 90);
+
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
 
@@ -631,6 +691,12 @@ private void setBufSizeOption( BufferSizeRule rule ) {
     BottleneckLink b = getSelectedBottleneck();
     if( b != null && b.getBufSizeRule() != rule )
         b.setBufSizeRule( rule );
+}
+
+private void setTGenOption( Class cls ) {
+    BottleneckLink b = getSelectedBottleneck();
+    if( b != null && b.getTGen().getClass() != cls )
+        b.setTGen(cls);
 }
     
 private void optRuleOfThumbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optRuleOfThumbActionPerformed
@@ -674,6 +740,22 @@ private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     slCustomBufferSize.setValue( (int)(numBits / 8) );
 }//GEN-LAST:event_lblCustomMouseClicked
 
+private void optIperfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optIperfActionPerformed
+    setTGenOption( Iperf.class );
+}//GEN-LAST:event_optIperfActionPerformed
+
+private void optHarpoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optHarpoonActionPerformed
+    setTGenOption( Harpoon.class );
+}//GEN-LAST:event_optHarpoonActionPerformed
+
+private void optTomahawkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optTomahawkActionPerformed
+    setTGenOption( Tomahawk.class );
+}//GEN-LAST:event_optTomahawkActionPerformed
+
+private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optPlanetLabActionPerformed
+    setTGenOption( PlanetLab.class );
+}//GEN-LAST:event_optPlanetLabActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearThisData;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
@@ -688,13 +770,19 @@ private void lblCustomMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JLabel lblRuleOfThumb;
     private javax.swing.JRadioButton optCustom;
     private javax.swing.ButtonGroup optGroupRule;
+    private javax.swing.ButtonGroup optGroupTGen;
     private javax.swing.JRadioButton optGuido;
+    private javax.swing.JRadioButton optHarpoon;
+    private javax.swing.JRadioButton optIperf;
+    private javax.swing.JRadioButton optPlanetLab;
     private javax.swing.JRadioButton optRuleOfThumb;
+    private javax.swing.JRadioButton optTomahawk;
     private org.jfree.chart.ChartPanel pnlChartOcc;
     private org.jfree.chart.ChartPanel pnlChartXput;
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
     private javax.swing.JPanel pnlSizing;
+    private javax.swing.JPanel pnlTGen;
     private dgu.util.swing.binding.JSliderBound slCustomBufferSize;
     private dgu.util.swing.binding.JSliderBound slNumFlows;
     // End of variables declaration//GEN-END:variables
