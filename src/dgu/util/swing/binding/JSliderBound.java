@@ -191,6 +191,6 @@ public class JSliderBound<FROM> extends JSlider implements BoundComponent {
     public void paintComponent(java.awt.Graphics g) {
         super.paintComponent(g);       
         this.setBorder(null);
-    }  
-    
+        dgu.bufsizing.DemoGUI.me.sliderCallback(this, g);
+    }
 }

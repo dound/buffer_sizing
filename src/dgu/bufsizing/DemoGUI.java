@@ -391,6 +391,7 @@ public class DemoGUI extends javax.swing.JFrame {
             this.lblRuleOfThumb.setText( strROT );
             this.lblGuido.setText( strFS );
             this.lblCustom.setText( strCustom );
+            this.slCustomBufferSize.repaint(); // redraw it so the markers for buf size are adjusted correctly
         }
     }
     
@@ -405,6 +406,51 @@ public class DemoGUI extends javax.swing.JFrame {
         this.lblNumFlows.setText( "Number of Flows = " + numFlows );
     }
 
+    private static boolean debug = false;
+    private static int cb = 0;
+    /** called whenever a slider is painted */
+    public void sliderCallback(JSliderBound slider, java.awt.Graphics g) {
+        if( slider == this.slCustomBufferSize ) {
+            BottleneckLink bl = this.getSelectedBottleneck();
+            if( bl == null )
+                return;
+            
+            // half dimensions of the triangle
+            int w = 6, h = 6, insetWidth = 8;
+            
+            // dimensions of the slider
+            int xOff = insetWidth;
+            int range = slider.getMaximum() - slider.getMinimum();
+            
+            BufferSizeRule[] rules = new BufferSizeRule[]{BufferSizeRule.RULE_OF_THUMB,
+                                                          BufferSizeRule.FLOW_SENSITIVE};
+            boolean top = true;
+            for( BufferSizeRule rule : rules ) {
+                // where should the the point be for this rule?
+                int bufSize = bl.getActualBufSize(rule);
+                if( debug && top ) { bufSize = cb; cb = (cb + (int)(.01*range)); if( cb > range ) cb = 0; }
+                float xPer = bufSize / (float)range;
+                int x = xOff;
+                if( xPer <= 1.0 )
+                    x += (int)(xPer * (slider.getWidth() - 2*insetWidth));
+                else
+                    x += slider.getWidth() - insetWidth; // off the charts!
+                int y = top ? 5 : 11;
+                
+                // generate the coords for the triangle
+                int[] xCoords = new int[]{x, x-w, x+w};
+                int[] yCoords = new int[]{y, y-h, y-h};
+                
+                // paint the Rule of Thumb point on the slider
+                g.setColor(top ? Color.RED : Color.BLUE);
+                g.fillPolygon(xCoords, yCoords, 3);
+                
+                top = false;
+                h = -h; // flip orientation of the triangle
+            }
+        }
+    }
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -484,7 +530,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slCustomBufferSize.setMinorTickSpacing(5242880);
         slCustomBufferSize.setValue(0);
         pnlSizing.add(slCustomBufferSize);
-        slCustomBufferSize.setBounds(30, 70, 165, 16);
+        slCustomBufferSize.setBounds(30, 70, 165, 17);
 
         optGroupRule.add(optGuido);
         optGuido.setFont(new java.awt.Font("Arial", 0, 12));
@@ -561,7 +607,7 @@ public class DemoGUI extends javax.swing.JFrame {
         btnClearThisData.setBounds(5, 70, 205, 20);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblNumFlows.setText("Number of Flows = x");
+        lblNumFlows.setText("Number of Flows = 1");
         lblNumFlows.setOpaque(true);
         pnlDetails.add(lblNumFlows);
         lblNumFlows.setBounds(470, 5, 220, 18);

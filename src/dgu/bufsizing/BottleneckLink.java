@@ -28,7 +28,7 @@ public class BottleneckLink extends Link<Router> {
     
     // user-defined variables on this bottleneck link
     private BufferSizeRule bufSizeRule = BufferSizeRule.RULE_OF_THUMB;
-    private int numFlows = 1;
+    private int numFlows;
     private int rtt_ms;
     private int rateLimit_kbps;
     private int customBufSize_bytes;
@@ -132,10 +132,12 @@ public class BottleneckLink extends Link<Router> {
         // set the initial values
         this.rtt_ms = 0;
         this.rateLimit_kbps = 0;
+        this.numFlows = 0;
         this.selected = false;
         
         // update the plots appropriately
         forceSet = true;
+        setNumFlows(1);
         setRTT_ms( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
         forceSet = false;
@@ -329,7 +331,8 @@ public class BottleneckLink extends Link<Router> {
     public synchronized void setNumFlows(int n) {
         this.numFlows = n;
         updateActualBufSize();
-        DemoGUI.me.setNumFlowsText(this);
+        if( DemoGUI.me != null )
+            DemoGUI.me.setNumFlowsText(this);
     }
 
     public synchronized void adjustNumFlows( int adjust ) {
@@ -345,18 +348,21 @@ public class BottleneckLink extends Link<Router> {
     
     /**
      * Returns the buffer size which would be specified by bufSizeRule with the 
-     * current parameters.
+     * current parameters.  The units on the return value is bytes.
      */
     public synchronized int getActualBufSize( BufferSizeRule bufSizeRule ) {
         switch( bufSizeRule ) {
             case RULE_OF_THUMB:  return rtt_ms * rateLimit_kbps / 8;
-            case FLOW_SENSITIVE: return rtt_ms * rateLimit_kbps / (8 * numFlows);
+            case FLOW_SENSITIVE: return (int)(rtt_ms * rateLimit_kbps / (8 * Math.sqrt(numFlows)));
             case CUSTOM:         return customBufSize_bytes;
             default:             throw( new Error("Error: unknown rule: " + bufSizeRule) );
         }
     }
     
     private synchronized void updateActualBufSize() {
+        // refresh the GUI no matter what
+        if( DemoGUI.me != null ) DemoGUI.me.setBufferSizeText( this );
+        
         long t = currentTime8ns();
         int curBufSize_bytes = getActualBufSize();
         if( lastBufSize_bytes == curBufSize_bytes )
@@ -373,9 +379,6 @@ public class BottleneckLink extends Link<Router> {
         
         // tell the router about the new buffer size in terms of packets
         this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, curBufSize_bytes / 1000 );
-        
-        // refresh the GUI
-        if( DemoGUI.me != null ) DemoGUI.me.setBufferSizeText( this );
     }
 
     public synchronized int getCustomBufSize() {
