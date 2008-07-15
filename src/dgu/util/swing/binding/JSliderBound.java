@@ -188,4 +188,9 @@ public class JSliderBound<FROM> extends JSlider implements BoundComponent {
     
     //</editor-fold>
     
+    public void paintComponent(java.awt.Graphics g) {
+        super.paintComponent(g);       
+        this.setBorder(null);
+    }  
+    
 }

@@ -47,6 +47,10 @@ public abstract class GUIHelper {
     setUIFont(new javax.swing.plaf.FontUIResource(DEFAULT_FONT));
     UIManager.put("ScrollBar.width", Integer.valueOf(14));
     UIManager.put("Label.font", DEFAULT_FONT);
+    
+    try {
+        UIManager.setLookAndFeel(new com.jgoodies.looks.plastic.PlasticXPLookAndFeel());
+    } catch (Exception e) {}
   }
 
   /**
