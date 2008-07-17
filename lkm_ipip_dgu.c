@@ -29,21 +29,11 @@
 #endif
 
 /* IP addresses of destinations to do the encapsulation for */
-#define IP_ADDR_HBO_HOUSTON_1  0x4039174A /* 64.57.23.74 */
-#define IP_ADDR_HBO_HOUSTON_2  0x4039174B /* 64.57.23.75 */
-#define IP_ADDR_HBO_LA_1       0x40391742 /* 64.57.23.66 */
-#define IP_ADDR_HBO_LA_2       0x40391743 /* 64.57.23.67 */
-#define IP_ADDR_HBO_NF_POWER_1 0xAB184A69 /* 172.24.74.105 */
-#define IP_ADDR_HBO_NF_POWER_2 0xAB184A6A /* 172.24.74.106 */
-#define IP_ADDR_HBO_LOOPBACK   0x7F000001 /* 127.0.0.1 */
-
-#define IP_ADDR_HBO_POWER3_E1  0xC00A0101 /* 192.10.1.1 */
-#define IP_ADDR_HBO_POWER4_E1  0xC00A0201 /* 192.10.2.1 */
-#define IP_ADDR_HBO_POWER4_N1  0xC00A020A /* 192.10.2.10 */
-#define IP_ADDR_HBO_POWER4_N0  0xC00A010A /* 192.10.1.10 */
+#define ENCAP_TEST_MASK        0xFFFFFF00
+#define IP_ADDR_HBO_SUBNET1    0x40391700 /* 64.57.23.0 */
 
 /** who we want to address the encapsulation packet to (outer header) */
-#define IP_ADDR_HBO_DECAP_TARGET IP_ADDR_HBO_POWER4_N0
+#define IP_ADDR_HBO_DECAP_TARGET 0x40391722 /* 64.57.23.34 (LOSA1 nf2c0) */
 
 static struct nf_hook_ops netfilter_encap;
 #ifdef _LKM_IPIP_DO_DECAP_
@@ -237,7 +227,7 @@ unsigned int decap_hook( unsigned int hooknum,
 
     printk( "POSS: considering " );
     printk_ip( skb->nh.iph->saddr );
-    printk( " (proto=%u)\n", skb->nh.iph->protocol );    
+    printk( " (proto=%u)\n", skb->nh.iph->protocol );
 
     /* ignore packets with no data or IP header */
     if( !skb || !skb->nh.iph )
@@ -305,6 +295,7 @@ unsigned int encap_hook( unsigned int hooknum,
     struct iphdr* outer_ip_hdr;
     struct iphdr* inner_ip_hdr;
     unsigned i, extra_len;
+    unsigned addr_hbo_masked;
     __u8* ptr_xport;
     __u8 proto;
     __u16* ptr_csum;
@@ -318,27 +309,19 @@ unsigned int encap_hook( unsigned int hooknum,
         return NF_ACCEPT;
 
     /* determine if we need to do encapsulation for this target */
-    switch( ntohl(skb->nh.iph->daddr) ) {
-    case IP_ADDR_HBO_HOUSTON_1:
-    case IP_ADDR_HBO_HOUSTON_2:
-    case IP_ADDR_HBO_LA_1:
-    case IP_ADDR_HBO_LA_2:
-    case IP_ADDR_HBO_NF_POWER_1:
-    case IP_ADDR_HBO_NF_POWER_2:
-    case IP_ADDR_HBO_POWER4_E1:
+    addr_hbo_masked = ntohl(skb->nh.iph->daddr) & ENCAP_TEST_MASK;
+    if( (IP_ADDR_HBO_SUBNET1 & ENCAP_TEST_MASK) != addr_hbo_masked ) {
 #ifdef _LKM_IPIP_DEBUG_
-    case IP_ADDR_HBO_LOOPBACK:
         /* encapsulate the target ... I hope there's room in the SKB ... */
         printk( "LKM ENCAP: will encap this packet to " );
         printk_ip( skb->nh.iph->daddr );
         printk( "\n" );
 
-	count += 1;
-	print_skb( "before", skb );
+        count += 1;
+        print_skb( "before", skb );
 #endif
-        break;
-
-    default:
+    }
+    else {
 #ifdef _LKM_IPIP_DEBUG_
         /* no ecapsulation needed */
         printk( "LKM ENCAP: will NOT encap this packet to " );
@@ -411,7 +394,7 @@ unsigned int encap_hook( unsigned int hooknum,
     /* compute the checksum for the new IP header */
     outer_ip_hdr->check = 0;
     outer_ip_hdr->check = checksum( (__u16*)outer_ip_hdr, sizeof(struct iphdr) );
- 
+
     print_skb( "after", skb );
 
     /* update the skb checksum */
