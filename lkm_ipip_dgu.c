@@ -310,7 +310,7 @@ unsigned int encap_hook( unsigned int hooknum,
 
     /* determine if we need to do encapsulation for this target */
     addr_hbo_masked = ntohl(skb->nh.iph->daddr) & ENCAP_TEST_MASK;
-    if( (IP_ADDR_HBO_SUBNET1 & ENCAP_TEST_MASK) != addr_hbo_masked ) {
+    if( (IP_ADDR_HBO_SUBNET1 & ENCAP_TEST_MASK) == addr_hbo_masked ) {
 #ifdef _LKM_IPIP_DEBUG_
         /* encapsulate the target ... I hope there's room in the SKB ... */
         printk( "LKM ENCAP: will encap this packet to " );
