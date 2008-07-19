@@ -1,0 +1,75 @@
+Buffer Sizing Demo Notes
+updated 12-June-2008 18:16
+==========================
+
+I) Setup: Los Angeles
+
+  1) Install the router buffer sizing bitfile with the corrected Event Capture
+  packet format from 11-June-2008 (thanks Jad!).  You can find the bitfile on
+  the Los Angeles machine at: /root/demo/latest-router_buffer_sizing.bit.  This
+  is a symlink to the actual latest ... so please update where it points instead
+  of replacing it (so the scripts can always rely on the symlink knowing what to
+  download).
+
+  2) Fire up the software component of the router located in /root/demo/decap_sw.
+  Build it with "make" and then run it as root.  It takes care of ARP,
+  decapsulation, and IP/MAC address setup so it really is required!
+
+  3) Event capture setup.  Go to /home/dgu/tomahawk and modify enable_ec.sh so
+  that destination IP address is that of the machine where you will run the GUI.
+  Then, enable event capture by running this script.
+
+  4) Launch the router controller which listens for requests from the GUI by
+  running "/home/dgu/tomahawk/buf_size_daemon -dst <IP WHERE GUI IS> -p 10272".
+  The router controller will try to connect to the GUI every 5 seconds if it
+  ever disconnects or otherwise cannot communicate with the GUI.
+
+
+II) Setup: Houston
+
+  1) Routing table setup.  Add an entry which routes to your traffic generating
+ computer (to facilitate two-way communication).  The outgoing interface should
+ be nf2c1 (to go back to LA), the gateway should be 64.57.23.38 (LA's nf2c1 IP),
+ and the mss should be no bigger than 1476 (1400 recommended) so that
+ encapsulation does not create packets which have to be fragmented (and are
+ therefore dropped by the router!).  The command you'll want to use (as root) is
+ (if your traffic generator is nf-test5, or 171.64.74.14):
+
+  /sbin/route add -net 171.64.74.14 mss 1400 gw 64.57.23.38 netmask 255.255.255.255 nf2c1
+
+  2) (Optional) iperf setup.  Just run 'iperf -s'.
+
+
+III) Setup: Traffic Generator (on nf-test5)
+
+  1) Setup encapsulation to Houston (64.57.23.37).  Go to
+  /root/demo/lkm_ipip_dgu.  Build the kernel module which handles
+  encapsulation with "make" and then install it with "make im".  Do "make um"
+  when you're done to stop it!
+
+  2) Run iperf with "iperf -c 64.57.23.37 -i 1 -t 180".
+
+
+IV) Setup: GUI (anywhere)
+
+  1) Check out the source.  Do "svn co
+  svn+ssh://`whoami`@pod.stanford.edu/afs/ir/users/d/g/dgu/svnrepos/mckeown/buf_sizing_demo_gui".
+
+  2) Build the source.  To do it with NetBeans, do "File --> Open Project" and
+  choose the folder you checked out in step #1.  Then right-click on the
+  project's root node on the left side of the window ("BufferSizingGUI") and
+  choose "Build" from the context menu which pops up.
+
+  3) Run the source.  In NetBeans, just choose "Run" from the context menu.
+  Otherwise, just do "java -jar BufferSizingGUI.jar" (you'll need the libraries
+  from "lib" in the same path as the jar, or specified on the Java classpath).
+  The GUI will wait for the router controller in LA to connect and then it will
+  display the GUI.
+
+  4) Using the GUI.  Click on the bottom-right graph to freeze/unfreeze both
+  graphs.  Use the rate limiter slider to adjust the bottleneck's throughput.
+  Adjusting buffer size just adjusts the maximum number of packets.
+
+
+Another important route in houston may be:
+64.57.23.32     *               255.255.255.248 U     0      0        0 nf2c1
