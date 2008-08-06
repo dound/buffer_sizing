@@ -248,6 +248,7 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
     
+    public XYLineAndShapeRenderer resultsRenderer = new XYLineAndShapeRenderer(true, false);
     private void createChartResults() {
         chartResults = prepareChart(
             "Utilization",
@@ -257,7 +258,7 @@ public class DemoGUI extends javax.swing.JFrame {
         );    
          
         XYPlot plot = (XYPlot) chartResults.getPlot();
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+        XYLineAndShapeRenderer renderer = resultsRenderer;
         
         // theoretical rule of thumb
         renderer.setSeriesPaint(0, new Color(128,0,0));
@@ -273,10 +274,15 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesLinesVisible(2, true);
         renderer.setSeriesShapesVisible(2, true);
         
-        // measured (live)
+        // measured (today's results)
         renderer.setSeriesPaint(3, new Color(128,0,128));
         renderer.setSeriesLinesVisible(3, false);
         renderer.setSeriesShapesVisible(3, true);
+        
+        // measured (current test)
+        renderer.setSeriesPaint(4, new Color(0,0,0));
+        renderer.setSeriesLinesVisible(4, false);
+        renderer.setSeriesShapesVisible(4, true);
         
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
@@ -332,7 +338,8 @@ public class DemoGUI extends javax.swing.JFrame {
                             DemoGUI.collRes.addSeries( b.getDataRTheROT(), false  );
                             DemoGUI.collRes.addSeries( b.getDataRTheGuido(), false  );
                             DemoGUI.collRes.addSeries( b.getDataRMea(), false  );
-                            DemoGUI.collRes.addSeries( b.getDataRNow(), false  );
+                            DemoGUI.collRes.addSeries( b.getDataRToday(), false );
+                            DemoGUI.collRes.addSeries( b.getDataRCur(), false );
                             
                             DemoGUI.me.refreshCharts();
                             

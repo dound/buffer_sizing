@@ -68,7 +68,8 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataRTheGuido = new XYSeries("Flow Sensitive", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRMea = new XYSeries("Measured", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
-    private final XYSeries dataRNow = new XYSeries("Current", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRToday = new XYSeries("Today", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRCur = new XYSeries("Now", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     
     /** Returns the current time in units of 8ns (with millisecond resolution) */
     public static final long currentTime8ns() {
@@ -145,7 +146,8 @@ public class BottleneckLink extends Link<Router> {
         prepareXYSeries( dataRTheROT,   dataPointsToKeep );
         prepareXYSeries( dataRTheGuido, dataPointsToKeep );
         prepareXYSeries( dataRMea,      dataPointsToKeep );
-        prepareXYSeries( dataRNow,      dataPointsToKeep );
+        prepareXYSeries( dataRToday,    dataPointsToKeep );
+        prepareXYSeries( dataRCur,      dataPointsToKeep );
         
         // set the initial values
         this.rtt_ms = 0;
@@ -320,8 +322,12 @@ public class BottleneckLink extends Link<Router> {
         return dataRMea;
     }
 
-    public XYSeries getDataRNow() {
-        return dataRNow;
+    public XYSeries getDataRToday() {
+        return dataRToday;
+    }
+    
+    public XYSeries getDataRCur() {
+        return dataRCur;
     }
     
     public class Result {
@@ -404,14 +410,29 @@ public class BottleneckLink extends Link<Router> {
     }
     
     /** 
-     * specifies he measured buffer size 'b' for the current capacity (rate limit)
-     * @param b  buffer size for 100% utilization in kilobytes
+     * specifies the measured buffer size 'b' for the current capacity (rate limit)
+     * @param bufSizeForMaxUtil_kB  buffer size for 100% utilization in kilobytes
      */
     public synchronized void addMeasuredResult(int bufSizeForMaxUtil_kB) {
         int n = this.getNumFlows();
         Result r = new Result( bufSizeForMaxUtil_kB, this.getRateLimit_kbps(), this.getRTT_ms(), 1 );
-        dataRNow.add(n, bufSizeForMaxUtil_kB);
+        dataRToday.add(n, bufSizeForMaxUtil_kB);
         System.out.println( n + " " + r.b_kB + " " + r.c_kbps + " " + r.numDataPoints );
+    }
+    
+    /** 
+     * specifies the in progress measured buffer size 'b' for the current capacity (rate limit)
+     * @param bufSizeForMaxUtil_kB  buffer size for 100% utilization in kilobytes
+     * @param confidence  confidence (0 => none, 1=> very)
+     */
+    public synchronized void noteCurrentMeasuredResult(int bufSizeForMaxUtil_kB, double confidence) {
+        dataRCur.clear();
+        dataRCur.add(this.getNumFlows(), bufSizeForMaxUtil_kB);
+      
+        // update the points color based on the confidence
+        int r = (confidence <  0.5) ? 128 + (int)(128*2*(0.5 - confidence)) : 0;
+        int g = (confidence >= 0.5) ? 128 + (int)(128*2*(confidence - 0.5)) : 0;
+        DemoGUI.me.resultsRenderer.setSeriesPaint(4, new java.awt.Color(r,g,0));
     }
     
     public synchronized void populateTheoreticalResults() {
