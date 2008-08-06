@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.*;
 import java.util.HashMap;
+import java.util.Vector;
 import org.jfree.data.xy.XYSeries;
 
 /**
@@ -324,13 +325,23 @@ public class BottleneckLink extends Link<Router> {
     }
     
     public class Result {
-        public int b_kb;
-        public int c_kbps;
-        public int numDataPoints;
-        public Result(int b, int c, int num) { 
-            b_kb = b;
+        public static final int BASE_RTT = 250;
+        
+        public final int b_kB;
+        public final int c_kbps;
+        public final int numDataPoints;
+        public Result(int b, int c, int r, int num) { 
             c_kbps = c;
             numDataPoints = num;
+            
+            // scale to base r so our data is rtt-independent
+            double scale = r / (double)BASE_RTT;
+            b_kB = (int)(b * scale);
+        }
+        
+        public int getScaledBufSize_kB(int rtt_ms) {
+            double scale = rtt_ms / (double)BASE_RTT;
+            return (int)(b_kB * scale);
         }
     }
     
@@ -365,7 +376,7 @@ public class BottleneckLink extends Link<Router> {
                 int c = Integer.valueOf(vals[2]);
                 int num = Integer.valueOf(vals[3]);
                     
-                resultsMea.put(n, new Result(b,c,num));
+                resultsMea.put(n, new Result(b,c,Result.BASE_RTT,num));
             }
 
             br.close();
@@ -381,10 +392,14 @@ public class BottleneckLink extends Link<Router> {
     /** refresh measured results data */
     private void populateMeasuredResults() {
         dataRMea.clear();
-        for( Integer n : resultsMea.keySet() ) {
+        
+        int rtt = rtt_ms;
+        Vector<Integer> nVals = new Vector<Integer>(resultsMea.keySet());
+        java.util.Collections.sort(nVals);
+        for( Integer n : nVals ) {
             Result r = resultsMea.get(n);
             if( r.c_kbps == this.getRateLimit_kbps() )
-                dataRMea.add(n.intValue(), r.b_kb);
+                dataRMea.add(n.intValue(), r.getScaledBufSize_kB(rtt));
         }
     }
     
@@ -394,9 +409,9 @@ public class BottleneckLink extends Link<Router> {
      */
     public synchronized void addMeasuredResult(int bufSizeForMaxUtil_kB) {
         int n = this.getNumFlows();
-        Result r = new Result( bufSizeForMaxUtil_kB, this.getRateLimit_kbps(), 1 );
+        Result r = new Result( bufSizeForMaxUtil_kB, this.getRateLimit_kbps(), this.getRTT_ms(), 1 );
         dataRNow.add(n, bufSizeForMaxUtil_kB);
-        System.out.println( n + " " + r.b_kb + " " + r.c_kbps + " " + r.numDataPoints );
+        System.out.println( n + " " + r.b_kB + " " + r.c_kbps + " " + r.numDataPoints );
     }
     
     public synchronized void populateTheoreticalResults() {

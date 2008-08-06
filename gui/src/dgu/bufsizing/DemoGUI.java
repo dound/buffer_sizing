@@ -270,10 +270,13 @@ public class DemoGUI extends javax.swing.JFrame {
         // measured
         renderer.setSeriesPaint(2, new Color(0,0,128));
         renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesLinesVisible(2, true);
+        renderer.setSeriesShapesVisible(2, true);
         
         // measured (live)
         renderer.setSeriesPaint(3, new Color(128,0,128));
-        renderer.setSeriesStroke(3, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesLinesVisible(3, false);
+        renderer.setSeriesShapesVisible(3, true);
         
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
