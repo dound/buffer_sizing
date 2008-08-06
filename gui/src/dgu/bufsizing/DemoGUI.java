@@ -56,7 +56,6 @@ public class DemoGUI extends javax.swing.JFrame {
         createChartOcc();
         createChartResults();
         initComponents();
-        initManualComponents();
         initPopup();
         prepareBindings();
         setIconImage( icon );
@@ -96,20 +95,6 @@ public class DemoGUI extends javax.swing.JFrame {
         // start the stats listener threads
         for( Router r : demo.getRouters() )
             r.startStatsListener();
-    }
-    
-    private ChartPanel pnlChartRes = new ChartPanel(chartResults);
-    private void initManualComponents() {
-        pnlChartRes.setBorder(null);
-        pnlChartRes.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                pnlChartOccMouseClicked(evt);
-            }
-        });
-        pnlChartRes.setLayout(null);
-        pnlDetails.add(pnlChartRes);
-        pnlChartRes.setBounds(508, 93, 509, 397);
-        pnlChartRes.setVisible(false);
     }
     
     public static final int RATE_LIM_VALUE_COUNT = 17;
@@ -166,9 +151,10 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuToggleGraph.setSelected(false);
         mnuToggleGraph.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuToggleGraph.setSelected( !mnuToggleGraph.isSelected() );
-                pnlChartOcc.setVisible( !mnuToggleGraph.isSelected() );
-                pnlChartRes.setVisible( mnuToggleGraph.isSelected() );
+                if( mnuToggleGraph.isSelected() )
+                    pnlChartOcc.setChart( chartOcc );
+                else
+                    pnlChartOcc.setChart( chartResults );
             }
         });
         mnuPopup.add(mnuToggleGraph);
@@ -264,8 +250,8 @@ public class DemoGUI extends javax.swing.JFrame {
     private void createChartResults() {
         chartResults = prepareChart(
             "Utilization",
-            "Buffer Size (kb) to Achieve 100% Link Utilization",
             "Number of Flows",
+            "Buffer Size (kb) to Achieve 100% Link Utilization",
             collRes
         );    
          
@@ -545,7 +531,7 @@ public class DemoGUI extends javax.swing.JFrame {
         cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
-        pnlChartOcc = new ChartPanel(chartOcc);
+        pnlChartOcc = new ChartPanel(chartResults);
         btnClearThisData = new javax.swing.JButton();
         lblNumFlows = new javax.swing.JLabel();
         pnlTGen = new javax.swing.JPanel();
