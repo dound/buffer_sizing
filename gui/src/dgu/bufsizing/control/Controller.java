@@ -52,8 +52,12 @@ public abstract class Controller {
         Socket clientSocket;
         try {
             System.out.println( "Waiting for " + getTypeString() + " to connect" );
-            clientSocket = serverSocket.accept();
-            System.out.println( "New " + getTypeString() + " client: " + clientSocket.getRemoteSocketAddress().toString() );
+            if(dgu.util.swing.GUIHelper.confirmDialog("Connect Confirm", "Wait for " + getTypeString() + " controller?", javax.swing.JOptionPane.YES_NO_OPTION)==javax.swing.JOptionPane.NO_OPTION)
+                clientSocket = null;
+            else {
+                clientSocket = serverSocket.accept();
+                System.out.println( "New " + getTypeString() + " client: " + clientSocket.getRemoteSocketAddress().toString() );
+            }
         } catch(IOException e) {
             System.err.println( e.getMessage() );
             System.exit( 1 );
@@ -64,7 +68,10 @@ public abstract class Controller {
         //try to establish the I/O streams: if we can't establish either, then close the socket
         OutputStream tmp;
         try {
-            tmp = s.getOutputStream();
+            if(s==null)
+                tmp=null;
+            else
+                tmp = s.getOutputStream();
         } catch( IOException e ) {
             System.err.println( "Client Socket Setup Error: " + e.getMessage() );
             System.exit( 1 );
@@ -76,7 +83,10 @@ public abstract class Controller {
 
         InputStream tmp2;
         try {
-            tmp2 = s.getInputStream();
+            if(s==null)
+                tmp2=null;
+            else
+                tmp2 = s.getInputStream();
         } catch( IOException e ) {
             System.err.println( "Client Socket Setup Error: " + e.getMessage() );
             System.exit( 1 );
@@ -89,6 +99,11 @@ public abstract class Controller {
     public abstract String getTypeString();
 
     protected synchronized void sendCommand( byte code, int value ) {
+        if(out==null) {
+            System.err.println("could not send command " + code + "," + value);
+            return;
+        }
+        
         try {
             //write the code (one byte)
             out.write( code );
