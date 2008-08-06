@@ -598,8 +598,8 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(optCustom);
         optCustom.setBounds(10, 55, 120, 15);
 
-        slCustomBufferSize.setMajorTickSpacing(10485760);
-        slCustomBufferSize.setMaximum(104857600);
+        slCustomBufferSize.setMajorTickSpacing(65536);
+        slCustomBufferSize.setMaximum(524288);
         slCustomBufferSize.setMinorTickSpacing(5242880);
         slCustomBufferSize.setValue(0);
         pnlSizing.add(slCustomBufferSize);
@@ -698,7 +698,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optIperf);
-        optIperf.setBounds(10, 15, 110, 15);
+        optIperf.setBounds(10, 15, 100, 15);
 
         optGroupTGen.add(optHarpoon);
         optHarpoon.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
@@ -710,7 +710,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optHarpoon);
-        optHarpoon.setBounds(10, 53, 110, 15);
+        optHarpoon.setBounds(10, 53, 100, 15);
 
         optGroupTGen.add(optTomahawk);
         optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
@@ -722,10 +722,10 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optTomahawk);
-        optTomahawk.setBounds(10, 34, 110, 15);
+        optTomahawk.setBounds(10, 34, 100, 15);
 
         optGroupTGen.add(optPlanetLab);
-        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12));
         optPlanetLab.setText("Planet Lab");
         optPlanetLab.setEnabled(false);
         optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
@@ -734,7 +734,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optPlanetLab);
-        optPlanetLab.setBounds(10, 72, 110, 15);
+        optPlanetLab.setBounds(10, 72, 100, 15);
 
         pnlDetails.add(pnlTGen);
         pnlTGen.setBounds(725, 5, 120, 90);

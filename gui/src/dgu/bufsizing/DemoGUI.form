@@ -135,8 +135,8 @@
             </Component>
             <Component class="dgu.util.swing.binding.JSliderBound" name="slCustomBufferSize">
               <Properties>
-                <Property name="majorTickSpacing" type="int" value="10485760"/>
-                <Property name="maximum" type="int" value="104857600"/>
+                <Property name="majorTickSpacing" type="int" value="65536"/>
+                <Property name="maximum" type="int" value="524288"/>
                 <Property name="minorTickSpacing" type="int" value="5242880"/>
                 <Property name="value" type="int" value="0"/>
               </Properties>
@@ -355,7 +355,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="110" height="15"/>
+                  <AbsoluteConstraints x="10" y="15" width="100" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -375,7 +375,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="53" width="110" height="15"/>
+                  <AbsoluteConstraints x="10" y="53" width="100" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -395,7 +395,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="34" width="110" height="15"/>
+                  <AbsoluteConstraints x="10" y="34" width="100" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -415,7 +415,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="72" width="110" height="15"/>
+                  <AbsoluteConstraints x="10" y="72" width="100" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
