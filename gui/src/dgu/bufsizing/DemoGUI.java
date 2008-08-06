@@ -141,7 +141,7 @@ public class DemoGUI extends javax.swing.JFrame {
         
         // add choices in the rate limit submenu
         long rate = RATE_LIM_MAX_RATE;
-        for( int i=0; i<RATE_LIM_VALUE_COUNT; i++ ) {
+        for( int i=1; i<RATE_LIM_VALUE_COUNT; i++ ) {
             final int index = i;
             mnuRateLimVal[i] = new JCheckBoxMenuItem( this.formatBits(rate, false, UnitTime.TIME_SEC).both() );
             mnuRateLimVal[i].setSelected(false);
@@ -149,7 +149,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
                     if( bl != null )
-                        bl.setRateLimitReg(index);
+                        bl.setRateLimitReg(index-1);
                 }
             });
             
@@ -489,7 +489,7 @@ public class DemoGUI extends javax.swing.JFrame {
     
     public synchronized void setRateLimitText( BottleneckLink l ) {
         int selectedIndex = l.getRateLimit_regValue();
-        for( int i=0; i<RATE_LIM_VALUE_COUNT; i++ )
+        for( int i=1; i<RATE_LIM_VALUE_COUNT; i++ )
             mnuRateLimVal[i].setSelected(i == selectedIndex);
     }
     
