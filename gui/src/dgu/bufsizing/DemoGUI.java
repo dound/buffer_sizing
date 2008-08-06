@@ -28,14 +28,15 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final int DEFAULT_RTT = 75;
     public static final int TIME_BETWEEN_REFRESHES = 250;
     
-    public static final String VERSION = "v0.02b";
+    public static final String VERSION = "v0.03b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
-    private static JFreeChart chartXput, chartOcc;
+    private static JFreeChart chartXput, chartOcc, chartResults;
     public static DemoGUI me;
     public final Demo demo;
     
     public static final XYSeriesCollection collXput = new XYSeriesCollection();
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
+    public static final XYSeriesCollection collRes  = new XYSeriesCollection();
     
     public static final int CANVAS_WIDTH  = 1028;
     public static final int CANVAS_HEIGHT =  250;
@@ -53,7 +54,9 @@ public class DemoGUI extends javax.swing.JFrame {
         GUIHelper.setGUIDefaults();
         createChartXput();
         createChartOcc();
+        createChartResults();
         initComponents();
+        initManualComponents();
         initPopup();
         prepareBindings();
         setIconImage( icon );
@@ -95,12 +98,27 @@ public class DemoGUI extends javax.swing.JFrame {
             r.startStatsListener();
     }
     
+    private ChartPanel pnlChartRes = new ChartPanel(chartResults);
+    private void initManualComponents() {
+        pnlChartRes.setBorder(null);
+        pnlChartRes.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pnlChartOccMouseClicked(evt);
+            }
+        });
+        pnlChartRes.setLayout(null);
+        pnlDetails.add(pnlChartRes);
+        pnlChartRes.setBounds(508, 93, 509, 397);
+        pnlChartRes.setVisible(false);
+    }
+    
     public static final int RATE_LIM_VALUE_COUNT = 17;
     public static final long RATE_LIM_MAX_RATE = 4L * 1000L * 1000L * 1000L;
     private static final long RATE_LIM_MAX_RATE_ALLOWED = 1000L * 1000L * 1000L;
     public static final int RATE_LIM_MIN_REG_VAL = 2;
     JMenu mnuRateLim = new JMenu("Rate Limit");
     javax.swing.JCheckBoxMenuItem[] mnuRateLimVal = new JCheckBoxMenuItem[RATE_LIM_VALUE_COUNT];
+    javax.swing.JCheckBoxMenuItem mnuToggleGraph;
     void initPopup() {
         // create the popup menu
         final JPopupMenu mnuPopup = new JPopupMenu();
@@ -142,6 +160,18 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         mnuPopup.add(mnuSetRTT);
+        
+        // add a toggle for queue occ vs other chart
+        mnuToggleGraph = new JCheckBoxMenuItem( "Toggle Graph" );
+        mnuToggleGraph.setSelected(false);
+        mnuToggleGraph.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuToggleGraph.setSelected( !mnuToggleGraph.isSelected() );
+                pnlChartOcc.setVisible( !mnuToggleGraph.isSelected() );
+                pnlChartRes.setVisible( mnuToggleGraph.isSelected() );
+            }
+        });
+        mnuPopup.add(mnuToggleGraph);
         
         // attach the popup to other components
         final MouseAdapter pl = new MouseAdapter() {
@@ -231,6 +261,32 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
     
+    private void createChartResults() {
+        chartResults = prepareChart(
+            "Utilization",
+            "Buffer Size (kb) to Achieve 100% Link Utilization",
+            "Number of Flows",
+            collRes
+        );    
+         
+        XYPlot plot = (XYPlot) chartResults.getPlot();
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+        
+        // theoretical
+        renderer.setSeriesPaint(0, new Color(128,0,0));
+        renderer.setSeriesStroke(0, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        
+        // measured
+        renderer.setSeriesPaint(1, new Color(0,0,128));
+        renderer.setSeriesStroke(1, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        
+        // measured (live)
+        renderer.setSeriesPaint(2, new Color(128,0,128));
+        renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        plot.setRenderer(0, renderer);
+        plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+    }
+    
     BottleneckLink getSelectedBottleneck() {
         // get the bottleneck which is now selected (if any)
         Router rtr = (Router)cboBottleneck.getBindingDelegate().getBinding().getBoundItem();
@@ -277,7 +333,10 @@ public class DemoGUI extends javax.swing.JFrame {
                             DemoGUI.collOcc.removeAllSeries( false );
                             DemoGUI.collOcc.addSeries( b.getDataQueueOcc(), false );
                             DemoGUI.collOcc.addSeries( b.getDataBufSize(), false );
-
+                            DemoGUI.collRes.removeAllSeries( false );
+                            DemoGUI.collRes.addSeries( b.getDataQueueOcc(), false );
+                            DemoGUI.collRes.addSeries( b.getDataBufSize(), false );
+                            
                             DemoGUI.me.refreshCharts();
                             
                             // refresh the text
@@ -331,6 +390,7 @@ public class DemoGUI extends javax.swing.JFrame {
     private void refreshCharts() {
         DemoGUI.collXput.manuallyNotifyListeners();
         DemoGUI.collOcc.manuallyNotifyListeners();
+        DemoGUI.collRes.manuallyNotifyListeners();
     }
     
     public static class StringPair {

@@ -7,6 +7,8 @@ import dgu.util.swing.GUIHelper;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.io.*;
+import java.util.HashMap;
 import org.jfree.data.xy.XYSeries;
 
 /**
@@ -59,6 +61,11 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataBufSize = new XYSeries("Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private boolean forceSet;
+    
+    // results data
+    private final XYSeries dataRThe = new XYSeries("Theoretical",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRMea = new XYSeries("Measured",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRNow = new XYSeries("Current",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     
     /** Returns the current time in units of 8ns (with millisecond resolution) */
     public static final long currentTime8ns() {
@@ -146,6 +153,8 @@ public class BottleneckLink extends Link<Router> {
         setRTT_ms( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
         forceSet = false;
+        
+        initMeasuredResults();
     }
     
     /**
@@ -289,6 +298,82 @@ public class BottleneckLink extends Link<Router> {
         long t = routerTimeToLocalTime8ns(rtr_time_ns8);
         this.addDataPointToXputData( t,  (int)throughput_bps);
         extendUserDataPoints( t );
+    }
+    
+    public class Result {
+        public int b_kb;
+        public int c_kbps;
+        public int numDataPoints;
+        public Result(int b, int c, int num) { 
+            b_kb = b;
+            c_kbps = c;
+            numDataPoints = num;
+        }
+    }
+    
+    HashMap<Integer, Result> resultsMea = new HashMap<Integer, Result>();
+    int[] interestingN = new int[]{1,5,10,50,100,200};
+    
+    /** read measured results from measured.txt */
+    private void initMeasuredResults() {
+        try {
+            File file = new File("measured.txt");
+            FileInputStream fis = new FileInputStream(file);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+
+            String line = br.readLine();
+            while( line != null ) {
+                String[] vals = line.split(" ");
+                if( vals.length != 4 ) {
+                    System.err.println("Error: invalid line format in measured.txt: " + line);
+                    System.exit(1);
+                }
+                
+                int n = Integer.valueOf(vals[0]);
+                int b = Integer.valueOf(vals[1]);
+                int c = Integer.valueOf(vals[2]);
+                int num = Integer.valueOf(vals[3]);
+                    
+                resultsMea.put(n, new Result(b,c,num));
+                
+                line = br.readLine();
+            }
+
+            br.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        populateMeasuredResults();
+    }
+    
+    /** refresh measured results data */
+    private void populateMeasuredResults() {
+        dataRMea.clear();
+        for( Integer n : resultsMea.keySet() ) {
+            Result r = resultsMea.get(n);
+            if( r.c_kbps == this.getRateLimit_kbps() )
+                dataRMea.add(n.intValue(), r.b_kb);
+        }
+    }
+    
+    public synchronized void addMeasuredResult(int b) {
+        int n = this.getNumFlows();
+        Result r = new Result( b, this.getRateLimit_kbps(), 1 );
+        dataRNow.add(n, b);
+        System.out.println( n + " " + r.b_kb + " " + r.c_kbps + " " + r.numDataPoints );
+    }
+    
+    public synchronized void populateTheoreticalResults() {
+        // recompute the theoretical
+        dataRThe.clear();
+        for( int n : interestingN ) {
+            int bufsz_kb = (int)(this.rtt_ms * this.rateLimit_kbps / Math.sqrt(this.getNumFlows()));
+            dataRThe.add(n, bufsz_kb);
+        }
     }
     
     public synchronized void clearData() {
@@ -480,6 +565,10 @@ public class BottleneckLink extends Link<Router> {
         // add the start point of the new rate and buffer size
         addDataPointToRateData(t);
         addDataPointToRateData(t);
+        
+        // refresh the measured results data being displayed (displays for the specified capacity)
+        populateTheoreticalResults();
+        populateMeasuredResults();
     }
 
     public Class getTGen() {
