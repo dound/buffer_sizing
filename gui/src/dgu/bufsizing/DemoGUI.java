@@ -152,9 +152,9 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuToggleGraph.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 if( mnuToggleGraph.isSelected() )
-                    pnlChartOcc.setChart( chartOcc );
+                    pnlChartRight.setChart( chartOcc );
                 else
-                    pnlChartOcc.setChart( chartResults );
+                    pnlChartRight.setChart( chartResults );
             }
         });
         mnuPopup.add(mnuToggleGraph);
@@ -531,7 +531,7 @@ public class DemoGUI extends javax.swing.JFrame {
         cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
-        pnlChartOcc = new ChartPanel(chartResults);
+        pnlChartRight = new ChartPanel(chartResults);
         btnClearThisData = new javax.swing.JButton();
         lblNumFlows = new javax.swing.JLabel();
         pnlTGen = new javax.swing.JPanel();
@@ -646,15 +646,15 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(lblNode);
         lblNode.setBounds(5, 10, 70, 25);
 
-        pnlChartOcc.setBorder(null);
-        pnlChartOcc.addMouseListener(new java.awt.event.MouseAdapter() {
+        pnlChartRight.setBorder(null);
+        pnlChartRight.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                pnlChartOccMouseClicked(evt);
+                pnlChartRightMouseClicked(evt);
             }
         });
-        pnlChartOcc.setLayout(null);
-        pnlDetails.add(pnlChartOcc);
-        pnlChartOcc.setBounds(508, 93, 509, 397);
+        pnlChartRight.setLayout(null);
+        pnlDetails.add(pnlChartRight);
+        pnlChartRight.setBounds(508, 93, 509, 397);
 
         btnClearThisData.setText("Clear Data");
         btnClearThisData.addActionListener(new java.awt.event.ActionListener() {
@@ -766,9 +766,9 @@ private void btnClearThisDataActionPerformed(java.awt.event.ActionEvent evt) {//
         b.clearData();
 }//GEN-LAST:event_btnClearThisDataActionPerformed
 
-private void pnlChartOccMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlChartOccMouseClicked
+private void pnlChartRightMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlChartRightMouseClicked
     freezeCharts = !freezeCharts;
-}//GEN-LAST:event_pnlChartOccMouseClicked
+}//GEN-LAST:event_pnlChartRightMouseClicked
 
 private void optGuidoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optGuidoActionPerformed
     setBufSizeOption( BufferSizeRule.FLOW_SENSITIVE );
@@ -830,7 +830,7 @@ private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private javax.swing.JRadioButton optPlanetLab;
     private javax.swing.JRadioButton optRuleOfThumb;
     private javax.swing.JRadioButton optTomahawk;
-    private org.jfree.chart.ChartPanel pnlChartOcc;
+    private org.jfree.chart.ChartPanel pnlChartRight;
     private org.jfree.chart.ChartPanel pnlChartXput;
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
