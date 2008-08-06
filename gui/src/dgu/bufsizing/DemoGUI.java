@@ -199,8 +199,9 @@ public class DemoGUI extends javax.swing.JFrame {
         
         ValueAxis domain = plot.getDomainAxis();
         domain.setLabelFont( GUIHelper.DEFAULT_FONT_BOLD_BIG );
-        domain.setTickLabelsVisible(false);
-        domain.setTickMarksVisible(false);
+        boolean b = coll==collRes;
+        domain.setTickLabelsVisible(b);
+        domain.setTickMarksVisible(b);
         domain.setAutoRange(true);
         
         ValueAxis range = plot.getRangeAxis();
@@ -251,7 +252,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartResults = prepareChart(
             "Utilization",
             "Number of Flows",
-            "Buffer Size (kb) to Achieve 100% Link Utilization",
+            "Buffer Size (kB) to Achieve 100% Link Utilization",
             collRes
         );    
          

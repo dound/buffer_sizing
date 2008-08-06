@@ -388,10 +388,14 @@ public class BottleneckLink extends Link<Router> {
         }
     }
     
-    public synchronized void addMeasuredResult(int b) {
+    /** 
+     * specifies he measured buffer size 'b' for the current capacity (rate limit)
+     * @param b  buffer size for 100% utilization in kilobytes
+     */
+    public synchronized void addMeasuredResult(int bufSizeForMaxUtil_kB) {
         int n = this.getNumFlows();
-        Result r = new Result( b, this.getRateLimit_kbps(), 1 );
-        dataRNow.add(n, b);
+        Result r = new Result( bufSizeForMaxUtil_kB, this.getRateLimit_kbps(), 1 );
+        dataRNow.add(n, bufSizeForMaxUtil_kB);
         System.out.println( n + " " + r.b_kb + " " + r.c_kbps + " " + r.numDataPoints );
     }
     
@@ -399,12 +403,16 @@ public class BottleneckLink extends Link<Router> {
         // recompute the theoretical
         dataRTheROT.clear();
         dataRTheGuido.clear();
-        for( int n : interestingN ) {
-            int bufsz_kb = this.rtt_ms * this.rateLimit_kbps;
-            dataRTheROT.add(n, bufsz_kb);
-            
-            bufsz_kb = (int)(bufsz_kb / Math.sqrt(this.getNumFlows()));
-            dataRTheGuido.add(n, bufsz_kb);
+        for( int n=1; n<=interestingN[interestingN.length-1]; n++ ) {
+            dataRTheROT.add(n, computeBufSize( BufferSizeRule.RULE_OF_THUMB, 
+                                               this.getRTT_ms(), 
+                                               this.getRateLimit_kbps(), 
+                                               n ) / 1024);
+             
+            dataRTheGuido.add(n, computeBufSize( BufferSizeRule.FLOW_SENSITIVE, 
+                                                 this.getRTT_ms(), 
+                                                 this.getRateLimit_kbps(), 
+                                                 n ) / 1024);
         }
     }
     
@@ -475,10 +483,21 @@ public class BottleneckLink extends Link<Router> {
      * current parameters.  The units on the return value is bytes.
      */
     public synchronized int getActualBufSize( BufferSizeRule bufSizeRule ) {
+        if( bufSizeRule == BufferSizeRule.CUSTOM )
+            return customBufSize_bytes;
+        
+        return computeBufSize( bufSizeRule, this.getRTT_ms(), this.getRateLimit_kbps(), this.getNumFlows() );
+    }
+    
+    /**
+     * Returns the buffer size which would be dictated by the specified rule and 
+     * link parameters.  The units on the return value is bytes.
+     */
+    public static int computeBufSize( BufferSizeRule bufSizeRule, int rtt_ms, int capacity_kbps, int n ) {
         switch( bufSizeRule ) {
-            case RULE_OF_THUMB:  return rtt_ms * rateLimit_kbps / 8;
-            case FLOW_SENSITIVE: return (int)(rtt_ms * rateLimit_kbps / (8 * Math.sqrt(numFlows)));
-            case CUSTOM:         return customBufSize_bytes;
+            case RULE_OF_THUMB:  return rtt_ms * capacity_kbps / 8;
+            case FLOW_SENSITIVE: return (int)(rtt_ms * capacity_kbps / (8 * Math.sqrt(n)));
+            
             default:             throw( new Error("Error: unknown rule: " + bufSizeRule) );
         }
     }
