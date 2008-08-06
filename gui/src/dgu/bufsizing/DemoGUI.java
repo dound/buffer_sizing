@@ -92,6 +92,34 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         }.start();
         
+        // starts a dummy thread to generate bogus measured data for testing
+        new Thread() {
+            public void run() {
+                int bfsz = 100;
+                int i = 0;
+                
+                while( true ) {
+                    BottleneckLink b = getSelectedBottleneck();
+                    if( b != null ) {
+                        double c = Math.random();
+                        bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
+                        b.noteCurrentMeasuredResult(bfsz, c);
+                        if( c >= 0.95 ) {
+                            b.addMeasuredResult(bfsz);
+                            
+                            i = (i + 1) % BottleneckLink.interestingN.length;
+                            DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
+                        }
+                    }
+                    try {
+                        Thread.sleep( 100 );
+                    } catch( InterruptedException e ) {
+                        // no-op
+                    }
+                }
+            }
+        }.start();
+        
         // start the stats listener threads
         for( Router r : demo.getRouters() )
             r.startStatsListener();
@@ -560,6 +588,7 @@ public class DemoGUI extends javax.swing.JFrame {
 
         slNumFlows.setBorder(null);
         slNumFlows.setMajorTickSpacing(250);
+        slNumFlows.setMaximum(200);
         slNumFlows.setMinimum(1);
         slNumFlows.setMinorTickSpacing(100);
         pnlDetails.add(slNumFlows);
