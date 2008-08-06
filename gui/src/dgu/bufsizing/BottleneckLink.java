@@ -62,10 +62,10 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private boolean forceSet;
     
-    // results data
-    private final XYSeries dataRThe = new XYSeries("Theoretical",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataRMea = new XYSeries("Measured",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataRNow = new XYSeries("Current",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheGuido = new XYSeries("Flow Sensitive", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRMea = new XYSeries("Measured", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRNow = new XYSeries("Current", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     
     /** Returns the current time in units of 8ns (with millisecond resolution) */
     public static final long currentTime8ns() {
@@ -138,6 +138,11 @@ public class BottleneckLink extends Link<Router> {
         
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
         prepareXYSeries( dataRateLimit, dataPointsToKeep );
+        
+        prepareXYSeries( dataRTheROT,   dataPointsToKeep );
+        prepareXYSeries( dataRTheGuido, dataPointsToKeep );
+        prepareXYSeries( dataRMea,      dataPointsToKeep );
+        prepareXYSeries( dataRNow,      dataPointsToKeep );
         
         // set the initial values
         this.rtt_ms = 0;
@@ -299,6 +304,22 @@ public class BottleneckLink extends Link<Router> {
         this.addDataPointToXputData( t,  (int)throughput_bps);
         extendUserDataPoints( t );
     }
+
+    public XYSeries getDataRTheROT() {
+        return dataRTheROT;
+    }
+
+    public XYSeries getDataRTheGuido() {
+        return dataRTheGuido;
+    }
+
+    public XYSeries getDataRMea() {
+        return dataRMea;
+    }
+
+    public XYSeries getDataRNow() {
+        return dataRNow;
+    }
     
     public class Result {
         public int b_kb;
@@ -369,10 +390,14 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void populateTheoreticalResults() {
         // recompute the theoretical
-        dataRThe.clear();
+        dataRTheROT.clear();
+        dataRTheGuido.clear();
         for( int n : interestingN ) {
-            int bufsz_kb = (int)(this.rtt_ms * this.rateLimit_kbps / Math.sqrt(this.getNumFlows()));
-            dataRThe.add(n, bufsz_kb);
+            int bufsz_kb = this.rtt_ms * this.rateLimit_kbps;
+            dataRTheROT.add(n, bufsz_kb);
+            
+            bufsz_kb = (int)(bufsz_kb / Math.sqrt(this.getNumFlows()));
+            dataRTheGuido.add(n, bufsz_kb);
         }
     }
     

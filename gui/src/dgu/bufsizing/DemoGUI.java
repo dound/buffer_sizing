@@ -272,17 +272,22 @@ public class DemoGUI extends javax.swing.JFrame {
         XYPlot plot = (XYPlot) chartResults.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         
-        // theoretical
+        // theoretical rule of thumb
         renderer.setSeriesPaint(0, new Color(128,0,0));
         renderer.setSeriesStroke(0, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         
+        // theoretical guido
+        renderer.setSeriesPaint(1, new Color(0,128,0));
+        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        
         // measured
-        renderer.setSeriesPaint(1, new Color(0,0,128));
-        renderer.setSeriesStroke(1, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(2, new Color(0,0,128));
+        renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         
         // measured (live)
-        renderer.setSeriesPaint(2, new Color(128,0,128));
-        renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(3, new Color(128,0,128));
+        renderer.setSeriesStroke(3, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
@@ -334,8 +339,10 @@ public class DemoGUI extends javax.swing.JFrame {
                             DemoGUI.collOcc.addSeries( b.getDataQueueOcc(), false );
                             DemoGUI.collOcc.addSeries( b.getDataBufSize(), false );
                             DemoGUI.collRes.removeAllSeries( false );
-                            DemoGUI.collRes.addSeries( b.getDataQueueOcc(), false );
-                            DemoGUI.collRes.addSeries( b.getDataBufSize(), false );
+                            DemoGUI.collRes.addSeries( b.getDataRTheROT(), false  );
+                            DemoGUI.collRes.addSeries( b.getDataRTheGuido(), false  );
+                            DemoGUI.collRes.addSeries( b.getDataRMea(), false  );
+                            DemoGUI.collRes.addSeries( b.getDataRNow(), false  );
                             
                             DemoGUI.me.refreshCharts();
                             
