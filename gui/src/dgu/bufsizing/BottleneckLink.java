@@ -28,6 +28,8 @@ public class BottleneckLink extends Link<Router> {
     private static final boolean AUTOSORT_SETTING = false;
     private static final boolean ALLOW_DUPS_SETTING = true;
     
+    private static final String SAVED_RESULTS_FN = "measured.txt";
+    
     // user-defined variables on this bottleneck link
     private BufferSizeRule bufSizeRule = BufferSizeRule.RULE_OF_THUMB;
     private int numFlows;
@@ -338,16 +340,23 @@ public class BottleneckLink extends Link<Router> {
     /** read measured results from measured.txt */
     private void initMeasuredResults() {
         try {
-            File file = new File("measured.txt");
+            File file = new File(SAVED_RESULTS_FN);
             FileInputStream fis = new FileInputStream(file);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
 
-            String line = br.readLine();
-            while( line != null ) {
+            while( true ) {
+                String line = br.readLine();
+                if( line == null )
+                    break;
+                        
+                // ignore comments
+                if( line.charAt(0) == '#' )
+                    continue;
+                
                 String[] vals = line.split(" ");
                 if( vals.length != 4 ) {
-                    System.err.println("Error: invalid line format in measured.txt: " + line);
+                    System.err.println("Error: invalid line format in " + SAVED_RESULTS_FN + ": " + line);
                     System.exit(1);
                 }
                 
@@ -357,8 +366,6 @@ public class BottleneckLink extends Link<Router> {
                 int num = Integer.valueOf(vals[3]);
                     
                 resultsMea.put(n, new Result(b,c,num));
-                
-                line = br.readLine();
             }
 
             br.close();
