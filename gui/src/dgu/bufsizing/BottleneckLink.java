@@ -552,6 +552,10 @@ public class BottleneckLink extends Link<Router> {
         
         // tell the router about the new buffer size in terms of packets
         updateActualBufSize();
+        
+        // refresh the measured results data being displayed (displays for the specified capacity)
+        populateTheoreticalResults();
+        populateMeasuredResults();
     }
 
     public int getRateLimit_kbps() {
