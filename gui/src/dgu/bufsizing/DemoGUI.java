@@ -58,6 +58,7 @@ public class DemoGUI extends javax.swing.JFrame {
         createChartOcc();
         createChartResults();
         initComponents();
+        pnlTGen.setVisible(false);
         initPopup();
         prepareBindings();
         setIconImage( icon );
