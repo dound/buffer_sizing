@@ -38,7 +38,7 @@ public class DemoBasic {
         demo.addGenericNode( dc );
         
         // add our traffic generators
-        TrafficGenerator su = new Harpoon( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, 30, 100 );
+        TrafficGenerator su = new Iperf( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, 30, 100, true, 100000000 );
         demo.addTrafficGenerator( su );
         
         // add the links between nodes
