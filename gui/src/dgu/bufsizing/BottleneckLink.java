@@ -113,11 +113,18 @@ public class BottleneckLink extends Link<Router> {
     private void addDataPointToQueueOccData( long time_ns8 ) {
         if( dgu.bufsizing.control.EventProcessor.USE_PACKETS ) {
             dataQueueOcc.add( time_ns8, queueOcc_bytes );
-            dataQueueOccPer.add( time_ns8, queueOcc_bytes / this.getQueueOcc_bytes() );
+            
+            if( this.getQueueOcc_bytes() == 0 )
+                dataQueueOccPer.add( time_ns8, 0 );
+            else
+                dataQueueOccPer.add( time_ns8, queueOcc_bytes / this.getQueueOcc_bytes() );
         }
         else {
             dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
-            dataQueueOccPer.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes / this.getActualBufSize()) );
+            if( this.getActualBufSize() == 0 )
+                dataQueueOccPer.add( time_ns8, 0 );
+            else
+                dataQueueOccPer.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes / this.getActualBufSize()) );
         }
     }
     
