@@ -185,7 +185,10 @@ static void controller_main() {
 static void setNumFlows(int n) {
     /* remove flows if we have too many */
     while( numFlows > n ) {
-        kill( tgen_pid[--numFlows], SIGKILL );
+        numFlows -= 1;
+        int pid = tgen_pid[numFlows];
+        fprintf(stderr, "killed pid %u", pid);
+        kill( pid, SIGKILL );
     }
 
     /* add flows if we don't have enough */
@@ -197,7 +200,11 @@ static void setNumFlows(int n) {
                      MIN_PORT+n-1+portOffset);
             exit(0);
         }
-        else
+        else {
             tgen_pid[numFlows++] = pid;
+            fprintf(stderr, "spawned pid %u", pid);
+        }
     }
+
+    fprintf(stderr, "tgen controller # of flows = %u", numFlows);
 }
