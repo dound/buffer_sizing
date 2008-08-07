@@ -185,8 +185,7 @@ static void controller_main() {
 static void setNumFlows(int n) {
     /* remove flows if we have too many */
     while( numFlows > n ) {
-        kill( tgen_pid[n], SIGKILL );
-        numFlows -= 1;
+        kill( tgen_pid[--numFlows], SIGKILL );
     }
 
     /* add flows if we don't have enough */
@@ -199,6 +198,6 @@ static void setNumFlows(int n) {
             exit(0);
         }
         else
-            tgen_pid[n++] = pid;
+            tgen_pid[numFlows++] = pid;
     }
 }
