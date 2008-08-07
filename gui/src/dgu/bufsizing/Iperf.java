@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.IperfController;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -39,6 +40,10 @@ public class Iperf extends TrafficGenerator {
     }
     
     public void setNumFlows(int n) {
+        IperfController.setNumFlows(n);
+    }
+    
+    public void setNumFlowsLocal(int n) {
         Runtime run = Runtime.getRuntime();
         if( procs.size() < n ) {
             if( procs.size() == MAX_IPERFS ) {

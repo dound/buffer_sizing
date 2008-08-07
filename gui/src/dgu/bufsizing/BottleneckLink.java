@@ -159,7 +159,7 @@ public class BottleneckLink extends Link<Router> {
         
         // update the plots appropriately
         forceSet = true;
-        setNumFlows(1);
+        setNumFlows(0);
         setRTT_ms( bufSize_msec );
         setRateLimit_kbps( rateLimit_kbps );
         forceSet = false;

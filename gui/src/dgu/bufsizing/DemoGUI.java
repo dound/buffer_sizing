@@ -1,5 +1,6 @@
 package dgu.bufsizing;
 
+import dgu.bufsizing.control.IperfController;
 import dgu.util.StringOps;
 import dgu.util.swing.GUIHelper;
 import dgu.util.swing.binding.JComboBoxBound;
@@ -27,6 +28,7 @@ import org.jfree.ui.*;
 public class DemoGUI extends javax.swing.JFrame {
     public static final int DEFAULT_RTT = 75;
     public static final int TIME_BETWEEN_REFRESHES = 250;
+    private static final int NUM_IPERF_CONTROLLERS = 2;
     
     public static final String VERSION = "v0.03b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
@@ -92,37 +94,15 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         }.start();
         
-        // starts a dummy thread to generate bogus measured data for testing
-        new Thread() {
-            public void run() {
-                int bfsz = 100;
-                int i = 0;
-                
-                while( true ) {
-                    BottleneckLink b = getSelectedBottleneck();
-                    if( b != null ) {
-                        double c = Math.random();
-                        bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
-                        b.noteCurrentMeasuredResult(bfsz, c);
-                        if( c >= 0.95 ) {
-                            b.addMeasuredResult(bfsz);
-                            
-                            i = (i + 1) % BottleneckLink.interestingN.length;
-                            DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
-                        }
-                    }
-                    try {
-                        Thread.sleep( 100 );
-                    } catch( InterruptedException e ) {
-                        // no-op
-                    }
-                }
-            }
-        }.start();
+        //startDummyStatsThread();
         
         // start the stats listener threads
         for( Router r : demo.getRouters() )
             r.startStatsListener();
+        
+        // start the iperf controllers
+        for( int i=0; i<NUM_IPERF_CONTROLLERS; i++ )
+             new IperfController(IperfController.BASE_PORT + i);
     }
     
     public static final int RATE_LIM_VALUE_COUNT = 17;
@@ -589,8 +569,8 @@ public class DemoGUI extends javax.swing.JFrame {
         slNumFlows.setBorder(null);
         slNumFlows.setMajorTickSpacing(250);
         slNumFlows.setMaximum(200);
-        slNumFlows.setMinimum(1);
         slNumFlows.setMinorTickSpacing(100);
+        slNumFlows.setValue(0);
         pnlDetails.add(slNumFlows);
         slNumFlows.setBounds(470, 25, 220, 16);
 
@@ -715,7 +695,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlTGen.setLayout(null);
 
         optGroupTGen.add(optIperf);
-        optIperf.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optIperf.setFont(new java.awt.Font("Arial", 0, 12));
         optIperf.setSelected(true);
         optIperf.setText("Iperf");
         optIperf.addActionListener(new java.awt.event.ActionListener() {
@@ -727,7 +707,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optIperf.setBounds(10, 15, 100, 15);
 
         optGroupTGen.add(optHarpoon);
-        optHarpoon.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optHarpoon.setFont(new java.awt.Font("Arial", 0, 12));
         optHarpoon.setText("Harpoon");
         optHarpoon.setEnabled(false);
         optHarpoon.addActionListener(new java.awt.event.ActionListener() {
@@ -739,7 +719,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optHarpoon.setBounds(10, 53, 100, 15);
 
         optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
         optTomahawk.setText("Tomahawk");
         optTomahawk.setEnabled(false);
         optTomahawk.addActionListener(new java.awt.event.ActionListener() {
@@ -880,4 +860,34 @@ private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private dgu.util.swing.binding.JSliderBound slNumFlows;
     // End of variables declaration//GEN-END:variables
     static final JMenuItem mnuSetRTT = new JMenuItem("Set RTT");
+    
+    private void startDummyStatsThread() {
+        // starts a dummy thread to generate bogus measured data for testing
+        new Thread() {
+            public void run() {
+                int bfsz = 100;
+                int i = 0;
+                
+                while( true ) {
+                    BottleneckLink b = getSelectedBottleneck();
+                    if( b != null ) {
+                        double c = Math.random();
+                        bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
+                        b.noteCurrentMeasuredResult(bfsz, c);
+                        if( c >= 0.95 ) {
+                            b.addMeasuredResult(bfsz);
+                            
+                            i = (i + 1) % BottleneckLink.interestingN.length;
+                            DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
+                        }
+                    }
+                    try {
+                        Thread.sleep( 100 );
+                    } catch( InterruptedException e ) {
+                        // no-op
+                    }
+                }
+            }
+        }.start();
+    }
 }
