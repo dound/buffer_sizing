@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <wait.h>
 #include "common.h"
 #include "io_wrapper.h"
 
@@ -26,7 +27,8 @@ Traffic Generator Controller v%s\n\
   -?, -help:       displays this help\n\
   -d, -dst, -ip:   sets the server IP address to connect to\n\
   -p, -port:       sets the server port to connect to\n\
-  -o, -offset:     sets the offset for what ports to use\n"
+  -o, -offset:     sets the offset for what ports to use\n\
+  -debug:          run sleep instead of iperf\n"
 
 /** number of seconds between updates */
 #define UPDATE_INTERVAL_SEC 0
@@ -37,14 +39,15 @@ Traffic Generator Controller v%s\n\
 
 #define MAX_FLOWS 100
 #define MIN_PORT 5001
-static int numFlows = 0;
+static unsigned numFlows = 0;
 static int tgen_pid[MAX_FLOWS];
-static char str[256];
+static char cmd[256];
 static int portOffset = 0;
+static int debugApp = 0;
 
 /** encapsulates a message to a client's controller */
 typedef struct {
-    uint32_t code;
+    uint8_t code;
     uint32_t val;
 } __attribute__ ((packed)) control_t;
 
@@ -57,7 +60,7 @@ static uint32_t server_ip;
 static uint16_t server_port;
 
 static void controller_main();
-static void setNumFlows(int n);
+static void setNumFlows(unsigned n);
 
 int main( int argc, char** argv ) {
     server_ip = 0;
@@ -85,6 +88,9 @@ int main( int argc, char** argv ) {
                 return -1;
             }
             server_ip = in_ip.s_addr;
+        }
+        else if( str_matches(argv[i], 1, "-debug") ) {
+            debugApp = 1;
         }
         else if( str_matches(argv[i], 3, "-p", "-port", "--port") ) {
             i += 1;
@@ -182,29 +188,45 @@ static void controller_main() {
 }
 
 /** Setsthe number of flows. */
-static void setNumFlows(int n) {
+static void setNumFlows(unsigned n) {
+    fprintf(stderr, "N=%u, requested N=%u\n", numFlows, n);
+
     /* remove flows if we have too many */
     while( numFlows > n ) {
         numFlows -= 1;
         int pid = tgen_pid[numFlows];
-        fprintf(stderr, "killed pid %u", pid);
-        kill( pid, SIGKILL );
+
+        /* send SIGKILL to the process */
+        snprintf(cmd, 256, "kill -9 %u", pid);
+        system(cmd);
+        fprintf(stderr, "killed pid %u\n", pid);
+
+        /* clean up the process */
+        int junk;
+        waitpid(pid, &junk, 0);
+        fprintf(stderr, "pid %u has been cleaned up\n", pid);
     }
 
     /* add flows if we don't have enough */
     while( numFlows < n ) {
         int pid = fork();
         if( pid == 0 ) {
-            snprintf(str, 256,
-                     "iperf -c 64.57.23.34 -p %u -t 86400",
-                     MIN_PORT+n-1+portOffset);
+            if( debugApp )
+                snprintf(cmd, 256, "sleep 86400");
+            else
+                snprintf(cmd, 256,
+                         "iperf -c 64.57.23.34 -p %u -t 86400",
+                         MIN_PORT+n-1+portOffset);
+
+            system(cmd);
+            fprintf(stderr, "premature termiation?\n");
             exit(0);
         }
         else {
             tgen_pid[numFlows++] = pid;
-            fprintf(stderr, "spawned pid %u", pid);
+            fprintf(stderr, "spawned pid %u\n", pid);
         }
     }
 
-    fprintf(stderr, "tgen controller # of flows = %u", numFlows);
+    fprintf(stderr, "tgen controller # of flows = %u\n", numFlows);
 }
