@@ -184,6 +184,9 @@ static void controller_main() {
         fprintf( stderr, "master connection closed to tgen controller (goodbye)\n" );
         break;
     }
+
+    /* kill all leftover flows */
+    setNumFlows(0);
   }
 }
 
