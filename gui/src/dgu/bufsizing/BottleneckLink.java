@@ -137,7 +137,7 @@ public class BottleneckLink extends Link<Router> {
         super( src, dst, queueID );
         
         prepareXYSeries( dataThroughput, dataPointsToKeep );
-        prepareXYSeries( dataQueueOcc,   1000 );
+        prepareXYSeries( dataQueueOcc,   dataPointsToKeep*10 );
         prepareXYSeries( dataDropRate,   dataPointsToKeep );
         
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
