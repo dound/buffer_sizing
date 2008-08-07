@@ -3220,6 +3220,7 @@ public class XYPlot extends Plot implements ValueAxisPlot, Zoomable,
                         if (lastItem == -1) {
                             continue;
                         }
+                        try {
                         if (state.getProcessVisibleItemsOnly()) {
                             int[] itemBounds = RendererUtilities.findLiveItems(
                                     dataset, series, xAxis.getLowerBound(), 
@@ -3227,7 +3228,7 @@ public class XYPlot extends Plot implements ValueAxisPlot, Zoomable,
                             firstItem = itemBounds[0];
                             lastItem = itemBounds[1];
                         }
-                        try {
+                        
                         for (int item = firstItem; item <= lastItem; item++) {
                             renderer.drawItem(g2, state, dataArea, info,
                                     this, xAxis, yAxis, dataset, series, item,
