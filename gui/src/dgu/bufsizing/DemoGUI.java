@@ -112,7 +112,7 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final int RATE_LIM_MIN_REG_VAL = 2;
     JMenu mnuRateLim = new JMenu("Rate Limit");
     javax.swing.JCheckBoxMenuItem[] mnuRateLimVal = new JCheckBoxMenuItem[RATE_LIM_VALUE_COUNT];
-    javax.swing.JCheckBoxMenuItem mnuToggleGraph;
+    javax.swing.JCheckBoxMenuItem mnuToggleGraph, mnuTogglePerData;
     void initPopup() {
         // create the popup menu
         final JPopupMenu mnuPopup = new JPopupMenu();
@@ -168,6 +168,16 @@ public class DemoGUI extends javax.swing.JFrame {
         });
         mnuPopup.add(mnuToggleGraph);
         
+        // add a toggle for actual vs percent xput/occ
+        mnuTogglePerData = new JCheckBoxMenuItem( "Toggle Y-Axes as Percentage" );
+        mnuTogglePerData.setSelected(true);
+        mnuTogglePerData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                populateCollXputAndOcc();
+            }
+        });
+        mnuPopup.add(mnuTogglePerData);
+        
         // attach the popup to other components
         final MouseAdapter pl = new MouseAdapter() {
             public void mousePressed(MouseEvent e) { showPopupIfTriggered(e); }
@@ -180,6 +190,26 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         };
         lblMap.addMouseListener( pl );
+    }
+    
+    private void populateCollXputAndOcc() {
+        DemoGUI.collXput.removeAllSeries(false);
+        DemoGUI.collOcc.removeAllSeries(false);
+        BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
+        if( bl != null ) {
+            if( !mnuTogglePerData.isSelected() ) {
+                DemoGUI.collXput.addSeries( bl.getDataThroughput(), false );
+                DemoGUI.collXput.addSeries( bl.getDataRateLimit(),  false );
+                DemoGUI.collOcc.addSeries(  bl.getDataQueueOcc(),   false );
+                DemoGUI.collOcc.addSeries(  bl.getDataBufSize(),    false );
+            }
+            else {
+                DemoGUI.collXput.addSeries( bl.getDataThroughputPer(), false );
+                DemoGUI.collOcc.addSeries(  bl.getDataQueueOccPer(),   false );
+            }
+            
+            DemoGUI.me.refreshCharts();
+        }
     }
     
     private JFreeChart prepareChart( String title, String xAxis, String yAxis, XYSeriesCollection coll ) {
@@ -337,12 +367,7 @@ public class DemoGUI extends javax.swing.JFrame {
                             }
 
                             // bind this bottleneck's data to the chart and remove old data
-                            DemoGUI.collXput.removeAllSeries( false );
-                            DemoGUI.collXput.addSeries( b.getDataThroughput(), false );
-                            DemoGUI.collXput.addSeries( b.getDataRateLimit(), false );
-                            DemoGUI.collOcc.removeAllSeries( false );
-                            DemoGUI.collOcc.addSeries( b.getDataQueueOcc(), false );
-                            DemoGUI.collOcc.addSeries( b.getDataBufSize(), false );
+                            populateCollXputAndOcc();
                             DemoGUI.collRes.removeAllSeries( false );
                             DemoGUI.collRes.addSeries( b.getDataRTheROT(), false  );
                             DemoGUI.collRes.addSeries( b.getDataRTheGuido(), false  );

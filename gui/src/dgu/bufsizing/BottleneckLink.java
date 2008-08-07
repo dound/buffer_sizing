@@ -52,9 +52,10 @@ public class BottleneckLink extends Link<Router> {
     private static final int MSEC_DIV_8NS = 125000;
     
     // empirical data collected from the router
-    private final XYSeries dataThroughput = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataQueueOcc   = new XYSeries("Queue Occupancy",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataDropRate   = new XYSeries("Drop Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataThroughput    = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataThroughputPer = new XYSeries("Link Utilization",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataQueueOcc      = new XYSeries("Queue Occupancy",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataQueueOccPer   = new XYSeries("Queue Utilization",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     
     // last throughput data point (replicated to avoid critical section / locking) (float => one word ~=> atomic)
     private float instantaneousUtilization = 0.0f;
@@ -110,14 +111,19 @@ public class BottleneckLink extends Link<Router> {
     }
     
     private void addDataPointToQueueOccData( long time_ns8 ) {
-        if( dgu.bufsizing.control.EventProcessor.USE_PACKETS )
+        if( dgu.bufsizing.control.EventProcessor.USE_PACKETS ) {
             dataQueueOcc.add( time_ns8, queueOcc_bytes );
-        else
+            dataQueueOccPer.add( time_ns8, queueOcc_bytes / this.getQueueOcc_bytes() );
+        }
+        else {
             dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
+            dataQueueOccPer.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes / this.getActualBufSize()) );
+        }
     }
     
     private void addDataPointToXputData( long time_ns8, int xput_bps ) {
         dataThroughput.add( time_ns8, bitsToRateRangeUnits(xput_bps), false );
+        dataThroughputPer.add( time_ns8, xput_bps / (double)(this.getRateLimit_kbps() * 1000), false );
     }
     
     /**
@@ -136,9 +142,10 @@ public class BottleneckLink extends Link<Router> {
                            throws IllegalArgValException {
         super( src, dst, queueID );
         
-        prepareXYSeries( dataThroughput, dataPointsToKeep );
-        prepareXYSeries( dataQueueOcc,   dataPointsToKeep*10 );
-        prepareXYSeries( dataDropRate,   dataPointsToKeep );
+        prepareXYSeries( dataThroughput,    dataPointsToKeep );
+        prepareXYSeries( dataThroughputPer, dataPointsToKeep );
+        prepareXYSeries( dataQueueOcc,      dataPointsToKeep*10 );
+        prepareXYSeries( dataQueueOccPer,   dataPointsToKeep*10 );
         
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
         prepareXYSeries( dataRateLimit, dataPointsToKeep );
@@ -454,8 +461,9 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void clearData() {
         dataThroughput.clear( false );
+        dataThroughputPer.clear( false );
         dataQueueOcc.clear(   false );
-        dataDropRate.clear(   false );
+        dataQueueOccPer.clear(   false );
         dataBufSize.clear(    false );
         dataRateLimit.clear(  false );
         
@@ -508,7 +516,7 @@ public class BottleneckLink extends Link<Router> {
     }
     
     /**
-     * Returns the current buffer size.
+     * Returns the current buffer size in bytes.
      */
     public synchronized int getActualBufSize() {
         return getActualBufSize(bufSizeRule);
@@ -685,15 +693,19 @@ public class BottleneckLink extends Link<Router> {
     public XYSeries getDataThroughput() {
         return dataThroughput;
     }
+    
+    public XYSeries getDataThroughputPer() {
+        return dataThroughputPer;
+    }
 
     public XYSeries getDataQueueOcc() {
         return dataQueueOcc;
     }
 
-    public XYSeries getDataDropRate() {
-        return dataDropRate;
+    public XYSeries getDataQueueOccPer() {
+        return dataQueueOccPer;
     }
-
+    
     public XYSeries getDataBufSize() {
         return dataBufSize;
     }
