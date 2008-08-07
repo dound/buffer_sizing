@@ -10,6 +10,7 @@
 #endif
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -27,8 +28,11 @@ Traffic Generator Controller v%s\n\
   -?, -help:       displays this help\n\
   -d, -dst, -ip:   sets the server IP address to connect to\n\
   -p, -port:       sets the server port to connect to\n\
+  -s, -server:     target iperf server\n\
   -o, -offset:     sets the offset for what ports to use\n\
-  -debug:          run sleep instead of iperf\n"
+  -debug:          run sleep instead of iperf\n\
+\n\
+Example: ./tgen_controller -dst 127.0.0.1 -port 10273 -server 127.0.0.1 -offset 0 -debug\n"
 
 /** number of seconds between updates */
 #define UPDATE_INTERVAL_SEC 0
@@ -42,7 +46,7 @@ Traffic Generator Controller v%s\n\
 static unsigned numFlows = 0;
 static int tgen_pid[MAX_FLOWS];
 static char cmd[256];
-static int portOffset = 0;
+static int portOffset;
 static int debugApp = 0;
 
 /** encapsulates a message to a client's controller */
@@ -58,6 +62,7 @@ typedef enum {
 
 static uint32_t server_ip;
 static uint16_t server_port;
+static char* iperf_server_ip;
 
 static void controller_main();
 static void setNumFlows(unsigned n);
@@ -65,6 +70,8 @@ static void setNumFlows(unsigned n);
 int main( int argc, char** argv ) {
     server_ip = 0;
     server_port = DEFAULT_PORT;
+    iperf_server_ip = NULL;
+    portOffset = -1;
 
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
@@ -75,6 +82,19 @@ int main( int argc, char** argv ) {
         if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
             printf( STR_USAGE, STR_VERSION, (argc>0) ? argv[0] : "tgen_controller" );
             return 0;
+        }
+        else if( str_matches(argv[i], 3, "-t", "-target", "--target") ) {
+            i += 1;
+            if( i == argc ) {
+                fprintf( stderr, "Error: -target requires an IP address to be specified\n" );
+                return -1;
+            }
+            struct in_addr in_ip;
+            if( inet_aton(argv[i],&in_ip) == 0 ) {
+                fprintf( stderr, "Error: %s is not a valid IP address\n", argv[i] );
+                return -1;
+            }
+            iperf_server_ip = inet_ntoa(in_ip);
         }
         else if( str_matches(argv[i], 5, "-d", "-dst", "--dst", "-ip", "--ip") ) {
             i += 1;
@@ -117,6 +137,14 @@ int main( int argc, char** argv ) {
     }
     if( server_ip==0 ) {
         fprintf( stderr, "Error: -dst is a required argument; you must supply a server IP\n" );
+        exit( 1 );
+    }
+    if( iperf_server_ip==0 ) {
+        fprintf( stderr, "Error: -target is a required argument; you must supply an iperf server IP\n" );
+        exit( 1 );
+    }
+    if( portOffset==-1 ) {
+        fprintf( stderr, "Error: -offset is a required argument; you must supply an iperf port offset\n" );
         exit( 1 );
     }
 
@@ -218,7 +246,8 @@ static void setNumFlows(unsigned n) {
                 snprintf(cmd, 256, "sleep 86400");
             else
                 snprintf(cmd, 256,
-                         "iperf -c 64.57.23.34 -p %u -t 86400",
+                         "iperf -c %s -p %u -t 86400 > /dev/null",
+                         iperf_server_ip,
                          MIN_PORT+n-1+portOffset);
 
             system(cmd);
