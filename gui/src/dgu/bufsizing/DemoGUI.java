@@ -28,7 +28,7 @@ import org.jfree.ui.*;
 public class DemoGUI extends javax.swing.JFrame {
     public static final int DEFAULT_RTT = 75;
     public static final int TIME_BETWEEN_REFRESHES = 250;
-    private static final int NUM_IPERF_CONTROLLERS = 2;
+    private static final int NUM_IPERF_CONTROLLERS = 1;
     
     public static final String VERSION = "v0.03b";
     public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
