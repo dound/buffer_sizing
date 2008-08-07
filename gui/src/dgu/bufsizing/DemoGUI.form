@@ -316,7 +316,7 @@
         <Component class="javax.swing.JLabel" name="lblNumFlows">
           <Properties>
             <Property name="horizontalAlignment" type="int" value="0"/>
-            <Property name="text" type="java.lang.String" value="Number of Flows = 1"/>
+            <Property name="text" type="java.lang.String" value="Number of Flows = 0"/>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
           <Constraints>

@@ -688,7 +688,7 @@ public class DemoGUI extends javax.swing.JFrame {
         btnClearThisData.setBounds(5, 70, 205, 20);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblNumFlows.setText("Number of Flows = 1");
+        lblNumFlows.setText("Number of Flows = 0");
         lblNumFlows.setOpaque(true);
         pnlDetails.add(lblNumFlows);
         lblNumFlows.setBounds(515, 5, 220, 18);
