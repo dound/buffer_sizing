@@ -217,21 +217,28 @@ public class BottleneckLink extends Link<Router> {
         int y = src.getQueueY( gfx ) + QUEUE_HEIGHT * queueID;
         gfx.drawLine( x, y, x + QUEUE_WIDTH, y );
         gfx.drawLine( x, y + QUEUE_HEIGHT, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
-
+        gfx.drawLine( x + QUEUE_WIDTH, y, x + QUEUE_WIDTH, y + QUEUE_HEIGHT );
+        
         // fill the queue based on current occupancy
         gfx.setColor( COLOR_QUEUE_FILL );
         gfx.setStroke( STROKE_OCC );
         int width = (int)(QUEUE_WIDTH * queue_usage);
-        int fillX = x + (QUEUE_WIDTH - width);
+        int fillX = x + (QUEUE_WIDTH - width) - 1;
         int fillY = y + QUEUE_HEIGHT / 2;
         gfx.drawLine( fillX, fillY, fillX + width, fillY );
+        
+        // draw marker near bottom of queue to finish the queue symbol
+        gfx.setColor( Color.RED );
+        gfx.setStroke( Drawable.STROKE_THICK );
+        x += QUEUE_WIDTH * 4 / 5;
+        gfx.drawLine( x, y + QUEUE_HEIGHT / 5, x, y + QUEUE_HEIGHT * 4 / 5 );
         
         // restore defaultsAndBufferSize
         gfx.setPaint( Drawable.PAINT_DEFAULT );
         gfx.setStroke( Drawable.STROKE_DEFAULT );
         
-        // paint the name of the interface
-        GUIHelper.drawCeneteredString( dst.getName(), gfx, x + QUEUE_WIDTH / 2, fillY + 4 );
+        // for now, do NOT paint the name of the interface
+        // GUIHelper.drawCeneteredString( dst.getName(), gfx, x + QUEUE_WIDTH / 2, fillY + 4 );
     }
     
     /**
