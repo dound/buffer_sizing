@@ -28,7 +28,7 @@ public class DemoBasic {
         Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 80, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
         demo.addRouter( la );
         
-        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, 530, 220 );
+        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, 515, 200 );
         demo.addGenericNode( hou );
         
         Receiver ny = new Receiver( "New York", "NY", Importance.NIL, 930, 85 );
