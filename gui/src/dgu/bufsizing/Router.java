@@ -13,6 +13,10 @@ import java.awt.geom.Ellipse2D;
  * @author David Underhill
  */
 public class Router extends Node {
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("nf2router.gif");
+    protected static final int ICON_WIDTH  = 50;
+    protected static final int ICON_HEIGHT = 50;
+    
     public static final int   ROUTER_DIAMETER = 10;
     private static final Paint PAINT_ROUTER    = new GradientPaint(   0,   0, Color.BLUE,
                                                                     100, 100, new Color(0,0,128),
@@ -36,25 +40,10 @@ public class Router extends Node {
     
     protected void drawNode( Graphics2D gfx ) {
         // draw the router
-        gfx.setPaint( PAINT_ROUTER );
-        gfx.fill( objForDrawing );
+        gfx.drawImage( ICON, getX()-ICON_WIDTH/2+10, getY()-ICON_HEIGHT/2-10, ICON_WIDTH, ICON_HEIGHT, null );
         
         // put its name on top
-        drawName( gfx, getX(), getNameY(gfx) );
-        
-        // restore the default paint and draw a border around the object
-        if( isSelected() ) {
-            gfx.setColor( Drawable.COLOR_SELECTED );
-            gfx.setStroke( Drawable.STROKE_THICK3 );
-            gfx.draw( objForDrawing );
-            gfx.setPaint( PAINT_DEFAULT );
-        }
-        else {
-            gfx.setPaint( PAINT_DEFAULT );
-            gfx.setStroke( Drawable.STROKE_THICK );
-            gfx.draw( objForDrawing );
-        }
-        gfx.setStroke( Drawable.STROKE_DEFAULT );
+        drawName( gfx, getX(), getY() + 10 + gfx.getFontMetrics().getHeight() );
     }
 
     public int getNameY( Graphics2D gfx ) {

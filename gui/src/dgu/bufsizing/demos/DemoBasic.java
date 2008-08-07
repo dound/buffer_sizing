@@ -25,7 +25,7 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 80, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
+        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 100, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
         demo.addRouter( la );
         
         Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, 515, 190 );
@@ -34,10 +34,10 @@ public class DemoBasic {
         EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, 455, 215 );
         demo.addGenericNode( rice );
         
-        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, 930, 85 );
+        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, 920, 80 );
         demo.addGenericNode( ny );
         
-        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, 895, 115 );
+        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, 865, 120 );
         demo.addGenericNode( dc );
         
         // add our traffic generators
