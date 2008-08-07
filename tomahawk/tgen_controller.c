@@ -242,15 +242,14 @@ static void setNumFlows(unsigned n) {
     while( numFlows < n ) {
         int pid = fork();
         if( pid == 0 ) {
+            /* reuse this process to run the app */
             if( debugApp )
-                snprintf(cmd, 256, "sleep 86400");
-            else
-                snprintf(cmd, 256,
-                         "iperf -c %s -p %u -t 86400 > /dev/null",
-                         iperf_server_ip,
-                         MIN_PORT+n-1+portOffset);
+                execl("/bin/sleep", "sleep",  "86400", (char*)0);
+            else {
+                snprintf(cmd, 256, "%u", MIN_PORT+n-1+portOffset);
+                execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", (char*)0);
+            }
 
-            system(cmd);
             fprintf(stderr, "premature termiation?\n");
             exit(0);
         }
