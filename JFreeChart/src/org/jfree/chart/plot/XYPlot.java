@@ -3227,10 +3227,14 @@ public class XYPlot extends Plot implements ValueAxisPlot, Zoomable,
                             firstItem = itemBounds[0];
                             lastItem = itemBounds[1];
                         }
+                        try {
                         for (int item = firstItem; item <= lastItem; item++) {
                             renderer.drawItem(g2, state, dataArea, info,
                                     this, xAxis, yAxis, dataset, series, item,
                                     crosshairState, pass);
+                        }
+                        } catch(java.lang.IndexOutOfBoundsException e) {
+                            System.err.println("ignoring bad index");
                         }
                     }
                 }
