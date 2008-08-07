@@ -65,8 +65,8 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private boolean forceSet;
     
-    private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataRTheGuido = new XYSeries("Flow Sensitive", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb (RTT*C)",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheGuido = new XYSeries("RTT * C / sqrt(N)", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRMea = new XYSeries("Measured", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRToday = new XYSeries("Today", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRCur = new XYSeries("Now", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
@@ -530,6 +530,10 @@ public class BottleneckLink extends Link<Router> {
      * link parameters.  The units on the return value is bytes.
      */
     public static int computeBufSize( BufferSizeRule bufSizeRule, int rtt_ms, int capacity_kbps, int n ) {
+        // prevent div by zero
+        if( n == 0 )
+            n = 1;
+        
         switch( bufSizeRule ) {
             case RULE_OF_THUMB:  return rtt_ms * capacity_kbps / 8;
             case FLOW_SENSITIVE: return (int)(rtt_ms * capacity_kbps / (8 * Math.sqrt(n)));

@@ -572,7 +572,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slNumFlows.setMinorTickSpacing(100);
         slNumFlows.setValue(0);
         pnlDetails.add(slNumFlows);
-        slNumFlows.setBounds(470, 25, 220, 16);
+        slNumFlows.setBounds(515, 25, 220, 16);
 
         pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
@@ -583,15 +583,16 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
-        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12));
-        optRuleOfThumb.setText("Rule of Thumb");
+        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optRuleOfThumb.setText("<html>Rule of Thumb: RTT &#183; C</html>");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optRuleOfThumbActionPerformed(evt);
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 120, 15);
+        optRuleOfThumb.setBounds(10, 15, 170, 15);
+        optRuleOfThumb.getAccessibleContext().setAccessibleName("Rule of Thumb (RTT * C)");
 
         optGroupRule.add(optCustom);
         optCustom.setFont(new java.awt.Font("Arial", 0, 12));
@@ -602,7 +603,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optCustom);
-        optCustom.setBounds(10, 55, 120, 15);
+        optCustom.setBounds(10, 55, 170, 15);
 
         slCustomBufferSize.setMajorTickSpacing(65536);
         slCustomBufferSize.setMaximum(524288);
@@ -612,17 +613,17 @@ public class DemoGUI extends javax.swing.JFrame {
         slCustomBufferSize.setBounds(30, 70, 165, 17);
 
         optGroupRule.add(optGuido);
-        optGuido.setFont(new java.awt.Font("Arial", 0, 12));
-        optGuido.setText("Flow-Sensitive");
+        optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optGuido.setText("<html>RTT &#183; C / &#8730;N</html>");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optGuidoActionPerformed(evt);
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 120, 15);
+        optGuido.setBounds(10, 35, 170, 15);
 
-        lblCustom.setFont(new java.awt.Font("Courier", 0, 12));
+        lblCustom.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
         lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCustom.setText("1000kB");
         lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -631,22 +632,22 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(lblCustom);
-        lblCustom.setBounds(130, 55, 60, 15);
+        lblCustom.setBounds(175, 55, 60, 15);
 
-        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12));
+        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
         lblRuleOfThumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblRuleOfThumb.setText("10kB");
         pnlSizing.add(lblRuleOfThumb);
-        lblRuleOfThumb.setBounds(130, 15, 60, 15);
+        lblRuleOfThumb.setBounds(175, 15, 60, 15);
 
         lblGuido.setFont(new java.awt.Font("Courier", 0, 12));
         lblGuido.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblGuido.setText("100MB");
         pnlSizing.add(lblGuido);
-        lblGuido.setBounds(130, 35, 60, 15);
+        lblGuido.setBounds(175, 35, 60, 15);
 
         pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(240, 5, 200, 90);
+        pnlSizing.setBounds(240, 5, 245, 90);
         pnlDetails.add(jSeparator1);
         jSeparator1.setBounds(0, 0, 1025, 10);
 
@@ -689,7 +690,7 @@ public class DemoGUI extends javax.swing.JFrame {
         lblNumFlows.setText("Number of Flows = 1");
         lblNumFlows.setOpaque(true);
         pnlDetails.add(lblNumFlows);
-        lblNumFlows.setBounds(470, 5, 220, 18);
+        lblNumFlows.setBounds(515, 5, 220, 18);
 
         pnlTGen.setBorder(javax.swing.BorderFactory.createTitledBorder("Traffic Generator"));
         pnlTGen.setLayout(null);
@@ -743,7 +744,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optPlanetLab.setBounds(10, 72, 100, 15);
 
         pnlDetails.add(pnlTGen);
-        pnlTGen.setBounds(725, 5, 120, 90);
+        pnlTGen.setBounds(770, 5, 120, 90);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
