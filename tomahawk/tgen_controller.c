@@ -240,6 +240,11 @@ static void setNumFlows(unsigned n) {
 
     /* add flows if we don't have enough */
     while( numFlows < n ) {
+        if( n >= MAX_FLOWS ) {
+            fprintf( stderr, "Warning: too many flows requested (max=%u, requested=%u)\n", MAX_FLOWS, n );
+            return;
+        }
+
         int pid = fork();
         if( pid == 0 ) {
             /* reuse this process to run the app */
