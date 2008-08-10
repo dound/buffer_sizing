@@ -137,13 +137,13 @@ public class BottleneckLink extends Link<Router> {
      * @param src               The source of data on this link.
      * @param dst               The endpoint of this link.
      * @param queueID           The interface index for the queue on src for this link.
-     * @param bufSize_msec      Initial buffer size in milliseconds
+     * @param rtt               Initial rtt for tgens across this link
      * @param rateLimit_kbps    Initial rate limit in kilobits per second
      * @param dataPointsToKeep  Maximum number of data points to keep around
      * @throws IllegalArgValException  thrown if too many links already exist from src
      */
     public BottleneckLink( Router src, Node dst, int queueID,
-                           int bufSize_msec, int rateLimit_kbps, int dataPointsToKeep ) 
+                           int rtt, int rateLimit_kbps, int dataPointsToKeep  ) 
                            throws IllegalArgValException {
         super( src, dst, queueID );
         
@@ -172,7 +172,7 @@ public class BottleneckLink extends Link<Router> {
         // update the plots appropriately
         forceSet = true;
         setNumFlows(0);
-        setRTT_ms( bufSize_msec );
+        setRTT_ms( rtt  );
         setRateLimit_kbps( rateLimit_kbps );
         forceSet = false;
         

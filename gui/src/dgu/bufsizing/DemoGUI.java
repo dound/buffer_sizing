@@ -26,7 +26,6 @@ import org.jfree.ui.*;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
-    public static final int DEFAULT_RTT = 75;
     public static final int TIME_BETWEEN_REFRESHES = 250;
     private static final int NUM_IPERF_CONTROLLERS = 1;
     

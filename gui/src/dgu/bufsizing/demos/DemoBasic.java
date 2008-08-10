@@ -50,8 +50,8 @@ public class DemoBasic {
         // links from LA
         new Link( la, su, Link.NF2C0  );
         new BottleneckLink( la, hou, Link.NF2C1, 
-                Demo.DEFAULT_BUFFER_SIZE_MSEC, Demo.DEFAULT_RATE_LIMIT_KBPS, 
-                Demo.DEFAULT_DATA_POINTS_TO_KEEP  );
+                Demo.DEFAULT_RTT, Demo.DEFAULT_RATE_LIMIT_KBPS, 
+                Demo.DEFAULT_DATA_POINTS_TO_KEEP    );
         new Link( la, ny, Link.NF2C2 );
         new Link( la, dc, Link.NF2C3 );
         
