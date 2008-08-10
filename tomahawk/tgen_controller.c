@@ -83,10 +83,10 @@ int main( int argc, char** argv ) {
             printf( STR_USAGE, STR_VERSION, (argc>0) ? argv[0] : "tgen_controller" );
             return 0;
         }
-        else if( str_matches(argv[i], 3, "-t", "-target", "--target") ) {
+        else if( str_matches(argv[i], 3, "-s", "-server", "--server") ) {
             i += 1;
             if( i == argc ) {
-                fprintf( stderr, "Error: -target requires an IP address to be specified\n" );
+                fprintf( stderr, "Error: -server requires an IP address to be specified\n" );
                 return -1;
             }
             struct in_addr in_ip;
@@ -140,7 +140,7 @@ int main( int argc, char** argv ) {
         exit( 1 );
     }
     if( iperf_server_ip==0 ) {
-        fprintf( stderr, "Error: -target is a required argument; you must supply an iperf server IP\n" );
+        fprintf( stderr, "Error: -server is a required argument; you must supply an iperf server IP\n" );
         exit( 1 );
     }
     if( portOffset==-1 ) {
