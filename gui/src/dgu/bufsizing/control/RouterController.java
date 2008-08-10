@@ -38,7 +38,7 @@ public class RouterController extends Controller {
             div *= 2;
 
         // 1Gbps is the base
-        return (1000*1000*1000) / div;
+        return (1000*1000*1000) / (div / 2);
     }
     
     /**
