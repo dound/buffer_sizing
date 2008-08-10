@@ -494,7 +494,7 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     
     public synchronized void setRateLimitText( BottleneckLink l ) {
-        int selectedIndex = l.getRateLimit_regValue();
+        int selectedIndex = l.getRateLimit_regValue() + 1;
         for( int i=1; i<RATE_LIM_VALUE_COUNT; i++ )
             mnuRateLimVal[i].setSelected(i == selectedIndex);
     }
