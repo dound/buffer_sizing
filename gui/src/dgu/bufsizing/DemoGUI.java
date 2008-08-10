@@ -560,6 +560,7 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule = new javax.swing.ButtonGroup();
         optGroupTGen = new javax.swing.ButtonGroup();
+        optGroupMode = new javax.swing.ButtonGroup();
         pnlDetails = new javax.swing.JPanel();
         slNumFlows = new JSliderBound( "numFlows" );
         pnlChartXput = new ChartPanel(chartXput);
@@ -584,6 +585,9 @@ public class DemoGUI extends javax.swing.JFrame {
         optHarpoon = new javax.swing.JRadioButton();
         optTomahawk = new javax.swing.JRadioButton();
         optPlanetLab = new javax.swing.JRadioButton();
+        pnlMode = new javax.swing.JPanel();
+        optManual = new javax.swing.JRadioButton();
+        optAuto = new javax.swing.JRadioButton();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -609,7 +613,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
-        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12));
         optRuleOfThumb.setText("<html>Rule of Thumb: RTT &#183; C</html>");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -639,7 +643,7 @@ public class DemoGUI extends javax.swing.JFrame {
         slCustomBufferSize.setBounds(30, 70, 165, 17);
 
         optGroupRule.add(optGuido);
-        optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optGuido.setFont(new java.awt.Font("Arial", 0, 12));
         optGuido.setText("<html>RTT &#183; C / &#8730;N</html>");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -649,7 +653,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(optGuido);
         optGuido.setBounds(10, 35, 170, 15);
 
-        lblCustom.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
+        lblCustom.setFont(new java.awt.Font("Courier", 0, 12));
         lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCustom.setText("1000kB");
         lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -660,7 +664,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(lblCustom);
         lblCustom.setBounds(175, 55, 60, 15);
 
-        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
+        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12));
         lblRuleOfThumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblRuleOfThumb.setText("10kB");
         pnlSizing.add(lblRuleOfThumb);
@@ -746,7 +750,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optHarpoon.setBounds(10, 53, 100, 15);
 
         optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optTomahawk.setText("Tomahawk");
         optTomahawk.setEnabled(false);
         optTomahawk.addActionListener(new java.awt.event.ActionListener() {
@@ -771,6 +775,35 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlDetails.add(pnlTGen);
         pnlTGen.setBounds(770, 5, 120, 90);
+
+        pnlMode.setBorder(javax.swing.BorderFactory.createTitledBorder("Mode"));
+        pnlMode.setLayout(null);
+
+        optGroupMode.add(optManual);
+        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optManual.setSelected(true);
+        optManual.setText("Manual");
+        optManual.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optManualActionPerformed(evt);
+            }
+        });
+        pnlMode.add(optManual);
+        optManual.setBounds(10, 15, 90, 15);
+
+        optGroupMode.add(optAuto);
+        optAuto.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optAuto.setText("Automatic");
+        optAuto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optAutoActionPerformed(evt);
+            }
+        });
+        pnlMode.add(optAuto);
+        optAuto.setBounds(10, 34, 90, 15);
+
+        pnlDetails.add(pnlMode);
+        pnlMode.setBounds(905, 5, 110, 90);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -856,6 +889,27 @@ private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     setTGenOption( PlanetLab.class );
 }//GEN-LAST:event_optPlanetLabActionPerformed
 
+private void enableComponForManual(boolean b) {
+    pnlSizing.setEnabled(b);
+    optRuleOfThumb.setEnabled(b);
+    optGuido.setEnabled(b);
+    optCustom.setEnabled(b);
+    slCustomBufferSize.setEnabled(b);
+    slNumFlows.setEnabled(b);
+}
+
+private void optManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optManualActionPerformed
+    enableComponForManual(true);
+    optGuido.setSelected(true);
+}//GEN-LAST:event_optManualActionPerformed
+
+private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoActionPerformed
+    enableComponForManual(false);
+    slCustomBufferSize.setValue( slCustomBufferSize.getMaximum() );
+    optCustom.setSelected(true);
+    slNumFlows.setValue(1);
+}//GEN-LAST:event_optAutoActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearThisData;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
@@ -868,12 +922,15 @@ private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private javax.swing.JLabel lblNode;
     private javax.swing.JLabel lblNumFlows;
     private javax.swing.JLabel lblRuleOfThumb;
+    private javax.swing.JRadioButton optAuto;
     private javax.swing.JRadioButton optCustom;
+    private javax.swing.ButtonGroup optGroupMode;
     private javax.swing.ButtonGroup optGroupRule;
     private javax.swing.ButtonGroup optGroupTGen;
     private javax.swing.JRadioButton optGuido;
     private javax.swing.JRadioButton optHarpoon;
     private javax.swing.JRadioButton optIperf;
+    private javax.swing.JRadioButton optManual;
     private javax.swing.JRadioButton optPlanetLab;
     private javax.swing.JRadioButton optRuleOfThumb;
     private javax.swing.JRadioButton optTomahawk;
@@ -881,6 +938,7 @@ private void optPlanetLabActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private org.jfree.chart.ChartPanel pnlChartXput;
     private javax.swing.JPanel pnlDetails;
     private javax.swing.JPanel pnlMap;
+    private javax.swing.JPanel pnlMode;
     private javax.swing.JPanel pnlSizing;
     private javax.swing.JPanel pnlTGen;
     private dgu.util.swing.binding.JSliderBound slCustomBufferSize;
