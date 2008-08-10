@@ -953,6 +953,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         ON
     }
     
+    /** sleep for the specified number of milliseconds */
     private static void msleep(int ms) {
         try {
             Thread.sleep( ms );
@@ -961,7 +962,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         }
     }
     
-    private static final boolean GEN_DEBUG_FAKE_STATS = true;
+    private static final boolean GEN_DEBUG_FAKE_STATS = false;
     private static ThreadState autoStatsState = ThreadState.OFF;
     private void startAutoStatsThread() {
         autoStatsState = ThreadState.ON;
@@ -987,8 +988,12 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                             }
                         }
                         else {
-                            for( int n : BottleneckLink.interestingN )
-                                b.addMeasuredResult( computeBufferSizeForN(b, n) );
+                            for( int n : BottleneckLink.interestingN ) {
+                                int res = computeBufferSizeForN(b, n);
+                                if( autoStatsState != ThreadState.ON )
+                                    break;
+                                b.addMeasuredResult( res );
+                            }
                         }
                     }
                     msleep(100);
@@ -1041,6 +1046,9 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         int currentThroughput_bps = maxThroughput_bps;
         int bfszLo = 1;
         do {
+            if( autoStatsState != ThreadState.ON )
+                return -1;
+            
             if( currentThroughput_bps >= PERCENT_MAX_UTIL_TO_ACHIEVE * bfszMax ) {
                 // link is saturated!
                 // save current bf sz if it is the smallest to achieve this value
@@ -1078,8 +1086,11 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         return minBfSzWithFullLinkUtil;
     }
     
+    /** gets the average throughput reading over the specified time interval */
     private int getAvgThroughputReading_bps(BottleneckLink b, int time_msec) {
-        throw(new Error("not yet implemented"));
+        b.resetXputMovingAverage();
+        msleep(time_msec);
+        return b.getXputMovingAverage();
     }
     
     /** Block until the automatic stats thread is off. */
