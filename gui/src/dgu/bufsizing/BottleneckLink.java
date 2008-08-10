@@ -141,7 +141,6 @@ public class BottleneckLink extends Link<Router> {
      * @param bufSize_msec      Initial buffer size in milliseconds
      * @param rateLimit_kbps    Initial rate limit in kilobits per second
      * @param dataPointsToKeep  Maximum number of data points to keep around
-     * @param notifyOnChange    Whether to redraw any attached charts when the mutator methods are called.
      * @throws IllegalArgValException  thrown if too many links already exist from src
      */
     public BottleneckLink( Router src, Node dst, int queueID,
@@ -151,8 +150,8 @@ public class BottleneckLink extends Link<Router> {
         
         prepareXYSeries( dataThroughput,    dataPointsToKeep );
         prepareXYSeries( dataThroughputPer, dataPointsToKeep );
-        prepareXYSeries( dataQueueOcc,      dataPointsToKeep*10 );
-        prepareXYSeries( dataQueueOccPer,   dataPointsToKeep*10 );
+        prepareXYSeries( dataQueueOcc,      dataPointsToKeep );
+        prepareXYSeries( dataQueueOccPer,   dataPointsToKeep );
         
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
         prepareXYSeries( dataRateLimit, dataPointsToKeep );

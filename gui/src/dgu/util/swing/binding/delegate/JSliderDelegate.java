@@ -157,7 +157,7 @@ public class JSliderDelegate<FROM> extends GenericJComponentDelegate<FROM, Integ
     /**
      * Sets the bound item with the the specified value
      *
-     * @param b the new value to be set
+     * @param i the new value to be set
      */
     public void setValue( Integer i ) {
         if( binding() == null ) return;

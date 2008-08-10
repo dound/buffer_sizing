@@ -28,8 +28,6 @@ public class TomahawkController extends Controller {
      * 
      * @param cmd        the command to execute
      * @param value      the value to send with this command
-     * 
-     * @return the value returned by the command (0 if the command is a SET command)
      */
     public synchronized void command( TomahawkCmd cmd, int value ) {
         sendCommand( cmd.code, value );
