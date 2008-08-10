@@ -132,6 +132,10 @@ public class BottleneckLink extends Link<Router> {
         dataThroughputPer.add( time_ns8, xput_bps / (double)(this.getRateLimit_kbps() * 1000), false );
     }
     
+    public synchronized void clearInProgressPoint() {
+        dataRCur.clear();
+    }
+    
     /**
      * Constructs a new uni-directional bottleneck link between src and dst.
      * @param src               The source of data on this link.

@@ -900,6 +900,7 @@ private void enableComponForManual(boolean b) {
 }
 
 private void optManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optManualActionPerformed
+    stopAutoStatsThread();
     enableComponForManual(true);
     optGuido.setSelected(true);
 }//GEN-LAST:event_optManualActionPerformed
@@ -909,6 +910,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     slCustomBufferSize.setValue( slCustomBufferSize.getMaximum() );
     optCustom.setSelected(true);
     slNumFlows.setValue(1);
+    startAutoStatsThread();
 }//GEN-LAST:event_optAutoActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -947,24 +949,39 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     // End of variables declaration//GEN-END:variables
     static final JMenuItem mnuSetRTT = new JMenuItem("Set RTT");
     
-    private void startDummyStatsThread() {
+    private enum ThreadState {
+        OFF,
+        TIME_TO_STOP,
+        ON
+    }
+    
+    private static final boolean GEN_DEBUG_FAKE_STATS = true;
+    private static ThreadState autoStatsState = ThreadState.OFF;
+    private void startAutoStatsThread() {
+        autoStatsState = ThreadState.ON;
+        
         // starts a dummy thread to generate bogus measured data for testing
         new Thread() {
             public void run() {
                 int bfsz = 100;
                 int i = 0;
                 
-                while( true ) {
+                while( autoStatsState == ThreadState.ON ) {
                     BottleneckLink b = getSelectedBottleneck();
                     if( b != null ) {
-                        double c = Math.random();
-                        bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
-                        b.noteCurrentMeasuredResult(bfsz, c);
-                        if( c >= 0.95 ) {
-                            b.addMeasuredResult(bfsz);
+                        if( GEN_DEBUG_FAKE_STATS ) {
+                            double c = Math.random();
+                            bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
+                            b.noteCurrentMeasuredResult(bfsz, c);
+                            if( c >= 0.95 ) {
+                                b.addMeasuredResult(bfsz);
+
+                                i = (i + 1) % BottleneckLink.interestingN.length;
+                                DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
+                            }
+                        }
+                        else {
                             
-                            i = (i + 1) % BottleneckLink.interestingN.length;
-                            DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
                         }
                     }
                     try {
@@ -973,7 +990,31 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                         // no-op
                     }
                 }
+                
+                autoStatsState = ThreadState.OFF;
             }
         }.start();
+    }
+    
+    /** Block until the automatic stats thread is off. */
+    private void stopAutoStatsThread() {
+        if( autoStatsState != ThreadState.OFF ) {
+            // tell the stats thread to stop
+            autoStatsState = ThreadState.TIME_TO_STOP;
+            
+            // wait for it to stop
+            while( autoStatsState != ThreadState.OFF ) {
+                try {
+                    Thread.sleep( 100 );
+                } catch( InterruptedException e ) {
+                    // no-op
+                }
+            }
+            
+            // remove the unsettled point
+            BottleneckLink b = getSelectedBottleneck();
+            if( b != null )
+                b.clearInProgressPoint();
+        }
     }
 }
