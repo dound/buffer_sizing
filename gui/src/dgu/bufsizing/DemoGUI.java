@@ -1048,7 +1048,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         
         // get the throughput for when the buffer size is maximized => maximum throughput
         int maxThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
-        int maxThroughputThresh_bps = (int)(PERCENT_MAX_UTIL_TO_ACHIEVE * bfszMax);
+        int maxThroughputThresh_bps = (int)(PERCENT_MAX_UTIL_TO_ACHIEVE * maxThroughput_bps);
         System.err.println("  Max throughput = " + maxThroughput_bps + "bps ... thresh=" + maxThroughputThresh_bps );
         
         // perform a binary search for the minimum buffer size which maximizes throughput
