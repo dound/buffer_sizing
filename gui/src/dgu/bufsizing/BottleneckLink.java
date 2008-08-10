@@ -298,6 +298,7 @@ public class BottleneckLink extends Link<Router> {
     //public static long c_pkts = 0, c_bytes = 0;
     private float cont_throughput_bps = 0;
     
+    private boolean noteCurrentXputValue = true;
     private int avgThroughput_bps = 0;
     private int numReadingsForAvgXput = 0;
     public synchronized void resetXputMovingAverage() {
@@ -350,6 +351,10 @@ public class BottleneckLink extends Link<Router> {
         // update the throughput moving average
         avgThroughput_bps = (actualThroughput_bps + avgThroughput_bps*numReadingsForAvgXput) / (numReadingsForAvgXput+1);
         numReadingsForAvgXput += 1;
+        
+        // plot the current value on the util plot too
+        if( noteCurrentXputValue )
+            noteCurrentMeasuredResult(getActualBufSize()/1024, 0);
     }
 
     public XYSeries getDataRTheROT() {
@@ -472,8 +477,8 @@ public class BottleneckLink extends Link<Router> {
         dataRCur.add(this.getNumFlows(), bufSizeForMaxUtil_kB);
       
         // update the points color based on the confidence
-        int r = (confidence <  0.5) ? 128 + (int)(128*2*(0.5 - confidence)) : 0;
-        int g = (confidence >= 0.5) ? 128 + (int)(128*2*(confidence - 0.5)) : 0;
+        int r = (confidence <  0.5) ? 128 + (int)(128*(0.5 - confidence)) : 0;
+        int g = (confidence >= 0.5) ? 128 + (int)(128*(confidence - 0.5)) : 0;
         DemoGUI.me.resultsRenderer.setSeriesPaint(4, new java.awt.Color(r,g,0));
     }
     
