@@ -585,7 +585,8 @@ public class BottleneckLink extends Link<Router> {
         lastBufSize_bytes = curBufSize_bytes;
         
         // tell the router about the new buffer size in terms of packets
-        this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, curBufSize_bytes / 1000 );
+        int numPackets = curBufSize_bytes / 1500; // assumes packets are MTU-sized packets!
+        this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, numPackets );
     }
 
     public synchronized int getCustomBufSize() {
