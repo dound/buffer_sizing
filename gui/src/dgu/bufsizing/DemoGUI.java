@@ -903,11 +903,13 @@ private void optManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     stopAutoStatsThread();
     enableComponForManual(true);
     optGuido.setSelected(true);
+    optGuidoActionPerformed(null);
 }//GEN-LAST:event_optManualActionPerformed
 
 private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoActionPerformed
     enableComponForManual(false);
     optCustom.setSelected(true);
+    optCustomActionPerformed(null);
     startAutoStatsThread();
 }//GEN-LAST:event_optAutoActionPerformed
 
