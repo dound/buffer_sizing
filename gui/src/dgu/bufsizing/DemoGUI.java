@@ -130,7 +130,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     BottleneckLink bl = DemoGUI.me.getSelectedBottleneck();
                     if( bl != null )
-                        bl.setRateLimitReg(index-1);
+                        bl.setRateLimitReg(index);
                 }
             });
             
