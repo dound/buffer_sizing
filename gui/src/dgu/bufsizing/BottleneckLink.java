@@ -298,6 +298,16 @@ public class BottleneckLink extends Link<Router> {
     //public static long c_pkts = 0, c_bytes = 0;
     private float cont_throughput_bps = 0;
     
+    private int avgThroughput_bps = 0;
+    private int numReadingsForAvgXput = 0;
+    public synchronized void resetXputMovingAverage() {
+        avgThroughput_bps = 0;
+        numReadingsForAvgXput = 0;
+    }
+    public synchronized int getXputMovingAverage() {
+        return avgThroughput_bps;
+    }
+    
     public synchronized void refreshInstantaneousValues( long rtr_time_ns8 ) {
         // don't compute instantaneous values until we have received > 1 packet
         if( prev_time_offset_end_ns8 == 0 ) {
@@ -312,6 +322,7 @@ public class BottleneckLink extends Link<Router> {
         // compute xput b/w end of last update and now (+1 to avoid div by 0 ... 8ns won't matter)
         float time_passed_ns8 = rtr_time_ns8 - prev_time_offset_end_ns8 + 1;
         float throughput_bps = (8 * bytes_sent_since_last_update * SEC_DIV_8NS) / time_passed_ns8;
+        int actualThroughput_bps = (int)throughput_bps;
         
         throughput_bps = cont_throughput_bps = cont_throughput_bps*0.5f + throughput_bps*0.5f;
         bytes_sent_since_last_update = 0;
@@ -335,6 +346,10 @@ public class BottleneckLink extends Link<Router> {
         long t = routerTimeToLocalTime8ns(rtr_time_ns8);
         this.addDataPointToXputData( t,  (int)throughput_bps);
         extendUserDataPoints( t );
+        
+        // update the throughput moving average
+        avgThroughput_bps = (actualThroughput_bps + avgThroughput_bps*numReadingsForAvgXput) / (numReadingsForAvgXput+1);
+        numReadingsForAvgXput += 1;
     }
 
     public XYSeries getDataRTheROT() {
