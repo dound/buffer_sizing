@@ -3,7 +3,6 @@ package dgu.bufsizing;
 import dgu.bufsizing.control.RouterController;
 import dgu.bufsizing.control.RouterController.RouterCmd;
 import dgu.util.IllegalArgValException;
-import dgu.util.swing.GUIHelper;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -627,7 +626,7 @@ public class BottleneckLink extends Link<Router> {
         return getRateLimit_regValue(rateLimit_kbps*1000);
     }
     
-    public int getRateLimit_regValue(int rate) {
+    public int getRateLimit_regValue(long rate) {
         // translate the requested to rate to the register value to get the closest rate
         byte regValue = 0;
         while( rate < DemoGUI.RATE_LIM_MAX_RATE ) {
