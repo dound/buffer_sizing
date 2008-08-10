@@ -425,9 +425,11 @@ public class DemoGUI extends javax.swing.JFrame {
      * the refresh this induces.
      */
     private void refreshCharts() {
-        DemoGUI.collXput.manuallyNotifyListeners();
-        DemoGUI.collOcc.manuallyNotifyListeners();
-        DemoGUI.collRes.manuallyNotifyListeners();
+        // wrapped in try-catch blocks b/c JFreeChart sometimes throws exceptions
+        // due to bugs in it ... save our thread from dying from one of these
+        try { DemoGUI.collXput.manuallyNotifyListeners(); } catch(Exception e) {System.err.println("collXput saved: " + e);}
+        try { DemoGUI.collOcc.manuallyNotifyListeners(); } catch(Exception e) {System.err.println("collXput saved: " + e);}
+        try { DemoGUI.collRes.manuallyNotifyListeners(); } catch(Exception e) {System.err.println("collXput saved: " + e);}
     }
     
     public static class StringPair {
@@ -493,7 +495,7 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     
     public synchronized void setRateLimitText( BottleneckLink l ) {
-        int selectedIndex = l.getRateLimit_regValue() + 1;
+        int selectedIndex = l.getRateLimit_regValue();
         for( int i=1; i<RATE_LIM_VALUE_COUNT; i++ )
             mnuRateLimVal[i].setSelected(i == selectedIndex);
     }

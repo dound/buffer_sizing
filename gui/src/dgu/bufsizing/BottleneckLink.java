@@ -626,11 +626,12 @@ public class BottleneckLink extends Link<Router> {
         return getRateLimit_regValue(rateLimit_kbps*1000);
     }
     
-    public int getRateLimit_regValue(long rate) {
+    /** returns the register value to achieve the requested rate in bps */
+    public int getRateLimit_regValue(long rate_bps) {
         // translate the requested to rate to the register value to get the closest rate
         byte regValue = 0;
-        while( rate < DemoGUI.RATE_LIM_MAX_RATE ) {
-            rate *= 2;
+        while( rate_bps < DemoGUI.RATE_LIM_MAX_RATE ) {
+            rate_bps *= 2;
             regValue += 1;
             
             // stop at the max value
@@ -638,11 +639,11 @@ public class BottleneckLink extends Link<Router> {
                 break;
         }
         
-        return regValue;
+        return regValue + 1; // + 1 to compensate for the hw off by one ...
     }
     
     public synchronized void setRateLimit_kbps(int rate_kbps) {
-        setRateLimitReg( getRateLimit_regValue(rate_kbps) );
+        setRateLimitReg( getRateLimit_regValue(rate_kbps*1000) );
     }
         
     public synchronized void setRateLimitReg(int regValue) {
