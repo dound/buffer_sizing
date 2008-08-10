@@ -316,11 +316,15 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesPaint(3, new Color(128,0,128));
         renderer.setSeriesLinesVisible(3, false);
         renderer.setSeriesShapesVisible(3, true);
+        int diamondX[] = { 0, 6, 0, -6, 0 };
+        int diamondY[] = { -6, 0, 6, 0, -6 };
+        DemoGUI.me.resultsRenderer.setSeriesShape(3, new java.awt.Polygon(diamondX, diamondY, diamondX.length), false);
         
         // measured (current test)
         renderer.setSeriesPaint(4, new Color(0,0,0));
         renderer.setSeriesLinesVisible(4, false);
         renderer.setSeriesShapesVisible(4, true);
+        renderer.setSeriesVisibleInLegend(4, false, false);
         
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
