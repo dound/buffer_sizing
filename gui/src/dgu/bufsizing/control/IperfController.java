@@ -71,7 +71,7 @@ public class IperfController extends Controller {
     }
     
     public IperfController( int port ) {
-        super( port );
+        super( port, false );
         controllers.add(new ICInfo(this));
     }
 

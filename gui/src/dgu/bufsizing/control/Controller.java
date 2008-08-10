@@ -37,6 +37,10 @@ public abstract class Controller {
      * @param port  the TCP port to connect on
      */
     public Controller( int port ) {
+        this(port, true);
+    }
+    
+    public Controller( int port, boolean askBeforeBlocking ) {    
         // setup socket for listening for new clients connection requests
         ServerSocket serverSocket;
         try {
@@ -52,7 +56,7 @@ public abstract class Controller {
         Socket clientSocket;
         try {
             System.out.println( "Waiting for " + getTypeString() + " to connect" );
-            if(dgu.util.swing.GUIHelper.confirmDialog("Connect Confirm", "Wait for " + getTypeString() + " controller?", javax.swing.JOptionPane.YES_NO_OPTION)==javax.swing.JOptionPane.NO_OPTION)
+            if(askBeforeBlocking && dgu.util.swing.GUIHelper.confirmDialog("Connect Confirm", "Wait for " + getTypeString() + " controller?", javax.swing.JOptionPane.YES_NO_OPTION)==javax.swing.JOptionPane.NO_OPTION)
                 clientSocket = null;
             else {
                 clientSocket = serverSocket.accept();

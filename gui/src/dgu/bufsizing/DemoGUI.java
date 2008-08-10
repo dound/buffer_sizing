@@ -99,9 +99,10 @@ public class DemoGUI extends javax.swing.JFrame {
         // start the stats listener threads
         for( Router r : demo.getRouters() )
             r.startStatsListener();
-        
-        // start the iperf controllers
-        for( int i=0; i<NUM_IPERF_CONTROLLERS; i++ )
+                
+        // start the iperf controller(s)
+        int numIperfControllers = GUIHelper.getIntFromUser("How many traffic controllers are running?", 0, NUM_IPERF_CONTROLLERS, 9);
+        for( int i=0; i<numIperfControllers; i++ )
              new IperfController(IperfController.BASE_PORT + i);
     }
     
