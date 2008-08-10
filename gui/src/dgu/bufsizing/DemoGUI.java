@@ -1018,7 +1018,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     private static final int STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = 5000;
     
     /** how long to wait for a new buffer size to stabalize */
-    private static final int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 5000;
+    private static final int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 2000;
     
     /** how long to sample throughput */
     private static final int TIME_MSEC_FOR_THROUGHPUT_SAMPLE = 1000;
@@ -1073,19 +1073,29 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                 System.err.println( "  ==> underutilized!" );
             }
             
-            // set the buffer size halfway between our current min and max
-            // buffer size for this search
-            int newBfSz = (minBfSzWithFullLinkUtil - bfszLo) / 2 + bfszLo;
-
+            // pick a new buffer size to test
+            int newBfSz;
+            if( bfsz.getValue() == bfsz.getMaximum() ) {
+                // skip straight to the expected result (can always go back up ...)
+                newBfSz = b.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE);
+            }
+            else {
+                // set the buffer size halfway between our current min and max
+                // buffer size for this search
+                newBfSz = (minBfSzWithFullLinkUtil - bfszLo) / 2 + bfszLo;
+            }
+            
             // if the change is sufficiently small, the search is over
             if( Math.abs(newBfSz - bfsz.getValue()) <= SEARCH_PRECISION_THRESHOLD_BYTES )
                 break;
 
             // set the new buffer size
             bfsz.setValue( newBfSz );
-            
+
             // give the new buffer size a chance to stabalize
             msleep(STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE);
+            if( n == 1 ) // extra time for n == 1
+                msleep(STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE);
             
             // get the throughput for this buffer size
             currentThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
