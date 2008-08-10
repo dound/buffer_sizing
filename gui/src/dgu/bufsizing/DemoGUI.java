@@ -907,9 +907,7 @@ private void optManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
 
 private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoActionPerformed
     enableComponForManual(false);
-    slCustomBufferSize.setValue( slCustomBufferSize.getMaximum() );
     optCustom.setSelected(true);
-    slNumFlows.setValue(1);
     startAutoStatsThread();
 }//GEN-LAST:event_optAutoActionPerformed
 
@@ -955,6 +953,14 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         ON
     }
     
+    private static void msleep(int ms) {
+        try {
+            Thread.sleep( ms );
+        } catch( InterruptedException e ) {
+            // no-op
+        }
+    }
+    
     private static final boolean GEN_DEBUG_FAKE_STATS = true;
     private static ThreadState autoStatsState = ThreadState.OFF;
     private void startAutoStatsThread() {
@@ -981,19 +987,99 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                             }
                         }
                         else {
-                            
+                            for( int n : BottleneckLink.interestingN )
+                                b.addMeasuredResult( computeBufferSizeForN(b, n) );
                         }
                     }
-                    try {
-                        Thread.sleep( 100 );
-                    } catch( InterruptedException e ) {
-                        // no-op
-                    }
+                    msleep(100);
                 }
                 
                 autoStatsState = ThreadState.OFF;
             }
         }.start();
+    }
+    
+    /** what percent of maximum throughput will be considered close 
+     * enough to be called a link maximally utilized */
+    private static final double PERCENT_MAX_UTIL_TO_ACHIEVE = 0.99;
+    
+    /** how long to wait for a new number of flows to stabalize */
+    private static final int STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = 5000;
+    
+    /** how long to wait for a new buffer size to stabalize */
+    private static final int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 5000;
+    
+    /** how long to sample throughput */
+    private static final int TIME_MSEC_FOR_THROUGHPUT_SAMPLE = 1000;
+    
+    /** how precise the search for the ideal buffer size should be */
+    private static final int SEARCH_PRECISION_THRESHOLD_PKTS = 1;
+    private static final int SEARCH_PRECISION_THRESHOLD_BYTES = 
+            SEARCH_PRECISION_THRESHOLD_PKTS*BottleneckLink.BYTES_PER_PACKET;
+    
+    /** returns the measured buffer size needed to achieve maximum link utilization with n flows */
+    private int computeBufferSizeForN(BottleneckLink b, int n) {
+        // convenience ...
+        dgu.util.swing.binding.JSliderBound bfsz = slCustomBufferSize;
+        
+        // initialize buffer size to its maximum size
+        int bfszMin = 1;
+        int bfszMax = bfsz.getMaximum();
+        bfsz.setValue( bfszMax );
+        
+        // set the number of flows to the requested value
+        slNumFlows.setValue(n);
+        
+        // wait for the new # of flows to stabalize
+        msleep(STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE);
+        
+        // get the throughput for when the buffer size is maximized => maximum throughput
+        int maxThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
+        
+        // perform a binary search for the minimum buffer size which maximizes throughput
+        int minBfSzWithFullLinkUtil = bfszMax;
+        int currentThroughput_bps = maxThroughput_bps;
+        int bfszLo = 1;
+        do {
+            if( currentThroughput_bps >= PERCENT_MAX_UTIL_TO_ACHIEVE * bfszMax ) {
+                // link is saturated!
+                // save current bf sz if it is the smallest to achieve this value
+                minBfSzWithFullLinkUtil = slCustomBufferSize.getValue();
+            }
+            else {
+                // link is not saturated!
+                // save current bf sz as a new lo (no reason to try any smaller bf sizes)
+                bfszLo = slCustomBufferSize.getValue();
+            }
+            
+            // set the buffer size halfway between our current min and max
+            // buffer size for this search
+            int newBfSz = (minBfSzWithFullLinkUtil - bfszLo) / 2 + bfszLo;
+
+            // if the change is sufficiently small, the search is over
+            if( Math.abs(newBfSz - bfsz.getValue()) <= SEARCH_PRECISION_THRESHOLD_BYTES )
+                break;
+
+            // set the new buffer size
+            bfsz.setValue( newBfSz );
+            
+            // give the new buffer size a chance to stabalize
+            msleep(STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE);
+            
+            // get the throughput for this buffer size
+            currentThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
+        }
+        while( true );
+        
+        // cleanup the old progress point
+        b.clearInProgressPoint();
+        
+        // return the measured minimum buffer size value
+        return minBfSzWithFullLinkUtil;
+    }
+    
+    private int getAvgThroughputReading_bps(BottleneckLink b, int time_msec) {
+        throw(new Error("not yet implemented"));
     }
     
     /** Block until the automatic stats thread is off. */
@@ -1003,13 +1089,8 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             autoStatsState = ThreadState.TIME_TO_STOP;
             
             // wait for it to stop
-            while( autoStatsState != ThreadState.OFF ) {
-                try {
-                    Thread.sleep( 100 );
-                } catch( InterruptedException e ) {
-                    // no-op
-                }
-            }
+            while( autoStatsState != ThreadState.OFF )
+                msleep(100);
             
             // remove the unsettled point
             BottleneckLink b = getSelectedBottleneck();

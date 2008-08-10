@@ -50,6 +50,10 @@ public class BottleneckLink extends Link<Router> {
     private static final int SEC_DIV_8NS  = 125000000;
     private static final int MSEC_DIV_8NS = 125000;
     
+    /** set packet sizes for sizing the buffer (assumes packets are MTU-sized 
+     * packets which is reasonably for the type of traffic we generate) */
+    public static final int BYTES_PER_PACKET = 1500;
+    
     // empirical data collected from the router
     private final XYSeries dataThroughput    = new XYSeries("Throughput",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataThroughputPer = new XYSeries("Link Utilization",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -585,7 +589,8 @@ public class BottleneckLink extends Link<Router> {
         lastBufSize_bytes = curBufSize_bytes;
         
         // tell the router about the new buffer size in terms of packets
-        int numPackets = curBufSize_bytes / 1500; // assumes packets are MTU-sized packets!
+        int numPackets = curBufSize_bytes / BYTES_PER_PACKET;
+        if( curBufSize_bytes > 0 && numPackets == 0 ) numPackets = 1;
         this.src.getController().command( RouterCmd.CMD_SET_BUF_SZ, queueID, numPackets );
     }
 
