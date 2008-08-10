@@ -604,7 +604,7 @@ public class DemoGUI extends javax.swing.JFrame {
 
         slNumFlows.setBorder(null);
         slNumFlows.setMajorTickSpacing(250);
-        slNumFlows.setMaximum(200);
+        slNumFlows.setMaximum(900);
         slNumFlows.setMinorTickSpacing(100);
         slNumFlows.setValue(0);
         pnlDetails.add(slNumFlows);
@@ -756,7 +756,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optHarpoon.setBounds(10, 53, 100, 15);
 
         optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
         optTomahawk.setText("Tomahawk");
         optTomahawk.setEnabled(false);
         optTomahawk.addActionListener(new java.awt.event.ActionListener() {
@@ -786,7 +786,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlMode.setLayout(null);
 
         optGroupMode.add(optManual);
-        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optManual.setFont(new java.awt.Font("Arial", 0, 12));
         optManual.setSelected(true);
         optManual.setText("Manual");
         optManual.addActionListener(new java.awt.event.ActionListener() {
@@ -798,7 +798,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optManual.setBounds(10, 15, 90, 15);
 
         optGroupMode.add(optAuto);
-        optAuto.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optAuto.setFont(new java.awt.Font("Arial", 0, 12));
         optAuto.setText("Automatic");
         optAuto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
