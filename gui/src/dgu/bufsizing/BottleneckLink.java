@@ -354,7 +354,7 @@ public class BottleneckLink extends Link<Router> {
         
         // plot the current value on the util plot too
         if( noteCurrentXputValue )
-            noteCurrentMeasuredResult(getActualBufSize()/1024, 0);
+            noteCurrentMeasuredResult(getActualBufSize(), 0);
     }
 
     public XYSeries getDataRTheROT() {
@@ -380,7 +380,7 @@ public class BottleneckLink extends Link<Router> {
     public class Result {
         public static final int BASE_RTT = 250;
         
-        public final int b_kB;
+        public final int b_B;
         public final int c_kbps;
         public final int numDataPoints;
         public Result(int b, int c, int r, int num) { 
@@ -389,12 +389,12 @@ public class BottleneckLink extends Link<Router> {
             
             // scale to base r so our data is rtt-independent
             double scale = r / (double)BASE_RTT;
-            b_kB = (int)(b * scale);
+            b_B = (int)(b * scale);
         }
         
-        public int getScaledBufSize_kB(int rtt_ms) {
+        public int getScaledBufSize_B(int rtt_ms) {
             double scale = rtt_ms / (double)BASE_RTT;
-            return (int)(b_kB * scale);
+            return (int)(b_B * scale);
         }
     }
     
@@ -452,7 +452,7 @@ public class BottleneckLink extends Link<Router> {
         for( Integer n : nVals ) {
             Result r = resultsMea.get(n);
             if( r.c_kbps == this.getRateLimit_kbps() )
-                dataRMea.add(n.intValue(), r.getScaledBufSize_kB(rtt));
+                dataRMea.add(n.intValue(), r.getScaledBufSize_B(rtt) / 1024);
         }
     }
     
@@ -460,21 +460,21 @@ public class BottleneckLink extends Link<Router> {
      * specifies the measured buffer size 'b' for the current capacity (rate limit)
      * @param bufSizeForMaxUtil_kB  buffer size for 100% utilization in kilobytes
      */
-    public synchronized void addMeasuredResult(int bufSizeForMaxUtil_kB) {
+    public synchronized void addMeasuredResult(int bufSizeForMaxUtil_B) {
         int n = this.getNumFlows();
-        Result r = new Result( bufSizeForMaxUtil_kB, this.getRateLimit_kbps(), this.getRTT_ms(), 1 );
-        dataRToday.add(n, bufSizeForMaxUtil_kB);
-        System.out.println( n + " " + r.b_kB + " " + r.c_kbps + " " + r.numDataPoints );
+        Result r = new Result( bufSizeForMaxUtil_B, this.getRateLimit_kbps(), this.getRTT_ms(), 1 );
+        dataRToday.add(n, bufSizeForMaxUtil_B / 1024);
+        System.out.println( n + " " + r.b_B + " " + r.c_kbps + " " + r.numDataPoints );
     }
     
     /** 
      * specifies the in progress measured buffer size 'b' for the current capacity (rate limit)
-     * @param bufSizeForMaxUtil_kB  buffer size for 100% utilization in kilobytes
+     * @param bufSizeForMaxUtil_B  buffer size for 100% utilization in bytes
      * @param confidence  confidence (0 => none, 1=> very)
      */
-    public synchronized void noteCurrentMeasuredResult(int bufSizeForMaxUtil_kB, double confidence) {
+    public synchronized void noteCurrentMeasuredResult(int bufSizeForMaxUtil_B, double confidence) {
         dataRCur.clear();
-        dataRCur.add(this.getNumFlows(), bufSizeForMaxUtil_kB);
+        dataRCur.add(this.getNumFlows(), bufSizeForMaxUtil_B / 1024);
       
         // update the points color based on the confidence
         int r = (confidence <  0.5) ? 128 + (int)(128*(0.5 - confidence)) : 0;

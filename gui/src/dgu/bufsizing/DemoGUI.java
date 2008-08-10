@@ -970,7 +970,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         // starts a dummy thread to generate bogus measured data for testing
         new Thread() {
             public void run() {
-                int bfsz = 100;
+                int bfsz_B = 100 * 1024;
                 int i = 0;
                 
                 while( autoStatsState == ThreadState.ON ) {
@@ -978,10 +978,10 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                     if( b != null ) {
                         if( GEN_DEBUG_FAKE_STATS ) {
                             double c = Math.random();
-                            bfsz = (int)(0.1 * Math.random() * 200 + 0.9 * bfsz);
-                            b.noteCurrentMeasuredResult(bfsz, c);
+                            bfsz_B = (int)(0.1 * Math.random() * 200 * 1024 + 0.9 * bfsz_B);
+                            b.noteCurrentMeasuredResult(bfsz_B, c);
                             if( c >= 0.95 ) {
-                                b.addMeasuredResult(bfsz);
+                                b.addMeasuredResult(bfsz_B);
 
                                 i = (i + 1) % BottleneckLink.interestingN.length;
                                 DemoGUI.me.slNumFlows.setValue( BottleneckLink.interestingN[i] );
@@ -1022,7 +1022,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     private static final int SEARCH_PRECISION_THRESHOLD_BYTES = 
             SEARCH_PRECISION_THRESHOLD_PKTS*BottleneckLink.BYTES_PER_PACKET;
     
-    /** returns the measured buffer size needed to achieve maximum link utilization with n flows */
+    /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
     private int computeBufferSizeForN(BottleneckLink b, int n) {
         // convenience ...
         dgu.util.swing.binding.JSliderBound bfsz = slCustomBufferSize;
@@ -1034,12 +1034,16 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         
         // set the number of flows to the requested value
         slNumFlows.setValue(n);
+        System.err.println("Measuring buffer size needed for n = " + n);
         
         // wait for the new # of flows to stabalize
+        System.err.println("  Waiting for flows to stabalize ...");
         msleep(STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE);
         
         // get the throughput for when the buffer size is maximized => maximum throughput
         int maxThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
+        int maxThroughputThresh_bps = (int)(PERCENT_MAX_UTIL_TO_ACHIEVE * bfszMax);
+        System.err.println("  Max throughput = " + maxThroughput_bps + "bps ... thresh=" + maxThroughputThresh_bps );
         
         // perform a binary search for the minimum buffer size which maximizes throughput
         int minBfSzWithFullLinkUtil = bfszMax;
@@ -1049,15 +1053,18 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             if( autoStatsState != ThreadState.ON )
                 return -1;
             
-            if( currentThroughput_bps >= PERCENT_MAX_UTIL_TO_ACHIEVE * bfszMax ) {
+            System.err.println("  Measurement: bfsz=" + bfsz.getValue() + "B ... xput=" + currentThroughput_bps + "bps" );
+            if( currentThroughput_bps >= maxThroughputThresh_bps ) {
                 // link is saturated!
                 // save current bf sz if it is the smallest to achieve this value
-                minBfSzWithFullLinkUtil = slCustomBufferSize.getValue();
+                minBfSzWithFullLinkUtil = bfsz.getValue();
+                System.err.println( "  ==> fully utilized ... new min bfsz!" );
             }
             else {
                 // link is not saturated!
                 // save current bf sz as a new lo (no reason to try any smaller bf sizes)
-                bfszLo = slCustomBufferSize.getValue();
+                bfszLo = bfsz.getValue();
+                System.err.println( "  ==> underutilized!" );
             }
             
             // set the buffer size halfway between our current min and max
