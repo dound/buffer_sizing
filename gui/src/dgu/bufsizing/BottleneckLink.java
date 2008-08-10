@@ -394,7 +394,7 @@ public class BottleneckLink extends Link<Router> {
         
         public int getScaledBufSize_B(int rtt_ms) {
             double scale = rtt_ms / (double)BASE_RTT;
-            return (int)(b_B * scale);
+            return (int)(b_B / scale);
         }
     }
     
