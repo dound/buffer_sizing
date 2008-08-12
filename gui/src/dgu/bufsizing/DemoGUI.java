@@ -1162,7 +1162,13 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     }
     
     private String getParamsAsString() {
+        double totalExpected_msec = 0;
+        for( int n : BottleneckLink.interestingN )
+            totalExpected_msec += getExpectedBound_msec(n);
         
+        String strInterestingN = "" + BottleneckLink.interestingN[0];
+        for( int i=1; i<BottleneckLink.interestingN.length; i++ )
+            strInterestingN += ", " + BottleneckLink.interestingN[i];
         
         return  "Auto Mode Configuration Parameters:\n" +
                 "    Full Utilization Threshold     = " + fullUtilThreshold*100 + "%\n" +
@@ -1171,7 +1177,9 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                 "    Throughput Sample Time = " + xputSampleTime_msec + "ms\n" + 
                 "    Search Precision = " + searchPrecision_packets + " packets (" + searchPrecision_bytes + ")\n" + 
                 "\n" + 
-                "    Upper Bound = " + (int)(getUpperBound_msec() / 1000) + "sec\n";
+                "    Interesting N Values = {" + strInterestingN + " }\n" +
+                "    Time Upper Bound Per Flow = " + (int)(getUpperBound_msec() / 1000) + "sec\n" +
+                "    Expected Time For All Interesting N = " + (int)(totalExpected_msec / 1000) + "sec (about " + (int)(totalExpected_msec / 60000) + "min)\n";
     }
     
     private static final String AUTO_MODE_PARAMS_FILE = "automode.conf";
