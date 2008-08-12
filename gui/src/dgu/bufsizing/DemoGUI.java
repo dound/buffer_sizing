@@ -225,7 +225,7 @@ public class DemoGUI extends javax.swing.JFrame {
         });
         mnuAutoModeConfig.add(mnuAMCXputSampleTime);
         
-        JMenuItem mnuAMCSearchPrecision = new JMenuItem("Full Utilization Threshold");
+        JMenuItem mnuAMCSearchPrecision = new JMenuItem("Search Precision");
         mnuAMCSearchPrecision.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 int ret = GUIHelper.getIntFromUser("How precisely to determine the minimum buffer size in packets (1500B each)?",
