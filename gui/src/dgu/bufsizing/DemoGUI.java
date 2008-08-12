@@ -1145,13 +1145,33 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         searchPrecision_bytes = searchPrecision_packets*BottleneckLink.BYTES_PER_PACKET;
     }
     
+    private double getUpperBound_msec() {
+        return getBound_msec( slCustomBufferSize.getMaximum() );
+    }
+    
+    private double getExpectedBound_msec(int n) {
+        BottleneckLink b = this.getSelectedBottleneck();
+        if( b == null ) 
+            return getUpperBound_msec();
+        
+        return getBound_msec( BottleneckLink.computeBufSize(BufferSizeRule.FLOW_SENSITIVE, b.getRTT_ms(), b.getRateLimit_kbps(), n) );
+    }
+    
+    private double getBound_msec(int bfszStart) {
+        return flowStabilizeTime_msec + (Math.ceil( Math.log(bfszStart / searchPrecision_bytes) / Math.log(2)) + 2) * (bufszStabilizeTime_msec + xputSampleTime_msec);
+    }
+    
     private String getParamsAsString() {
+        
+        
         return  "Auto Mode Configuration Parameters:\n" +
                 "    Full Utilization Threshold     = " + fullUtilThreshold*100 + "%\n" +
                 "    Flow Change Stabilization Time = " + flowStabilizeTime_msec + "ms\n" +
                 "    Buffer Size Change Stabilization Time = " + bufszStabilizeTime_msec + "ms\n" +
-                "    Throughput Sample Time = " + xputSampleTime_msec + "ms\n" +
-                "    Search Precision = " + searchPrecision_packets + " packets (" + searchPrecision_bytes + ")\n";
+                "    Throughput Sample Time = " + xputSampleTime_msec + "ms\n" + 
+                "    Search Precision = " + searchPrecision_packets + " packets (" + searchPrecision_bytes + ")\n" + 
+                "\n" + 
+                "    Upper Bound = " + (int)(getUpperBound_msec() / 1000) + "sec\n";
     }
     
     private static final String AUTO_MODE_PARAMS_FILE = "automode.conf";
@@ -1220,6 +1240,8 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     
     /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
     private int computeBufferSizeForN(BottleneckLink b, int n) {
+        long startTime = System.currentTimeMillis();
+        
         // convenience ...
         dgu.util.swing.binding.JSliderBound bfsz = slCustomBufferSize;
         
@@ -1295,6 +1317,19 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         
         // cleanup the old progress point
         b.clearInProgressPoint();
+        
+        // compare expected and actual runtimes
+        long runtime_msec = System.currentTimeMillis() - startTime;
+        double expected_msec = getExpectedBound_msec(n);
+        double delta_msec = runtime_msec - expected_msec;
+        double abs_delta_msec = Math.abs(delta_msec);
+        double percentOff = delta_msec / expected_msec * 100;
+        String deltaNote = (runtime_msec > expected_msec) ? "Slower" : "Faster";
+        System.err.println( "Runtime stats: " +
+                            "    Upper bound: " + (int)(getUpperBound_msec() / 1000) + "sec\n" +
+                            "    Expected:    " + (int)(expected_msec / 1000) + "sec\n" +
+                            "    Actual:      " + (int)(runtime_msec / 1000) + "sec\n" +
+                            "      =========> " + deltaNote + " than expected by " + (int)(abs_delta_msec / 1000) + "sec (" + (int)percentOff + "% from expected)\n" );
         
         // return the measured minimum buffer size value
         return minBfSzWithFullLinkUtil;
