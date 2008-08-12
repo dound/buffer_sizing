@@ -1261,7 +1261,6 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         dgu.util.swing.binding.JSliderBound bfsz = slCustomBufferSize;
         
         // initialize buffer size to its maximum size
-        int bfszMin = 1;
         int bfszMax = bfsz.getMaximum();
         bfsz.setValue( bfszMax );
         
@@ -1280,11 +1279,12 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         System.err.println("  Max throughput = " + maxThroughput_bps + "bps ... thresh=" + maxThroughputThresh_bps );
         
         // perform a binary search for the minimum buffer size which maximizes throughput
-        int minBfSzWithFullLinkUtil = bfszMax;
+        boolean first = true;
         int currentThroughput_bps = maxThroughput_bps;
         int bfszLo = 1;
+        int bfszHi = bfszMax;
         do {
-            b.noteCurrentMeasuredResultRange(bfszMin, minBfSzWithFullLinkUtil);
+            b.noteCurrentMeasuredResultRange(bfszLo, bfszHi);
             
             if( autoStatsState != ThreadState.ON )
                 return -1;
@@ -1293,7 +1293,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             if( currentThroughput_bps >= maxThroughputThresh_bps ) {
                 // link is saturated!
                 // save current bf sz if it is the smallest to achieve this value
-                minBfSzWithFullLinkUtil = bfsz.getValue();
+                bfszHi = bfsz.getValue();
                 System.err.println( "  ==> fully utilized ... new min bfsz!" );
             }
             else {
@@ -1305,18 +1305,19 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             
             // pick a new buffer size to test
             int newBfSz;
-            if( bfsz.getValue() == bfsz.getMaximum() ) {
+            if( first && bfsz.getValue() == bfsz.getMaximum() ) {
                 // skip straight to the expected result (can always go back up ...)
                 newBfSz = b.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE);
+                first = false;
             }
             else {
                 // set the buffer size halfway between our current min and max
                 // buffer size for this search
-                newBfSz = (minBfSzWithFullLinkUtil - bfszLo) / 2 + bfszLo;
+                newBfSz = (bfszHi - bfszLo) / 2 + bfszLo;
             }
             
             // if the change is sufficiently small, the search is over
-            if( Math.abs(newBfSz - bfsz.getValue()) <= searchPrecision_bytes )
+            if( Math.abs(bfszHi - bfszLo) <= searchPrecision_bytes )
                 break;
 
             // set the new buffer size
@@ -1349,7 +1350,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
                             "      =========> " + deltaNote + " than expected by " + (int)(abs_delta_msec / 1000) + "sec (" + (int)percentOff + "% from expected)\n" );
         
         // return the measured minimum buffer size value
-        return minBfSzWithFullLinkUtil;
+        return bfszHi;
     }
     
     /** gets the average throughput reading over the specified time interval */
