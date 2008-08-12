@@ -61,7 +61,8 @@ public class DemoGUI extends javax.swing.JFrame {
         initPopup();
         prepareBindings();
         setIconImage( icon );
-       
+        setSearchPrecision(1);
+        
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
         
@@ -177,6 +178,68 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         mnuPopup.add(mnuTogglePerData);
+        
+        // add options to control auto mode parameters
+        JMenu mnuAutoModeConfig = new JMenu("Auto Mode Config");
+        mnuPopup.add(mnuAutoModeConfig);
+        
+        JMenuItem mnuAMCFullUtilThresh = new JMenuItem("Full Utilization Threshold");
+        mnuAMCFullUtilThresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                double ret = GUIHelper.getDoubleFromUser("What percentage utilization will be considered \"fully\" utilized?",
+                                                         0.0, PERCENT_MAX_UTIL_TO_ACHIEVE*100.0, 100.0 );
+                PERCENT_MAX_UTIL_TO_ACHIEVE = ret / 100.0f;
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCFullUtilThresh);
+        
+        JMenuItem mnuAMCStabalizeFlowChange = new JMenuItem("Flow Change Stabilization Time");
+        mnuAMCStabalizeFlowChange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                int ret = GUIHelper.getIntFromUser("How long (msec) to give the system to stabilize after changing the number of flows?",
+                                                   0, STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE, 60000 );
+                STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = ret;
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCStabalizeFlowChange);
+        
+        JMenuItem mnuAMCStabalizeBufSzChange = new JMenuItem("Buffer Size Change Stabilization Time");
+        mnuAMCStabalizeBufSzChange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                int ret = GUIHelper.getIntFromUser("How long (msec) to give the system to stabilize after changing the buffer size?",
+                                                   0, STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE, 60000 );
+                STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = ret;
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCStabalizeBufSzChange);
+        
+        JMenuItem mnuAMCXputSampleTime = new JMenuItem("Throughput Sample Time");
+        mnuAMCXputSampleTime.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                int ret = GUIHelper.getIntFromUser("How long (msec) to sample the throughput to get a measurement for a given N and B?",
+                                                   100, TIME_MSEC_FOR_THROUGHPUT_SAMPLE, 60000 );
+                TIME_MSEC_FOR_THROUGHPUT_SAMPLE = ret;
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCXputSampleTime);
+        
+        JMenuItem mnuAMCSearchPrecision = new JMenuItem("Full Utilization Threshold");
+        mnuAMCSearchPrecision.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                int ret = GUIHelper.getIntFromUser("How precisely to determine the minimum buffer size in packets (1500B each)?",
+                                                   1, SEARCH_PRECISION_THRESHOLD_PKTS, 100 );
+                setSearchPrecision(ret);
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCSearchPrecision);
+        
+        JMenuItem mnuAMCPrintParams = new JMenuItem("Print Current Parameter Values");
+        mnuAMCPrintParams.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                System.err.println(getParamsAsString());
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCPrintParams);
         
         // attach the popup to other components
         final MouseAdapter pl = new MouseAdapter() {
@@ -1041,21 +1104,33 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     
     /** what percent of maximum throughput will be considered close 
      * enough to be called a link maximally utilized */
-    private static final double PERCENT_MAX_UTIL_TO_ACHIEVE = 0.99;
+    private double PERCENT_MAX_UTIL_TO_ACHIEVE = 0.99;
     
     /** how long to wait for a new number of flows to stabalize */
-    private static final int STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = 5000;
+    private int STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = 5000;
     
     /** how long to wait for a new buffer size to stabalize */
-    private static final int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 2000;
+    private int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 2000;
     
     /** how long to sample throughput */
-    private static final int TIME_MSEC_FOR_THROUGHPUT_SAMPLE = 1000;
+    private int TIME_MSEC_FOR_THROUGHPUT_SAMPLE = 1000;
     
     /** how precise the search for the ideal buffer size should be */
-    private static final int SEARCH_PRECISION_THRESHOLD_PKTS = 1;
-    private static final int SEARCH_PRECISION_THRESHOLD_BYTES = 
-            SEARCH_PRECISION_THRESHOLD_PKTS*BottleneckLink.BYTES_PER_PACKET;
+    private int SEARCH_PRECISION_THRESHOLD_PKTS;
+    private int SEARCH_PRECISION_THRESHOLD_BYTES;
+    private void setSearchPrecision(int numPackets) {
+        SEARCH_PRECISION_THRESHOLD_PKTS = numPackets;
+        SEARCH_PRECISION_THRESHOLD_BYTES = SEARCH_PRECISION_THRESHOLD_PKTS*BottleneckLink.BYTES_PER_PACKET;
+    }
+    
+    private String getParamsAsString() {
+        return  "Parameters:\n" +
+                "    Full Utilization Threshold     = " + PERCENT_MAX_UTIL_TO_ACHIEVE*100 + "%\n" +
+                "    Flow Change Stabilization Time = " + STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE + "ms\n" +
+                "    Buffer Size Change Stabilization Time = " + STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE + "ms\n" +
+                "    Throughput Sample Time = " + TIME_MSEC_FOR_THROUGHPUT_SAMPLE + "ms\n" +
+                "    Search Precision = " + SEARCH_PRECISION_THRESHOLD_PKTS + " packets (" + SEARCH_PRECISION_THRESHOLD_BYTES + ")\n";
+    }
     
     /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
     private int computeBufferSizeForN(BottleneckLink b, int n) {
@@ -1070,6 +1145,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         // set the number of flows to the requested value
         slNumFlows.setValue(n);
         System.err.println("Measuring buffer size needed for n = " + n);
+        System.err.println(getParamsAsString());
         
         // wait for the new # of flows to stabalize
         System.err.println("  Waiting for flows to stabalize ...");

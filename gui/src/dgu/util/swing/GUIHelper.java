@@ -192,6 +192,30 @@ public abstract class GUIHelper {
             }
         }
     }
+  
+  /**
+   * Gets an float from the user within the specified range.
+   * @param msg  The prompt to show the user.
+   * @param min  The minimum allowed value.
+   * @param def  The default value/
+   * @param max  The maximum allowed value.
+   * @return  The user-specified value.
+   */
+  public static double getDoubleFromUser( String msg, double min, double def, double max ) {
+        double v;
+        while( true ) {
+            try {
+                v = Double.valueOf( getInput(msg, String.valueOf(def)) );
+                if( v < min || v > max )
+                    displayError( "Error: must be between " + min + " and " + max + "." );
+                else
+                    return v;
+            }
+            catch( NumberFormatException e ) {
+                displayError(e);
+            }
+        }
+    }
 
     public static final void drawCeneteredString( String s, Graphics2D gfx, int x, int y ) {
         // center the string horizontally
