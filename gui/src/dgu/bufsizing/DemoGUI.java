@@ -414,6 +414,7 @@ public class DemoGUI extends javax.swing.JFrame {
         
         // measured range (current test range)
         renderer.setSeriesPaint(5, new Color(255,0,0));
+        renderer.setSeriesStroke(5, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesLinesVisible(5, true);
         renderer.setSeriesShapesVisible(5, false);
         renderer.setSeriesVisibleInLegend(5, false, false);
@@ -1278,6 +1279,10 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         int maxThroughputThresh_bps = (int)(fullUtilThreshold * maxThroughput_bps);
         System.err.println("  Max throughput = " + maxThroughput_bps + "bps ... thresh=" + maxThroughputThresh_bps );
         
+        // debugging code (temporary!)
+        int escapeWarnings = 0;
+        double prevSpread = Double.POSITIVE_INFINITY;
+        
         // perform a binary search for the minimum buffer size which maximizes throughput
         boolean first = true;
         int currentThroughput_bps = maxThroughput_bps;
@@ -1317,8 +1322,19 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             }
             
             // if the change is sufficiently small, the search is over
-            if( Math.abs(bfszHi - bfszLo) <= searchPrecision_bytes )
+            double spread = Math.abs(bfszHi - bfszLo);
+            if( spread <= searchPrecision_bytes )
                 break;
+            
+            // debugging, temp: don't get stuck!
+            if( spread > prevSpread ) {
+                System.err.println("posible oscillation?  range grew from " + prevSpread + " to " + spread);
+                if( escapeWarnings++ >= 3 ) {
+                    System.err.println("escaping possible oscillation");
+                    break;
+                }
+            }
+            prevSpread = spread;
 
             // set the new buffer size
             bfsz.setValue( newBfSz );
