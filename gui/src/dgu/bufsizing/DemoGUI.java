@@ -9,6 +9,7 @@ import dgu.util.swing.binding.delegate.ListBasedComponentDelegate;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
 import javax.swing.*;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
@@ -62,6 +63,7 @@ public class DemoGUI extends javax.swing.JFrame {
         prepareBindings();
         setIconImage( icon );
         setSearchPrecision(1);
+        readAutoModeParamsFromFileWrapper();
         
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
@@ -233,13 +235,33 @@ public class DemoGUI extends javax.swing.JFrame {
         });
         mnuAutoModeConfig.add(mnuAMCSearchPrecision);
         
-        JMenuItem mnuAMCPrintParams = new JMenuItem("Print Current Parameter Values");
+        // seperate parameters from print/load/save
+        mnuAutoModeConfig.addSeparator();
+        
+        // menus to print, load, and save the parameter values
+        JMenuItem mnuAMCPrintParams = new JMenuItem("Print Current Parameter Values To Stderr");
         mnuAMCPrintParams.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 System.err.println(getParamsAsString());
             }
         });
         mnuAutoModeConfig.add(mnuAMCPrintParams);
+        
+        JMenuItem mnuAMCReadFromFile = new JMenuItem("Read From Config File " + AUTO_MODE_PARAMS_FILE);
+        mnuAMCReadFromFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                readAutoModeParamsFromFileWrapper();
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCReadFromFile);
+        
+        JMenuItem mnuAMCSaveToFile = new JMenuItem("Save To Config File " + AUTO_MODE_PARAMS_FILE);
+        mnuAMCSaveToFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAutoModeParamsToFileWrapper();
+            }
+        });
+        mnuAutoModeConfig.add(mnuAMCSaveToFile);
         
         // attach the popup to other components
         final MouseAdapter pl = new MouseAdapter() {
@@ -1124,12 +1146,76 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     }
     
     private String getParamsAsString() {
-        return  "Parameters:\n" +
+        return  "Auto Mode Configuration Parameters:\n" +
                 "    Full Utilization Threshold     = " + fullUtilThreshold*100 + "%\n" +
                 "    Flow Change Stabilization Time = " + flowStabilizeTime_msec + "ms\n" +
                 "    Buffer Size Change Stabilization Time = " + bufszStabilizeTime_msec + "ms\n" +
                 "    Throughput Sample Time = " + xputSampleTime_msec + "ms\n" +
                 "    Search Precision = " + searchPrecision_packets + " packets (" + searchPrecision_bytes + ")\n";
+    }
+    
+    private static final String AUTO_MODE_PARAMS_FILE = "automode.conf";
+    
+    private void readAutoModeParamsFromFileWrapper() {
+        try {
+            readAutoModeParamsFromFile();
+        }
+        catch( Exception e ) {
+            GUIHelper.displayError("Unable to read auto mode params file: " + e.getMessage());
+        }
+    }
+    
+    /** read parameters from AUTO_MODE_PARAMS_FILE */
+    private void readAutoModeParamsFromFile() throws Exception {
+        File file = new File(AUTO_MODE_PARAMS_FILE);
+        FileInputStream fis = new FileInputStream(file);
+        InputStreamReader isr = new InputStreamReader(fis);
+        BufferedReader br = new BufferedReader(isr);
+
+        String fullUtil = br.readLine();
+        String stabilizeFlowChange = br.readLine();
+        String stabilizeBfSzChange = br.readLine();
+        String sampleXput = br.readLine();
+        String searchPrecision = br.readLine();
+        if( searchPrecision == null )
+            throw new Exception( "Not enough lines in " + AUTO_MODE_PARAMS_FILE + ", or file is missing" );
+
+        this.fullUtilThreshold = Double.valueOf( fullUtil );
+        this.flowStabilizeTime_msec = Integer.valueOf( stabilizeFlowChange );
+        this.bufszStabilizeTime_msec = Integer.valueOf( stabilizeBfSzChange );
+        this.xputSampleTime_msec = Integer.valueOf( sampleXput );
+        setSearchPrecision( Integer.valueOf( searchPrecision ) );
+
+        br.close();
+        System.err.println("Successfully loaded auto mode paramters from " + AUTO_MODE_PARAMS_FILE);
+        System.err.println(getParamsAsString());
+    }
+    
+    private void saveAutoModeParamsToFileWrapper() {
+        try {
+            saveAutoModeParamsToFile();
+        }
+        catch( Exception e ) {
+            GUIHelper.displayError("Unable to write auto mode params file: " + e.getMessage());
+        }
+    }
+    
+    /** save parameters to AUTO_MODE_PARAMS_FILE */
+    private void saveAutoModeParamsToFile() throws Exception {
+        File file = new File(AUTO_MODE_PARAMS_FILE);
+        FileOutputStream fos = new FileOutputStream(file);
+        OutputStreamWriter osr = new OutputStreamWriter(fos);
+        BufferedWriter bw = new BufferedWriter(osr);
+
+        bw.write( this.fullUtilThreshold + "\n" );
+        bw.write( this.flowStabilizeTime_msec + "\n" );
+        bw.write( this.bufszStabilizeTime_msec + "\n" );
+        bw.write( this.xputSampleTime_msec + "\n" );
+        bw.write( this.searchPrecision_packets + "\n" );
+
+        bw.close();
+        System.err.println("Successfully saved auto mode paramters from " + AUTO_MODE_PARAMS_FILE);
+        System.err.println(getParamsAsString());
     }
     
     /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
@@ -1145,7 +1231,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         // set the number of flows to the requested value
         slNumFlows.setValue(n);
         System.err.println("Measuring buffer size needed for n = " + n);
-        System.err.println(getParamsAsString());
+        System.err.print(getParamsAsString());
         
         // wait for the new # of flows to stabalize
         System.err.println("  Waiting for flows to stabalize ...");
