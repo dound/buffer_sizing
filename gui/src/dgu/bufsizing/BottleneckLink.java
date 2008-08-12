@@ -399,7 +399,7 @@ public class BottleneckLink extends Link<Router> {
     }
     
     HashMap<Integer, Result> resultsMea = new HashMap<Integer, Result>();
-    public static final int[] interestingN = new int[]{1,5,10,25,50,75,100,150,200,400,600,800,900};
+    public static final int[] interestingN = new int[]{1,5,10,25,50,75,100,150,200};
     
     /** read measured results from measured.txt */
     private void initMeasuredResults() {
