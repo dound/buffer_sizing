@@ -593,6 +593,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optPlanetLab = new javax.swing.JRadioButton();
         pnlMode = new javax.swing.JPanel();
         optManual = new javax.swing.JRadioButton();
+        optAutoForCurrentN = new javax.swing.JRadioButton();
         optAuto = new javax.swing.JRadioButton();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
@@ -602,7 +603,6 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlDetails.setLayout(null);
 
-        slNumFlows.setBorder(null);
         slNumFlows.setMajorTickSpacing(250);
         slNumFlows.setMaximum(900);
         slNumFlows.setMinorTickSpacing(100);
@@ -610,7 +610,6 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(slNumFlows);
         slNumFlows.setBounds(515, 25, 220, 16);
 
-        pnlChartXput.setBorder(null);
         pnlChartXput.setLayout(null);
         pnlDetails.add(pnlChartXput);
         pnlChartXput.setBounds(0, 93, 509, 397);
@@ -703,7 +702,6 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(lblNode);
         lblNode.setBounds(5, 10, 70, 25);
 
-        pnlChartRight.setBorder(null);
         pnlChartRight.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 pnlChartRightMouseClicked(evt);
@@ -741,7 +739,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optIperf);
-        optIperf.setBounds(10, 15, 100, 15);
+        optIperf.setBounds(10, 15, 95, 15);
 
         optGroupTGen.add(optHarpoon);
         optHarpoon.setFont(new java.awt.Font("Arial", 0, 12));
@@ -753,10 +751,10 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optHarpoon);
-        optHarpoon.setBounds(10, 53, 100, 15);
+        optHarpoon.setBounds(10, 53, 95, 15);
 
         optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optTomahawk.setText("Tomahawk");
         optTomahawk.setEnabled(false);
         optTomahawk.addActionListener(new java.awt.event.ActionListener() {
@@ -765,10 +763,10 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optTomahawk);
-        optTomahawk.setBounds(10, 34, 100, 15);
+        optTomahawk.setBounds(10, 34, 95, 15);
 
         optGroupTGen.add(optPlanetLab);
-        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12));
+        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optPlanetLab.setText("Planet Lab");
         optPlanetLab.setEnabled(false);
         optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
@@ -777,16 +775,16 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlTGen.add(optPlanetLab);
-        optPlanetLab.setBounds(10, 72, 100, 15);
+        optPlanetLab.setBounds(10, 72, 95, 15);
 
         pnlDetails.add(pnlTGen);
-        pnlTGen.setBounds(770, 5, 120, 90);
+        pnlTGen.setBounds(750, 5, 115, 90);
 
         pnlMode.setBorder(javax.swing.BorderFactory.createTitledBorder("Mode"));
         pnlMode.setLayout(null);
 
         optGroupMode.add(optManual);
-        optManual.setFont(new java.awt.Font("Arial", 0, 12));
+        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optManual.setSelected(true);
         optManual.setText("Manual");
         optManual.addActionListener(new java.awt.event.ActionListener() {
@@ -795,10 +793,21 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode.add(optManual);
-        optManual.setBounds(10, 15, 90, 15);
+        optManual.setBounds(10, 15, 100, 15);
+
+        optGroupMode.add(optAutoForCurrentN);
+        optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optAutoForCurrentN.setText("<html>Auto for<br/>current N</html>");
+        optAutoForCurrentN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optAutoForCurrentNActionPerformed(evt);
+            }
+        });
+        pnlMode.add(optAutoForCurrentN);
+        optAutoForCurrentN.setBounds(10, 55, 100, 30);
 
         optGroupMode.add(optAuto);
-        optAuto.setFont(new java.awt.Font("Arial", 0, 12));
+        optAuto.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optAuto.setText("Automatic");
         optAuto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -806,10 +815,10 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode.add(optAuto);
-        optAuto.setBounds(10, 34, 90, 15);
+        optAuto.setBounds(10, 35, 100, 15);
 
         pnlDetails.add(pnlMode);
-        pnlMode.setBounds(905, 5, 110, 90);
+        pnlMode.setBounds(890, 5, 125, 90);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -911,10 +920,28 @@ private void optManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     optGuidoActionPerformed(null);
 }//GEN-LAST:event_optManualActionPerformed
 
-private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoActionPerformed
+private void prepForAutoMode() {
     enableComponForManual(false);
     optCustom.setSelected(true);
     optCustomActionPerformed(null);
+}
+
+private void optAutoForCurrentNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoForCurrentNActionPerformed
+    prepForAutoMode();
+    final BottleneckLink b = getSelectedBottleneck();
+    if( b != null ) {
+        new Thread() {
+            public void run() {
+                autoStatsState = ThreadState.ON;
+                computeBufferSizeForN(b, slNumFlows.getValue());
+                autoStatsState = ThreadState.OFF;
+            }
+        }.start();
+    }
+}//GEN-LAST:event_optAutoForCurrentNActionPerformed
+
+private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optAutoActionPerformed
+    prepForAutoMode();
     startAutoStatsThread();
 }//GEN-LAST:event_optAutoActionPerformed
 
@@ -931,6 +958,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     private javax.swing.JLabel lblNumFlows;
     private javax.swing.JLabel lblRuleOfThumb;
     private javax.swing.JRadioButton optAuto;
+    private javax.swing.JRadioButton optAutoForCurrentN;
     private javax.swing.JRadioButton optCustom;
     private javax.swing.ButtonGroup optGroupMode;
     private javax.swing.ButtonGroup optGroupRule;

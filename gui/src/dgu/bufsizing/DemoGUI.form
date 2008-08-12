@@ -44,9 +44,6 @@
       <SubComponents>
         <Component class="dgu.util.swing.binding.JSliderBound" name="slNumFlows">
           <Properties>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="null"/>
-            </Property>
             <Property name="majorTickSpacing" type="int" value="250"/>
             <Property name="maximum" type="int" value="900"/>
             <Property name="minorTickSpacing" type="int" value="100"/>
@@ -62,11 +59,6 @@
           </Constraints>
         </Component>
         <Container class="org.jfree.chart.ChartPanel" name="pnlChartXput">
-          <Properties>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="null"/>
-            </Property>
-          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new ChartPanel(chartXput)"/>
           </AuxValues>
@@ -281,11 +273,6 @@
           </Constraints>
         </Component>
         <Container class="org.jfree.chart.ChartPanel" name="pnlChartRight">
-          <Properties>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="null"/>
-            </Property>
-          </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="pnlChartRightMouseClicked"/>
           </Events>
@@ -337,7 +324,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="770" y="5" width="120" height="90"/>
+              <AbsoluteConstraints x="750" y="5" width="115" height="90"/>
             </Constraint>
           </Constraints>
 
@@ -361,7 +348,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="100" height="15"/>
+                  <AbsoluteConstraints x="10" y="15" width="95" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -381,7 +368,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="53" width="100" height="15"/>
+                  <AbsoluteConstraints x="10" y="53" width="95" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -401,7 +388,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="34" width="100" height="15"/>
+                  <AbsoluteConstraints x="10" y="34" width="95" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -421,7 +408,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="72" width="100" height="15"/>
+                  <AbsoluteConstraints x="10" y="72" width="95" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -437,7 +424,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="905" y="5" width="110" height="90"/>
+              <AbsoluteConstraints x="890" y="5" width="125" height="90"/>
             </Constraint>
           </Constraints>
 
@@ -461,7 +448,26 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="90" height="15"/>
+                  <AbsoluteConstraints x="10" y="15" width="100" height="15"/>
+                </Constraint>
+              </Constraints>
+            </Component>
+            <Component class="javax.swing.JRadioButton" name="optAutoForCurrentN">
+              <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="optGroupMode"/>
+                </Property>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Arial" size="12" style="0"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;Auto for&lt;br/&gt;current N&lt;/html&gt;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optAutoForCurrentNActionPerformed"/>
+              </Events>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+                  <AbsoluteConstraints x="10" y="55" width="100" height="30"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -480,7 +486,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="34" width="90" height="15"/>
+                  <AbsoluteConstraints x="10" y="35" width="100" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
