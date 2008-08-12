@@ -187,8 +187,8 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuAMCFullUtilThresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 double ret = GUIHelper.getDoubleFromUser("What percentage utilization will be considered \"fully\" utilized?",
-                                                         0.0, PERCENT_MAX_UTIL_TO_ACHIEVE*100.0, 100.0 );
-                PERCENT_MAX_UTIL_TO_ACHIEVE = ret / 100.0f;
+                                                         0.0, fullUtilThreshold*100.0, 100.0 );
+                fullUtilThreshold = ret / 100.0f;
             }
         });
         mnuAutoModeConfig.add(mnuAMCFullUtilThresh);
@@ -197,8 +197,8 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuAMCStabalizeFlowChange.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 int ret = GUIHelper.getIntFromUser("How long (msec) to give the system to stabilize after changing the number of flows?",
-                                                   0, STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE, 60000 );
-                STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = ret;
+                                                   0, flowStabilizeTime_msec, 60000  );
+                flowStabilizeTime_msec = ret;
             }
         });
         mnuAutoModeConfig.add(mnuAMCStabalizeFlowChange);
@@ -207,8 +207,8 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuAMCStabalizeBufSzChange.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 int ret = GUIHelper.getIntFromUser("How long (msec) to give the system to stabilize after changing the buffer size?",
-                                                   0, STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE, 60000 );
-                STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = ret;
+                                                   0, bufszStabilizeTime_msec, 60000  );
+                bufszStabilizeTime_msec = ret;
             }
         });
         mnuAutoModeConfig.add(mnuAMCStabalizeBufSzChange);
@@ -217,8 +217,8 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuAMCXputSampleTime.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 int ret = GUIHelper.getIntFromUser("How long (msec) to sample the throughput to get a measurement for a given N and B?",
-                                                   100, TIME_MSEC_FOR_THROUGHPUT_SAMPLE, 60000 );
-                TIME_MSEC_FOR_THROUGHPUT_SAMPLE = ret;
+                                                   100, xputSampleTime_msec, 60000  );
+                xputSampleTime_msec = ret;
             }
         });
         mnuAutoModeConfig.add(mnuAMCXputSampleTime);
@@ -227,7 +227,7 @@ public class DemoGUI extends javax.swing.JFrame {
         mnuAMCSearchPrecision.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 int ret = GUIHelper.getIntFromUser("How precisely to determine the minimum buffer size in packets (1500B each)?",
-                                                   1, SEARCH_PRECISION_THRESHOLD_PKTS, 100 );
+                                                   1, searchPrecision_packets, 100  );
                 setSearchPrecision(ret);
             }
         });
@@ -1104,32 +1104,32 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     
     /** what percent of maximum throughput will be considered close 
      * enough to be called a link maximally utilized */
-    private double PERCENT_MAX_UTIL_TO_ACHIEVE = 0.99;
+    private double fullUtilThreshold = 0.99;
     
     /** how long to wait for a new number of flows to stabalize */
-    private int STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE = 5000;
+    private int flowStabilizeTime_msec = 5000;
     
     /** how long to wait for a new buffer size to stabalize */
-    private int STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE = 2000;
+    private int bufszStabilizeTime_msec = 2000;
     
     /** how long to sample throughput */
-    private int TIME_MSEC_FOR_THROUGHPUT_SAMPLE = 1000;
+    private int xputSampleTime_msec = 1000;
     
     /** how precise the search for the ideal buffer size should be */
-    private int SEARCH_PRECISION_THRESHOLD_PKTS;
-    private int SEARCH_PRECISION_THRESHOLD_BYTES;
+    private int searchPrecision_packets;
+    private int searchPrecision_bytes;
     private void setSearchPrecision(int numPackets) {
-        SEARCH_PRECISION_THRESHOLD_PKTS = numPackets;
-        SEARCH_PRECISION_THRESHOLD_BYTES = SEARCH_PRECISION_THRESHOLD_PKTS*BottleneckLink.BYTES_PER_PACKET;
+        searchPrecision_packets = numPackets;
+        searchPrecision_bytes = searchPrecision_packets*BottleneckLink.BYTES_PER_PACKET;
     }
     
     private String getParamsAsString() {
         return  "Parameters:\n" +
-                "    Full Utilization Threshold     = " + PERCENT_MAX_UTIL_TO_ACHIEVE*100 + "%\n" +
-                "    Flow Change Stabilization Time = " + STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE + "ms\n" +
-                "    Buffer Size Change Stabilization Time = " + STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE + "ms\n" +
-                "    Throughput Sample Time = " + TIME_MSEC_FOR_THROUGHPUT_SAMPLE + "ms\n" +
-                "    Search Precision = " + SEARCH_PRECISION_THRESHOLD_PKTS + " packets (" + SEARCH_PRECISION_THRESHOLD_BYTES + ")\n";
+                "    Full Utilization Threshold     = " + fullUtilThreshold*100 + "%\n" +
+                "    Flow Change Stabilization Time = " + flowStabilizeTime_msec + "ms\n" +
+                "    Buffer Size Change Stabilization Time = " + bufszStabilizeTime_msec + "ms\n" +
+                "    Throughput Sample Time = " + xputSampleTime_msec + "ms\n" +
+                "    Search Precision = " + searchPrecision_packets + " packets (" + searchPrecision_bytes + ")\n";
     }
     
     /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
@@ -1149,11 +1149,11 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         
         // wait for the new # of flows to stabalize
         System.err.println("  Waiting for flows to stabalize ...");
-        msleep(STABALIZE_TIME_MSEC_FOR_FLOW_CHANGE);
+        msleep(flowStabilizeTime_msec);
         
         // get the throughput for when the buffer size is maximized => maximum throughput
-        int maxThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
-        int maxThroughputThresh_bps = (int)(PERCENT_MAX_UTIL_TO_ACHIEVE * maxThroughput_bps);
+        int maxThroughput_bps = getAvgThroughputReading_bps(b, xputSampleTime_msec);
+        int maxThroughputThresh_bps = (int)(fullUtilThreshold * maxThroughput_bps);
         System.err.println("  Max throughput = " + maxThroughput_bps + "bps ... thresh=" + maxThroughputThresh_bps );
         
         // perform a binary search for the minimum buffer size which maximizes throughput
@@ -1191,19 +1191,19 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
             }
             
             // if the change is sufficiently small, the search is over
-            if( Math.abs(newBfSz - bfsz.getValue()) <= SEARCH_PRECISION_THRESHOLD_BYTES )
+            if( Math.abs(newBfSz - bfsz.getValue()) <= searchPrecision_bytes )
                 break;
 
             // set the new buffer size
             bfsz.setValue( newBfSz );
 
             // give the new buffer size a chance to stabalize
-            msleep(STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE);
+            msleep(bufszStabilizeTime_msec);
             if( n == 1 ) // extra time for n == 1
-                msleep(STABALIZE_TIME_MSEC_FOR_BUFSZ_CHANGE);
+                msleep(bufszStabilizeTime_msec);
             
             // get the throughput for this buffer size
-            currentThroughput_bps = getAvgThroughputReading_bps(b, TIME_MSEC_FOR_THROUGHPUT_SAMPLE);
+            currentThroughput_bps = getAvgThroughputReading_bps(b, xputSampleTime_msec);
         }
         while( true );
         
