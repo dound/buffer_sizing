@@ -74,6 +74,7 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRMea = new XYSeries("Measured", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRToday = new XYSeries("Today", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRCur = new XYSeries("Now", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRCurRange = new XYSeries("Now Range", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     
     /** Returns the current time in units of 8ns (with millisecond resolution) */
     public static final long currentTime8ns() {
@@ -138,6 +139,7 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void clearInProgressPoint() {
         dataRCur.clear();
+        dataRCurRange.clear();
     }
     
     /**
@@ -167,7 +169,8 @@ public class BottleneckLink extends Link<Router> {
         prepareXYSeries( dataRTheGuido, dataPointsToKeep );
         prepareXYSeries( dataRMea,      dataPointsToKeep );
         prepareXYSeries( dataRToday,    dataPointsToKeep );
-        prepareXYSeries( dataRCur,      dataPointsToKeep );
+        prepareXYSeries( dataRCur,      1 );
+        prepareXYSeries( dataRCurRange, 2 );
         
         // set the initial values
         this.rtt_ms = 0;
@@ -377,6 +380,10 @@ public class BottleneckLink extends Link<Router> {
         return dataRCur;
     }
     
+    public XYSeries getDataRCurRange() {
+        return dataRCurRange;
+    }
+    
     public class Result {
         public static final int BASE_RTT = 250;
         
@@ -467,14 +474,35 @@ public class BottleneckLink extends Link<Router> {
         System.out.println( n + " " + r.b_B + " " + r.c_kbps + " " + r.numDataPoints );
     }
     
+    public synchronized void noteCurrentMeasuredResultRange(int rangeMin_B, int rangeMax_B) {
+        dataRCurRange.clear();
+        dataRCurRange.add( this.getNumFlows(), rangeMin_B / 1024 );
+        dataRCurRange.add( this.getNumFlows(), rangeMax_B / 1024 );
+    }
+        
+    /** 
+     * specifies the in progress measured buffer size 'b' for the current capacity (rate limit)
+     * @param bufSizeForMaxUtil_B  buffer size for 100% utilization in bytes
+     * @param confidence  confidence (0 => none, 1=> very)
+     */
     /** 
      * specifies the in progress measured buffer size 'b' for the current capacity (rate limit)
      * @param bufSizeForMaxUtil_B  buffer size for 100% utilization in bytes
      * @param confidence  confidence (0 => none, 1=> very)
      */
     public synchronized void noteCurrentMeasuredResult(int bufSizeForMaxUtil_B, double confidence) {
+        noteCurrentMeasuredResult( bufSizeForMaxUtil_B, -1, -1, confidence );
+    }
+    
+    public synchronized void noteCurrentMeasuredResult(int bufSizeForMaxUtil_B, int rangeMin_B, int rangeMax_B, double confidence) {
         dataRCur.clear();
         dataRCur.add(this.getNumFlows(), bufSizeForMaxUtil_B / 1024);
+        
+        if( rangeMin_B > 0 ) {
+            dataRCurRange.clear();
+            dataRCurRange.add( this.getNumFlows(), rangeMin_B / 1024 );
+            dataRCurRange.add( this.getNumFlows(), rangeMax_B / 1024 );
+        }
       
         // update the points color based on the confidence
         int r = (confidence <  0.5) ? 128 + (int)(128*(0.5 - confidence)) : 0;

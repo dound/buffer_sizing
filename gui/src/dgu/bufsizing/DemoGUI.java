@@ -412,6 +412,12 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesShapesVisible(4, true);
         renderer.setSeriesVisibleInLegend(4, false, false);
         
+        // measured range (current test range)
+        renderer.setSeriesPaint(5, new Color(255,0,0));
+        renderer.setSeriesLinesVisible(5, true);
+        renderer.setSeriesShapesVisible(5, false);
+        renderer.setSeriesVisibleInLegend(5, false, false);
+        
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
@@ -463,6 +469,7 @@ public class DemoGUI extends javax.swing.JFrame {
                             DemoGUI.collRes.addSeries( b.getDataRMea(), false  );
                             DemoGUI.collRes.addSeries( b.getDataRToday(), false );
                             DemoGUI.collRes.addSeries( b.getDataRCur(), false );
+                            DemoGUI.collRes.addSeries( b.getDataRCurRange(), false );
                             
                             DemoGUI.me.refreshCharts();
                             
@@ -1277,6 +1284,8 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         int currentThroughput_bps = maxThroughput_bps;
         int bfszLo = 1;
         do {
+            b.noteCurrentMeasuredResultRange(bfszMin, minBfSzWithFullLinkUtil);
+            
             if( autoStatsState != ThreadState.ON )
                 return -1;
             
