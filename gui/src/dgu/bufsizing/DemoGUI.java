@@ -1026,7 +1026,11 @@ private void optAutoForCurrentNActionPerformed(java.awt.event.ActionEvent evt) {
         new Thread() {
             public void run() {
                 autoStatsState = ThreadState.ON;
-                computeBufferSizeForN(b, slNumFlows.getValue());
+                
+                int res = computeBufferSizeForN(b, slNumFlows.getValue());
+                if( autoStatsState == ThreadState.ON )
+                    b.addMeasuredResult( res );
+                
                 autoStatsState = ThreadState.OFF;
             }
         }.start();
