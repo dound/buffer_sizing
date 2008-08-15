@@ -355,8 +355,8 @@ public class BottleneckLink extends Link<Router> {
         avgThroughput_bps = (actualThroughput_bps + avgThroughput_bps*numReadingsForAvgXput) / (numReadingsForAvgXput+1);
         numReadingsForAvgXput += 1;
         
-        // plot the current value on the util plot too
-        if( noteCurrentXputValue )
+        // plot the current value on the util plot too (only in automatic mode)
+        if( noteCurrentXputValue && DemoGUI.me.showBufferSizeMarker() )
             noteCurrentMeasuredResult(getActualBufSize(), 0);
     }
 

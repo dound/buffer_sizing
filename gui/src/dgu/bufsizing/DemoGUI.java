@@ -1094,6 +1094,10 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
         }
     }
     
+    public boolean showBufferSizeMarker() {
+        return autoStatsState != ThreadState.OFF;
+    }
+    
     private static final boolean GEN_DEBUG_FAKE_STATS = false;
     private static ThreadState autoStatsState = ThreadState.OFF;
     private void startAutoStatsThread() {
