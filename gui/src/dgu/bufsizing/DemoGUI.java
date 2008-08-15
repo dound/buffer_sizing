@@ -349,7 +349,7 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesPaint(0, new Color(0,0,128));
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesPaint(1, new Color(128,0,0));
-        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
@@ -367,7 +367,7 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesPaint(0, new Color(0,0,128));
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesPaint(1, new Color(128,0,0));
-        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
     }
@@ -386,20 +386,20 @@ public class DemoGUI extends javax.swing.JFrame {
         
         // theoretical rule of thumb
         renderer.setSeriesPaint(0, new Color(128,0,0));
-        renderer.setSeriesStroke(0, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesStroke(0, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         
         // theoretical guido
-        renderer.setSeriesPaint(1, new Color(0,128,0));
-        renderer.setSeriesStroke(1, new BasicStroke(3f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(1, new Color(0,255,0));
+        renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         
         // measured
-        renderer.setSeriesPaint(2, new Color(0,0,128));
+        renderer.setSeriesPaint(2, new Color(0,128,255));
         renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesLinesVisible(2, true);
         renderer.setSeriesShapesVisible(2, true);
         
         // measured (today's results)
-        renderer.setSeriesPaint(3, new Color(128,0,128));
+        renderer.setSeriesPaint(3, new Color(255,0,255));
         renderer.setSeriesLinesVisible(3, false);
         renderer.setSeriesShapesVisible(3, true);
         int diamondX[] = { 0, 6, 0, -6, 0 };
@@ -407,7 +407,7 @@ public class DemoGUI extends javax.swing.JFrame {
         DemoGUI.me.resultsRenderer.setSeriesShape(3, new java.awt.Polygon(diamondX, diamondY, diamondX.length), false);
         
         // measured (current test)
-        renderer.setSeriesPaint(4, new Color(0,0,0));
+        renderer.setSeriesPaint(4, new Color(0,0,0)); // dynamically set based on confidence values from experiment
         renderer.setSeriesLinesVisible(4, false);
         renderer.setSeriesShapesVisible(4, true);
         renderer.setSeriesVisibleInLegend(4, false, false);
