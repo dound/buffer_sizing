@@ -14,8 +14,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include "common.h"
-#include "io_wrapper.h"
+#include "../common.h"
+#include "../io_wrapper.h"
 #include "nf2util.h"
 #include "reg_defines_bsr.h"
 

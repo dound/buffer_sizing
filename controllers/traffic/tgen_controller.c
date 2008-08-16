@@ -17,8 +17,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <wait.h>
-#include "common.h"
-#include "io_wrapper.h"
+#include "../common.h"
+#include "../io_wrapper.h"
 
 #define STR_VERSION "0.01b"
 

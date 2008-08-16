@@ -22,7 +22,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#include "debug.h"
+#include "../debug.h"
 #include "nf2.h"
 #include "nf2util.h"
 #include "reg_defines_bsr.h" /* buffer sizing router reg defines */
