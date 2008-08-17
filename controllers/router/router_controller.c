@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -58,9 +59,7 @@ typedef struct {
 } __attribute__ ((packed)) update_t;
 
 typedef enum {
-    CODE_GET_RATE_LIMIT=0,
     CODE_SET_RATE_LIMIT=1,
-    CODE_GET_BUF_SIZE=2,
     CODE_SET_BUF_SIZE=3
 } code_t;
 
@@ -143,56 +142,65 @@ int main( int argc, char** argv ) {
     return 0;
 }
 
+static void rc_print( const char* format, ... ) {
+#ifdef _DEBUG_
+    va_list args;
+    va_start( args, format );
+
+    fprintf( stderr, "[Router Controller Server] " );
+    vfprintf( stderr, format, args );
+    fprintf( stderr, "\n" );
+
+    va_end( args );
+#endif
+}
+
 /** listens for incoming connections from the master who will send commands */
 static void* controller_main( void* nil ) {
-  while(1) {
     struct sockaddr_in servaddr;
-    int fd, len;
+    struct sockaddr_in cliaddr;
+    socklen_t cliaddr_len;
+    int servfd, clifd, len;
 
     /* initialize the server's info */
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = server_ip;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons( server_port );
 
     /* make a TCP socket for the new flow */
-    if( (fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
-        perror( "Error: unable to create TCP socket for controller" );
+    if( (servfd = socket( AF_INET, SOCK_STREAM, IPPROTO_UDP )) == -1 ) {
+        perror( "Error: unable to create UDP socket for controller" );
         exit( 1 );
     }
 
-    /* connect to the server */
-    fprintf( stderr, "Trying to connect to the Router controller\n" );
-    if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
-        perror( "Error: connect for controller failed" );
-        sleep( 5 );
-        close( fd );
-        continue;
+    /* listen for incoming connections */
+    rc_print("listening for an incoming connection request to UDP port %u", server_port);
+    if( listen(servfd, 1) < 0 ) {
+        perror( "Error: unable to listen" );
+        exit( 1 );
     }
 
+    /* loop forever */
     while( 1 ) {
-        fprintf( stderr, "Connected to the master\n" );
+        rc_print("waiting for client to connect ...");
+        if( (clifd=accept(servfd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
+            perror( "Error: accept failed" );
+            continue;
+        }
+        rc_print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
 
         /* wait for control packets */
         control_t packet;
-        while( (len=readn(fd, &packet, sizeof(packet))) ) {
-            if( len < 0 )
+        while( (len=readn(clifd, &packet, sizeof(packet))) ) {
+            if( len < 0 ) {
+                rc_print("received EOF from client");
                 break;
+            }
 
-            int ret = 0;
             packet.val = ntohl( packet.val );
             switch( packet.code ) {
-            case CODE_GET_RATE_LIMIT:
-                packet.val = htonl( get_rate_limit(packet.queue) );
-                ret = writen( fd, &packet.val, sizeof(packet.val) );
-                break;
-
             case CODE_SET_RATE_LIMIT:
                 set_rate_limit( packet.queue, packet.val );
-                break;
-
-            case CODE_GET_BUF_SIZE:
-                packet.val = htonl( get_buffer_size_packets(packet.queue) );
-                ret = writen( fd, &packet.val, sizeof(packet.val) );
                 break;
 
             case CODE_SET_BUF_SIZE:
@@ -200,20 +208,16 @@ static void* controller_main( void* nil ) {
                 break;
 
             default:
-                fprintf( stderr, "controller got unexpected packet code %u\n", packet.code );
-            }
-            if( ret == -1 ) {
-                fprintf( stderr, "controller failed to write (will terminate)\n" );
-                break;
+                rc_print("received unexpected packet code %u", packet.code);
             }
         }
 
-        close( fd );
-        fprintf( stderr, "master connection closed (goodbye)\n" );
-        break;
+        rc_print("connection to client at %s closed", inet_ntoa(cliaddr.sin_addr));
+        close(clifd);
     }
-  }
-  return NULL;
+
+    close(servfd);
+    return NULL;
 }
 
 /** Periodically sends an update with the NetFPGA's info to the master. */
@@ -224,8 +228,8 @@ static void inform_server_loop() {
     sleep_time.tv_nsec = UPDATE_INTERVAL_NSEC;
 
     /* make a UDP socket to send data to the server on */
-    if( (fd = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP )) == -1 ) {
-        perror( "Error: unable to create UDP socket" );
+    if( (fd = socket( AF_INET, SOCK_DGRAM, IPPROTO_TCP )) == -1 ) {
+        perror( "Error: unable to create TCP socket" );
         exit( 1 );
     }
 
@@ -296,6 +300,11 @@ static void set_rate_limit( int queue, uint32_t shift ) {
     uint32_t enabled = shift ? 1 : 0;
     writeReg( &nf2, RATE_LIMIT_ENABLE_REG, enabled );
     writeReg( &nf2, RATE_LIMIT_SHIFT_REG, shift );
+
+    if( shift )
+        rc_print("rate limiter has been changed to %u", shift);
+    else
+        rc_print("rate limiter has been disabled");
 }
 
 static uint32_t get_bytes_sent( int queue ) {
@@ -331,6 +340,7 @@ static uint32_t get_buffer_size_packets( int queue ) {
 
 static void set_buffer_size_packets( int queue, uint32_t size ) {
     writeReg( &nf2, get_buffer_size_packets_reg(queue), size );
+    rc_print("buffer size has been changed to %u packets in size", size);
 }
 
 static uint32_t get_queue_occupancy_packets( int queue ) {
