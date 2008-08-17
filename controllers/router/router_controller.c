@@ -17,6 +17,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "../common.h"
+#include "../debug.h"
 #include "../io_wrapper.h"
 #include "nf2helpers.h"
 #include "nf2util.h"
@@ -52,9 +53,9 @@ typedef struct {
 typedef struct {
     uint32_t sec;
     uint32_t usec;
-    uint32_t bytes_arrived;
-    uint32_t bytes_departed;
-    uint32_t bytes_current;
+    uint32_t arrived;
+    uint32_t departed;
+    uint32_t current;
 } __attribute__ ((packed)) update_info_t;
 
 #define MAX_PAYLOAD 1460 /* Ethernet payload minus IP + TCP overheads */
@@ -76,6 +77,7 @@ static int client_fd = -1;
 
 static void* controller_main( void* nil );
 static void event_capture_handler();
+static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u);
 
 static void rc_print( const char* format, ... ) {
 #ifdef _DEBUG_
@@ -248,7 +250,7 @@ static void event_capture_handler() {
     struct sockaddr_in si_me, si_other;
     int evcap_fd, len;
     unsigned slen=sizeof(si_other), evcap_on;
-    char buf[1500];
+    uint8_t buf[1500];
 
     if( (evcap_fd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) ) == -1 ) {
         perror( "Error: unable to create UDP socket for event capture receiver" );
@@ -272,13 +274,13 @@ static void event_capture_handler() {
             memset( &update[updateInfoOn], 0, sizeof(update_info_t) );
 
         /* get the packet */
-        if( (len=recvfrom(evcap_fd, buf, 1500, 0, (struct sockaddr*)&si_other, &slen)) == -1 ) {
+        if( (len=recvfrom(evcap_fd, buf, 1500, 0, (struct sockaddr*)&si_other, &slen)) < 0 ) {
             perror( "Error: recvfrom failed to retrieve event capture packet" );
             exit( 1 );
         }
 
         /* parse the arrivals and departures */
-        /* to do ... */
+        parseEvCap(buf, len, &update[updateInfoOn]);
 
         /* see if we've aggregated enough evcaps to finish this update info */
         if( evcap_on == update_evcaps_per_info ) {
@@ -306,4 +308,129 @@ static void event_capture_handler() {
     }
 
     close(evcap_fd);
+}
+
+static uint32_t getU32(uint8_t* buf, unsigned index) {
+    return ntohl(*((uint32_t*)&buf[index]));
+}
+
+#define ntohll(x) (((uint64_t)(ntohl((int)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int)(x >> 32))))
+static uint64_t getU64(uint8_t* buf, unsigned index) {
+    return ntohll(*((uint64_t*)&buf[index]));
+}
+#define htonll(x) (ntohll(x))
+
+#define DEFAULT_QUEUE_TO_MONITOR 2
+#define USE_PACKETS 0
+#define NUM_QUEUES 8
+#define MASK_TYPE (htonl(0xC0))
+#define MASK_QID  (htonl(0x38000000))
+#define MASK_PLEN (htonl(0x07F80000))
+#define MASK_TSA1 (htonll(0xFFFFFFFFFFF80000LL))
+#define MASK_TSA2 (htonl(0x0007FFFF))
+
+static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
+    int i, index, num_events, num_bytes, num_packets, type;
+    uint64_t timestamp_8ns, timestamp_adjusted_8ns;
+    static uint64_t lastTS = 0;
+
+    if( len < 78 ) {
+        rc_print( "Ignoring evcap packet which is too small (%uB)", len );
+        return;
+    }
+
+    /* start processing at byte 1 (byte 0 isn't too interesting) */
+    index = 1;
+    num_events = buf[index];
+    index += 1;
+
+    /* skip the sequence number */
+    rc_print( "seq = %u", getU32(buf, index) );
+    index += 4;
+
+    /* get the timestamp before the queue data */
+    timestamp_8ns = getU64( buf, 70 );
+    if( lastTS > timestamp_8ns ) {
+        debug_println( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
+        return; /* old, out-of-order packet */
+    }
+    else {
+        debug_println( "got new timestamp %llu", timestamp_8ns );
+        lastTS = timestamp_8ns;
+    }
+
+    /* get queue occupancy data */
+    for( i=0; i<NUM_QUEUES; i++ ) {
+        /* update the queue with its new absolute value */
+        if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
+            num_bytes = 8 * getU32(buf, index);
+            u->current = num_bytes;
+            debug_println( "queue 2 set to %uB", num_bytes );
+        }
+        index += 4;
+
+        /* size in packets */
+        if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
+            num_packets = getU32(buf, index);
+            u->current = num_packets;
+            debug_println( "queue 2 set to %u packets" + num_packets );
+        }
+        index += 4;
+    }
+
+    /* already got the timestamp; keep going */
+    index += 8;
+
+    /* process each event */
+    timestamp_adjusted_8ns = timestamp_8ns;
+    while( index + 4 < len ) {
+        type = (buf[index] & MASK_TYPE) >> 6;
+        debug_println( "  got type = 0x%0X", type );
+
+        if( type == TYPE_TS ) {
+            if( index + 8 >= len ) break;
+
+            timestamp_8ns = getU64( buf, index );
+            index += 8;
+            debug_println( "    got timestamp " + timestamp_8ns );
+        }
+        else {
+            int val, queue_id, plen_bytes;
+
+            /* determine the # of bytes involved and the offset */
+            val = getU32( buf, index );
+            queue_id = ntohl(val & MASK_QID) >> 27;
+            plen_bytes = ntohl((val & MASK_PLEN) >> 19) * 8 - 8; /* - 8 to not include NetFPGA overhead */
+            timestamp_adjusted_8ns = (timestamp_8ns & MASK_TSA1) | ntohl(val & MASK_TSA2);
+            index += 4;
+
+            debug_println( "     got short event %u (%uB) at timestamp %llu for queue %u",
+                           type, plen_bytes, timestamp_adjusted_8ns, queue_id );
+
+            /* only pay attention to NF2C1 for now */
+            if( queue_id != DEFAULT_QUEUE_TO_MONITOR ) {
+                debug_println( "    ignoring event for queue %u", queue_id );
+                continue;
+            }
+
+            if( type == TYPE_ARRIVE ) {
+                if( USE_PACKETS )
+                    u->arrived += 1;
+                else
+                    u->arrived += plen_bytes;
+
+                debug_println( "arrival => %u", u->arrived );
+            }
+            else if( type == TYPE_DEPART ) {
+                if( USE_PACKETS )
+                    u->departed += 1;
+                else
+                    u->departed += plen_bytes;
+
+                debug_println( "departure => %u", u->departed );
+            }
+            else
+                debug_println( "    (dropped)" );
+        }
+    }
 }
