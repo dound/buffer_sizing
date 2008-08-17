@@ -29,13 +29,17 @@ Router Controller Server v%s\n\
   -?, -help:       displays this help\n\
   -l, -listen:     the port to listen for connections on\n\
   -e, -evcap:      the port to listen for event capture packets on\n\
-  -n, -num:        number of event capture packets to coallesce per info field\n"
+  -c, -coallesce:  number of event capture packets to coallesce per info field\n\
+  -n, -num:        number of info fields to (try to) send per packet\n\
+  -b, -bw:         compute the estimated bandwidth and update rate and then exit\n"
 
 #define STR_PARAMS "\n\
     Command Listen TCP Port = %u\n\
     Event Capture Listen UDP Port = %u\n\
     Number of Event Capture Packets Per Info = %u\n\
-    Number of Infos Per Update = %u"
+    Number of Infos Per Update = %u\n\
+    Approximate GUI Update Rate = %.1f updates per sec\n\
+    Approximate GUI Update Bandwidth = %.1f kbps\n"
 
 /** encapsulates a message to a client's controller */
 typedef struct {
@@ -59,8 +63,6 @@ typedef struct {
 
 #define MAX_PAYLOAD 1460 /* Ethernet payload minus IP + TCP overheads */
 #define MAX_UPDATE_INFOS (MAX_PAYLOAD / sizeof(update_info_t))
-static update_info_t update[MAX_UPDATE_INFOS];
-static unsigned updateInfoOn = 0;
 
 typedef enum {
     CODE_SET_RATE_LIMIT=1,
@@ -72,6 +74,7 @@ typedef enum {
 static uint16_t server_port;
 static uint16_t evcap_port;
 static unsigned update_evcaps_per_info;
+static unsigned update_infos_per_update_packet;
 static int client_fd = -1;
 
 static void* controller_main( void* nil );
@@ -82,9 +85,9 @@ static void rc_print( const char* format, ... ) {
     va_list args;
     va_start( args, format );
 
-    fprintf( stderr, "[Router Controller Server] " );
-    vfprintf( stderr, format, args );
-    fprintf( stderr, "\n" );
+    fprintf( stdout, "[Router Controller Server] " );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
 
     va_end( args );
 }
@@ -94,24 +97,23 @@ static void rc_print_verbose( const char* format, ... ) {
     va_list args;
     va_start( args, format );
 
-    fprintf( stderr, "[Router Controller Server] " );
-    vfprintf( stderr, format, args );
-    fprintf( stderr, "\n" );
+    fprintf( stdout, "[Router Controller Server] " );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
 
     va_end( args );
 #endif
 }
 
 int main( int argc, char** argv ) {
+    int printOnly = 0;
     server_port = 10272;
     evcap_port = 27033;
     update_evcaps_per_info = 1;
+    update_infos_per_update_packet = 10;
 
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
-
-    debug_pthread_init_init();
-    debug_pthread_init("[Router Controller Server]", "[Router Controller Server]");
 
     /* parse command-line arguments */
     unsigned i;
@@ -146,21 +148,57 @@ int main( int argc, char** argv ) {
             }
             evcap_port = val;
         }
+        else if( str_matches(argv[i], 3, "-c", "-coallesce", "--coallesce") ) {
+            i += 1;
+            if( i == argc ) {
+                rc_print("Error: -coallesce requires an argument to be specified");
+                return -1;
+            }
+            update_evcaps_per_info = strtoul( argv[i], NULL, 10 );
+            if( update_evcaps_per_info == 0 ) {
+                rc_print("Error: -coallesce must be greater than 0");
+                return -1;
+            }
+        }
         else if( str_matches(argv[i], 3, "-n", "-num", "--num") ) {
             i += 1;
             if( i == argc ) {
                 rc_print("Error: -num requires an argument to be specified");
                 return -1;
             }
-            update_evcaps_per_info = strtoul( argv[i], NULL, 10 );
-            if( update_evcaps_per_info == 0 ) {
+            update_infos_per_update_packet = strtoul( argv[i], NULL, 10 );
+            if( update_infos_per_update_packet == 0 ) {
                 rc_print("Error: -num must be greater than 0");
                 return -1;
             }
+            if( update_infos_per_update_packet > MAX_UPDATE_INFOS ) {
+                rc_print("Error: -num must be no greater than %u (this is the most that fit in a single packet)", MAX_UPDATE_INFOS);
+                return -1;
+            }
+       }
+        else if( str_matches(argv[i], 3, "-b", "-bw", "--bw") ) {
+            printOnly = 1;
         }
     }
 
-    rc_print(STR_PARAMS, server_port, evcap_port, update_evcaps_per_info, MAX_UPDATE_INFOS);
+    /* compute the BW the update thread will consume between here and the gui */
+    double evcaps_per_sec = 32.508; /* empircal measurement */
+    double infos_per_sec = evcaps_per_sec / update_evcaps_per_info;
+    double updates_per_sec = infos_per_sec / update_infos_per_update_packet;
+    unsigned overhead_bytes = 2 * (14 + 20 + 20); /* Ethernet + IP + TCP + ACK! */
+    unsigned update_size_bits = 8 * (overhead_bytes + update_infos_per_update_packet * sizeof(update_info_t));
+    double rate_bps = updates_per_sec * update_size_bits;
+
+    /* print and exit if that is all the user wanted */
+    if( printOnly ) {
+        printf( "%u\t%u\t%.1f\t%.1f\n", update_evcaps_per_info, update_infos_per_update_packet, updates_per_sec, rate_bps / 1000 );
+        return 0;
+    }
+
+    rc_print(STR_PARAMS,
+             server_port, evcap_port, update_evcaps_per_info, update_infos_per_update_packet,
+             updates_per_sec, rate_bps / 1000);
+
 
     /* connect to the hardware */
     hw_init( &nf2 );
@@ -264,6 +302,8 @@ static void* controller_main( void* nil ) {
 #define TYPE_DROP 3
 
 static void event_capture_handler() {
+    update_info_t update[MAX_UPDATE_INFOS];
+    unsigned updateInfoOn = 0;
     struct timeval now;
     struct sockaddr_in si_me, si_other;
     int evcap_fd, len;
