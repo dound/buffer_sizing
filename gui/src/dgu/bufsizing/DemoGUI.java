@@ -1088,7 +1088,7 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     }
     
     /** sleep for the specified number of milliseconds */
-    private static void msleep(int ms) {
+    public static void msleep(int ms) {
         try {
             Thread.sleep( ms );
         } catch( InterruptedException e ) {
