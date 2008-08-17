@@ -26,7 +26,6 @@
 
 #define STR_USAGE "\
 Router Controller Server v%s\n\
-%s\n\
   -?, -help:       displays this help\n\
   -l, -listen:     the port to listen for connections on\n\
   -e, -evcap:      the port to listen for event capture packets on\n\
@@ -104,7 +103,7 @@ int main( int argc, char** argv ) {
     unsigned i;
     for( i=1; i<argc || argc<=1; i++ ) {
         if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
-            printf( STR_USAGE, STR_VERSION, "hi" );
+            printf( STR_USAGE, STR_VERSION );
             return 0;
         }
         else if( str_matches(argv[i], 3, "-l", "-listen", "--listen") ) {
