@@ -351,10 +351,10 @@ static void event_capture_handler() {
             updateInfoOn += 1;
 
             /* see if the packet is full yet */
-            if( updateInfoOn == MAX_UPDATE_INFOS ) {
+            if( updateInfoOn == update_infos_per_update_packet ) {
                 /* send the update to the GUI */
                 if( client_fd >= 0 )
-                    writen(client_fd, &update, sizeof(update));
+                    writen(client_fd, &update, update_infos_per_update_packet * sizeof(update_info_t));
 
                 /* start again! */
                 updateInfoOn = 0;
