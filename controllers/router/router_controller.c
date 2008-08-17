@@ -180,8 +180,13 @@ static void* controller_main( void* nil ) {
 
     /* make a TCP socket for the new flow */
     if( (servfd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
-        perror( "Error: unable to create TCP socket for controller" );
+        perror( "Error: unable to create TCP socket for router controller" );
         exit( 1 );
+    }
+
+    if( bind(servfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
+        perror( "Error: unable to bind TCP socket for router controller" );
+        exit(1);
     }
 
     /* listen for incoming connections */
