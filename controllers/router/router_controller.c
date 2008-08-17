@@ -79,7 +79,18 @@ static void event_capture_handler();
 static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u);
 
 static void rc_print( const char* format, ... ) {
-#ifdef _DEBUG_
+    va_list args;
+    va_start( args, format );
+
+    fprintf( stderr, "[Router Controller Server] " );
+    vfprintf( stderr, format, args );
+    fprintf( stderr, "\n" );
+
+    va_end( args );
+}
+
+static void rc_print_verbose( const char* format, ... ) {
+#ifdef _VERBOSE_
     va_list args;
     va_start( args, format );
 
@@ -352,17 +363,17 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     index += 1;
 
     /* skip the sequence number */
-    rc_print( "seq = %u", getU32(buf, index) );
+    rc_print_verbose( "seq = %u", getU32(buf, index) );
     index += 4;
 
     /* get the timestamp before the queue data */
     timestamp_8ns = getU64( buf, 70 );
     if( lastTS > timestamp_8ns ) {
-        debug_println( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
+        rc_print_verbose( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
         return; /* old, out-of-order packet */
     }
     else {
-        debug_println( "got new timestamp %llu", timestamp_8ns );
+        rc_print_verbose( "got new timestamp %llu", timestamp_8ns );
         lastTS = timestamp_8ns;
     }
 
@@ -372,7 +383,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_bytes = 8 * getU32(buf, index);
             u->current = num_bytes;
-            debug_println( "queue 2 set to %uB", num_bytes );
+            rc_print_verbose( "queue 2 set to %uB", num_bytes );
         }
         index += 4;
 
@@ -380,7 +391,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_packets = getU32(buf, index);
             u->current = num_packets;
-            debug_println( "queue 2 set to %u packets" + num_packets );
+            rc_print_verbose( "queue 2 set to %u packets" + num_packets );
         }
         index += 4;
     }
@@ -391,15 +402,15 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     /* process each event */
     timestamp_adjusted_8ns = timestamp_8ns;
     while( index + 4 < len ) {
-        type = (buf[index] & MASK_TYPE) >> 30;
-        debug_println( "  got type = 0x%0X", type );
+        type = (getU32(buf, index) & MASK_TYPE) >> 30;
+        rc_print_verbose( "  got type = 0x%0X", type );
 
         if( type == TYPE_TS ) {
             if( index + 8 >= len ) break;
 
             timestamp_8ns = getU64( buf, index );
             index += 8;
-            debug_println( "    got timestamp %llu", timestamp_8ns );
+            rc_print_verbose( "    got timestamp %llu", timestamp_8ns );
         }
         else {
             int val, queue_id, plen_bytes;
@@ -411,12 +422,15 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
             timestamp_adjusted_8ns = (timestamp_8ns & MASK_TSA1) | ntohl(val & MASK_TSA2);
             index += 4;
 
-            debug_println( "     got short event %u (%uB) at timestamp %llu for queue %u",
-                           type, plen_bytes, timestamp_adjusted_8ns, queue_id );
+            rc_print_verbose( "    %uB %s for queue %u at timestamp %llu",
+                           plen_bytes,
+                           (type==TYPE_ARRIVE)?"arrived":(type==TYPE_DEPART)?"departed":"dropped",
+                           queue_id,
+                           timestamp_adjusted_8ns );
 
             /* only pay attention to NF2C1 for now */
             if( queue_id != DEFAULT_QUEUE_TO_MONITOR ) {
-                debug_println( "    ignoring event for queue %u", queue_id );
+                rc_print_verbose( "    ignoring event for queue %u", queue_id );
                 continue;
             }
 
@@ -426,7 +440,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->arrived += plen_bytes;
 
-                debug_println( "arrival => %u", u->arrived );
+                rc_print_verbose( "arrival => %u", u->arrived );
             }
             else if( type == TYPE_DEPART ) {
                 if( USE_PACKETS )
@@ -434,10 +448,10 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->departed += plen_bytes;
 
-                debug_println( "departure => %u", u->departed );
+                rc_print_verbose( "departure => %u", u->departed );
             }
             else
-                debug_println( "    (dropped)" );
+                rc_print_verbose( "    (dropped)" );
         }
     }
 }
