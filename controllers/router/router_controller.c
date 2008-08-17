@@ -330,11 +330,11 @@ static uint64_t getU64(uint8_t* buf, unsigned index) {
 #define DEFAULT_QUEUE_TO_MONITOR 2
 #define USE_PACKETS 0
 #define NUM_QUEUES 8
-#define MASK_TYPE (htonl(0xC0))
-#define MASK_QID  (htonl(0x38000000))
-#define MASK_PLEN (htonl(0x07F80000))
-#define MASK_TSA1 (htonll(0xFFFFFFFFFFF80000LL))
-#define MASK_TSA2 (htonl(0x0007FFFF))
+#define MASK_TYPE (0xC0000000)
+#define MASK_QID  (0x38000000)
+#define MASK_PLEN (0x07F80000)
+#define MASK_TSA1 (0xFFFFFFFFFFF80000LL)
+#define MASK_TSA2 (0x0007FFFF)
 
 static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     int i, index, num_events, num_bytes, num_packets, type;
@@ -391,7 +391,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     /* process each event */
     timestamp_adjusted_8ns = timestamp_8ns;
     while( index + 4 < len ) {
-        type = (buf[index] & MASK_TYPE) >> 6;
+        type = (buf[index] & MASK_TYPE) >> 30;
         debug_println( "  got type = 0x%0X", type );
 
         if( type == TYPE_TS ) {
@@ -406,8 +406,8 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
 
             /* determine the # of bytes involved and the offset */
             val = getU32( buf, index );
-            queue_id = ntohl(val & MASK_QID) >> 27;
-            plen_bytes = ntohl((val & MASK_PLEN) >> 19) * 8 - 8; /* - 8 to not include NetFPGA overhead */
+            queue_id = (val & MASK_QID) >> 27;
+            plen_bytes = ((val & MASK_PLEN) >> 19) * 8 - 8; /* - 8 to not include NetFPGA overhead */
             timestamp_adjusted_8ns = (timestamp_8ns & MASK_TSA1) | ntohl(val & MASK_TSA2);
             index += 4;
 
