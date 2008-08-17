@@ -10,7 +10,9 @@ import java.net.Socket;
  * Skeleton controller for receiving and sending commands to a client.
  * @author David Underhill
  */
-public abstract class Controller {    
+public abstract class Controller {
+    public static final long TIME_BETWEEN_ERROR_MSGS_MILLIS = 5000;
+    
     /** the socket which connects this Command to its client */
     protected final Socket s;
 
@@ -121,5 +123,28 @@ public abstract class Controller {
             System.err.println( "command " + code + " / " + value + " => failed: " + e.getMessage() );
             System.exit( 1 );
         }
+    }
+    
+    public int readByteOrDie() throws IOException {
+        if(in==null)
+            throw(new IOException("input socket is not open"));
+        
+        int ret = in.read();
+        if( ret == -1 )
+            throw new IOException("Socket received EOF");
+        
+        return ret;
+    }
+    
+    /** reads byte i to i+3 to form an int */
+    public int readInt() throws IOException {
+        // convert to signed ints, clearing any bits set due to sign extension
+        int a = readByteOrDie() & 0x000000FF;
+        int b = readByteOrDie() & 0x000000FF;
+        int c = readByteOrDie() & 0x000000FF;
+        int d = readByteOrDie() & 0x000000FF;
+        
+        // create the int
+        return a<<24 | b<<16 | c<<8 | d;
     }
 }
