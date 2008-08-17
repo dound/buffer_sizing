@@ -99,6 +99,9 @@ int main( int argc, char** argv ) {
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
 
+    debug_pthread_init_init();
+    debug_pthread_init("[Router Controller Server]", "[Router Controller Server]");
+
     /* parse command-line arguments */
     unsigned i;
     for( i=1; i<argc || argc<=1; i++ ) {
@@ -396,7 +399,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
 
             timestamp_8ns = getU64( buf, index );
             index += 8;
-            debug_println( "    got timestamp " + timestamp_8ns );
+            debug_println( "    got timestamp %llu", timestamp_8ns );
         }
         else {
             int val, queue_id, plen_bytes;
