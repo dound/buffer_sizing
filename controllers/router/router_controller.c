@@ -1,5 +1,5 @@
 /**
- * Filename: buf_size_daemon.c
+ * Filename: router_controller.c
  * Purpose: defines a client which continuously monitors the NetFPGA and reports
  *          its observations to a server.
  */
@@ -17,11 +17,8 @@
 #include <unistd.h>
 #include "../common.h"
 #include "../io_wrapper.h"
+#include "nf2helpers.h"
 #include "nf2util.h"
-#include "reg_defines_bsr.h"
-
-/** SEND_STATS, if defined, will poll stats and send them to the server (don't use this and eventcap) */
-/* #define SEND_STATS */
 
 #define STR_VERSION "0.02b"
 
@@ -39,11 +36,6 @@ Router Controller Server v%s\n\
     Event Capture Listen UDP Port = %u\n\
     Update Send Interval (ms) = %u\n\
     Update Maximum Size (B) = %u"
-
-
-/** number of seconds between updates */
-#define UPDATE_INTERVAL_SEC 0
-#define UPDATE_INTERVAL_NSEC (1000 * 1000) /* one per millisecond */
 
 /** encapsulates a message to a client's controller */
 typedef struct {
@@ -69,7 +61,6 @@ typedef enum {
     CODE_SET_BUF_SIZE=3
 } code_t;
 
-static nf2_device_t nf2;
 static uint16_t server_port;
 static uint16_t evcap_port;
 static unsigned update_interval_millis;
@@ -77,12 +68,6 @@ static unsigned update_maxsize_bytes;
 
 static void* controller_main( void* nil );
 static void inform_server_loop();
-static uint32_t get_rate_limit( int queue );
-static void set_rate_limit( int queue, uint32_t shift );
-static uint32_t get_bytes_sent();
-static uint32_t get_buffer_size_packets( int queue );
-static void set_buffer_size_packets( int queue, uint32_t size );
-static uint32_t get_queue_occupancy_packets( int queue );
 
 static void rc_print( const char* format, ... ) {
 #ifdef _DEBUG_
@@ -225,10 +210,17 @@ static void* controller_main( void* nil ) {
             switch( packet.code ) {
             case CODE_SET_RATE_LIMIT:
                 set_rate_limit( packet.queue, packet.val );
+
+                if( packet.val )
+                    rc_print("rate limiter has been changed to %u", packet.val);
+                else
+                    rc_print("rate limiter has been disabled");
+
                 break;
 
             case CODE_SET_BUF_SIZE:
                 set_buffer_size_packets( packet.queue, packet.val );
+                rc_print("buffer size has been changed to %u packets in size", packet.val);
                 break;
 
             default:
@@ -248,8 +240,8 @@ static void* controller_main( void* nil ) {
 static void inform_server_loop() {
     int fd;
     struct timespec sleep_time;
-    sleep_time.tv_sec = UPDATE_INTERVAL_SEC;
-    sleep_time.tv_nsec = UPDATE_INTERVAL_NSEC;
+    sleep_time.tv_sec = update_interval_millis / 1000;
+    sleep_time.tv_nsec = (update_interval_millis / 1000) * 1000 * 1000 * 1000;
 
     /* make a UDP socket to send data to the server on */
     if( (fd = socket( AF_INET, SOCK_DGRAM, IPPROTO_TCP )) == -1 ) {
@@ -288,83 +280,4 @@ static void inform_server_loop() {
         /* wait a while before compiling the next packet */
         nanosleep( &sleep_time, NULL );
     }
-}
-
-static uint32_t get_rate_limit( int queue ) {
-    uint32_t enabled, val;
-
-    if( queue != 1 ) {
-        rc_print("Error: only queue 1 (not queue %d) can do rate limiting", queue);
-        exit( 1 );
-    }
-
-    readReg( &nf2, RATE_LIMIT_ENABLE_REG, &enabled );
-    readReg( &nf2, RATE_LIMIT_SHIFT_REG, &val );
-    return enabled ? val : 0;
-}
-
-static void set_rate_limit( int queue, uint32_t shift ) {
-    if( queue != 1 ) {
-        rc_print("Error: only queue 1 (not queue %d) can do rate limiting", queue);
-        exit( 1 );
-    }
-
-    uint32_t enabled = shift ? 1 : 0;
-    writeReg( &nf2, RATE_LIMIT_ENABLE_REG, enabled );
-    writeReg( &nf2, RATE_LIMIT_SHIFT_REG, shift );
-
-    if( shift )
-        rc_print("rate limiter has been changed to %u", shift);
-    else
-        rc_print("rate limiter has been disabled");
-}
-
-static uint32_t get_bytes_sent( int queue ) {
-    unsigned reg;
-    switch( queue ) {
-    case 0: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_0; break;
-    case 1: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_2; break;
-    case 2: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_4; break;
-    case 3: reg = OQ_NUM_PKT_BYTES_REMOVED_REG_6; break;
-    }
-
-    uint32_t val;
-    readReg( &nf2, reg, &val );
-    return val;
-}
-
-static inline unsigned get_buffer_size_packets_reg( int queue ) {
-    unsigned reg;
-    switch( queue ) {
-    case 0: reg = OQ_MAX_PKTS_IN_Q_REG_0; break;
-    case 1: reg = OQ_MAX_PKTS_IN_Q_REG_2; break;
-    case 2: reg = OQ_MAX_PKTS_IN_Q_REG_4; break;
-    case 3: reg = OQ_MAX_PKTS_IN_Q_REG_6; break;
-    }
-    return reg;
-}
-
-static uint32_t get_buffer_size_packets( int queue ) {
-    uint32_t val;
-    readReg( &nf2, get_buffer_size_packets_reg(queue), &val );
-    return val;
-}
-
-static void set_buffer_size_packets( int queue, uint32_t size ) {
-    writeReg( &nf2, get_buffer_size_packets_reg(queue), size );
-    rc_print("buffer size has been changed to %u packets in size", size);
-}
-
-static uint32_t get_queue_occupancy_packets( int queue ) {
-    unsigned reg;
-    switch( queue ) {
-    case 0: reg = OQ_NUM_PKTS_IN_Q_REG_0; break;
-    case 1: reg = OQ_NUM_PKTS_IN_Q_REG_2; break;
-    case 2: reg = OQ_NUM_PKTS_IN_Q_REG_4; break;
-    case 3: reg = OQ_NUM_PKTS_IN_Q_REG_6; break;
-    }
-
-    uint32_t val;
-    readReg( &nf2, reg, &val );
-    return val;
 }
