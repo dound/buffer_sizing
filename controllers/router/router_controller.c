@@ -26,18 +26,24 @@
 #define STR_VERSION "0.02b"
 
 #define STR_USAGE "\
-Buffer Size Reporting Daemon v%s\n\
-%s: [-?]\n\
+Router Controller Server v%s\n\
+%s\n\
   -?, -help:       displays this help\n\
-  -d, -dst, -ip:   sets the server IP address to connect to\n\
-  -p, -port:       sets the server port to connect to (both UDP and TCP)\n"
+  -l, -listen:     the port to listen for connections on\n\
+  -e, -evcap:      the port to listen for event capture packets on\n\
+  -i, -interval:   how often to send interval updates (millisec)\n\
+  -m, -maxsize:    maximum number of bytes to send in a packet\n"
+
+#define STR_PARAMS "\n\
+    Command Listen TCP Port = %u\n\
+    Event Capture Listen UDP Port = %u\n\
+    Update Send Interval (ms) = %u\n\
+    Update Maximum Size (B) = %u"
+
 
 /** number of seconds between updates */
 #define UPDATE_INTERVAL_SEC 0
 #define UPDATE_INTERVAL_NSEC (1000 * 1000) /* one per millisecond */
-
-/** port to contact the server on */
-#define DEFAULT_PORT 10272
 
 /** encapsulates a message to a client's controller */
 typedef struct {
@@ -64,8 +70,10 @@ typedef enum {
 } code_t;
 
 static nf2_device_t nf2;
-static uint32_t server_ip;
 static uint16_t server_port;
+static uint16_t evcap_port;
+static unsigned update_interval_millis;
+static unsigned update_maxsize_bytes;
 
 static void* controller_main( void* nil );
 static void inform_server_loop();
@@ -75,72 +83,6 @@ static uint32_t get_bytes_sent();
 static uint32_t get_buffer_size_packets( int queue );
 static void set_buffer_size_packets( int queue, uint32_t size );
 static uint32_t get_queue_occupancy_packets( int queue );
-
-int main( int argc, char** argv ) {
-    server_ip = 0;
-    server_port = DEFAULT_PORT;
-
-    /* ignore the broken pipe signal */
-    signal( SIGPIPE, SIG_IGN );
-
-    /* parse command-line arguments */
-    unsigned i;
-    for( i=1; i<argc || argc<=1; i++ ) {
-        if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
-            printf( STR_USAGE, STR_VERSION, (argc>0) ? argv[0] : "buf_size_daemon" );
-            return 0;
-        }
-        else if( str_matches(argv[i], 5, "-d", "-dst", "--dst", "-ip", "--ip") ) {
-            i += 1;
-            if( i == argc ) {
-                fprintf( stderr, "Error: -ip requires an IP address to be specified\n" );
-                return -1;
-            }
-            struct in_addr in_ip;
-            if( inet_aton(argv[i],&in_ip) == 0 ) {
-                fprintf( stderr, "Error: %s is not a valid IP address\n", argv[i] );
-                return -1;
-            }
-            server_ip = in_ip.s_addr;
-        }
-        else if( str_matches(argv[i], 3, "-p", "-port", "--port") ) {
-            i += 1;
-            if( i == argc ) {
-                fprintf( stderr, "Error: -port requires a port number to be specified\n" );
-                return -1;
-            }
-            uint32_t val = strtoul( argv[i], NULL, 10 );
-            if( val==0 || val > 65535 ) {
-                fprintf( stderr, "Error: %u is not a valid port\n", val );
-                return -1;
-            }
-            server_port = val;
-        }
-    }
-    if( server_ip==0 ) {
-        fprintf( stderr, "Error: -dst is a required argument; you must supply a server IP\n" );
-        exit( 1 );
-    }
-
-    /* connect to the hardware */
-    hw_init( &nf2 );
-
-    /* listen for commands from the server */
-    pthread_t tid;
-    if( 0 != pthread_create( &tid, NULL, controller_main, NULL ) ) {
-        fprintf( stderr, "Error: unable to start controller thread\n" );
-        return -1;
-    }
-
-    /* tell the server what is going on from time to time */
-#if SEND_STATS
-    inform_server_loop();
-#endif
-
-    /* cleanup */
-    closeDescriptor( &nf2 );
-    return 0;
-}
 
 static void rc_print( const char* format, ... ) {
 #ifdef _DEBUG_
@@ -153,6 +95,88 @@ static void rc_print( const char* format, ... ) {
 
     va_end( args );
 #endif
+}
+
+int main( int argc, char** argv ) {
+    server_port = 10272;
+    evcap_port = 27033;
+    update_interval_millis = 500;
+    update_maxsize_bytes = 1500;
+
+    /* ignore the broken pipe signal */
+    signal( SIGPIPE, SIG_IGN );
+
+    /* parse command-line arguments */
+    unsigned i;
+    for( i=1; i<argc || argc<=1; i++ ) {
+        if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
+            printf( STR_USAGE, STR_VERSION, "hi" );
+            return 0;
+        }
+        else if( str_matches(argv[i], 3, "-l", "-listen", "--listen") ) {
+            i += 1;
+            if( i == argc ) {
+                rc_print("Error: -listen requires a port number to be specified");
+                return -1;
+            }
+            uint32_t val = strtoul( argv[i], NULL, 10 );
+            if( val==0 || val > 65535 ) {
+                rc_print("Error: %u is not a valid port", val);
+                return -1;
+            }
+            server_port = val;
+        }
+        else if( str_matches(argv[i], 3, "-e", "-evcap", "--evcap") ) {
+            i += 1;
+            if( i == argc ) {
+                rc_print("Error: -evcap requires a port number to be specified");
+                return -1;
+            }
+            uint32_t val = strtoul( argv[i], NULL, 10 );
+            if( val==0 || val > 65535 ) {
+                rc_print("Error: %u is not a valid port", val);
+                return -1;
+            }
+            evcap_port = val;
+        }
+        else if( str_matches(argv[i], 3, "-i", "-interval", "--interval") ) {
+            i += 1;
+            if( i == argc ) {
+                rc_print("Error: -interval requires a interval to be specified");
+                return -1;
+            }
+            update_interval_millis = strtoul( argv[i], NULL, 10 );
+        }
+        else if( str_matches(argv[i], 3, "-m", "-maxsize", "--maxsize") ) {
+            i += 1;
+            if( i == argc ) {
+                rc_print("Error: -maxsize requires an argument to be specified");
+                return -1;
+            }
+            update_maxsize_bytes = strtoul( argv[i], NULL, 10 );
+        }
+    }
+
+    rc_print(STR_PARAMS, server_port, evcap_port, update_interval_millis, update_maxsize_bytes);
+
+    /* connect to the hardware */
+    hw_init( &nf2 );
+
+    /* listen for commands from the server */
+    pthread_t tid;
+    if( 0 != pthread_create( &tid, NULL, controller_main, NULL ) ) {
+        rc_print("Error: unable to start controller thread");
+        return -1;
+    }
+
+    /* tell the server what is going on from time to time */
+#if SEND_STATS
+    inform_server_loop();
+#endif
+
+    /* cleanup */
+    closeDescriptor( &nf2 );
+    return 0;
 }
 
 /** listens for incoming connections from the master who will send commands */
@@ -261,18 +285,6 @@ static void inform_server_loop() {
         update.queue_occ  = htonl( get_queue_occupancy_packets(1) );
         /* note: still have 2B before we hit min Eth payload (incl overheads) */
 
-        /* reuse sin as server addr */
-        sin.sin_addr.s_addr = server_ip;
-
-        /* send the update to the server */
-        if( -1 == sendto( fd, (char*)&update, sizeof(update), 0,
-                          (struct sockaddr*)&sin, sizeof(sin) ) ) {
-            if( errno != EINTR ) {
-                perror( "Error: sendto failed" );
-                exit( 1 );
-            }
-        }
-
         /* wait a while before compiling the next packet */
         nanosleep( &sleep_time, NULL );
     }
@@ -282,7 +294,7 @@ static uint32_t get_rate_limit( int queue ) {
     uint32_t enabled, val;
 
     if( queue != 1 ) {
-        fprintf( stderr, "Error: only queue 1 (not queue %d) can do rate limiting\n", queue );
+        rc_print("Error: only queue 1 (not queue %d) can do rate limiting", queue);
         exit( 1 );
     }
 
@@ -293,7 +305,7 @@ static uint32_t get_rate_limit( int queue ) {
 
 static void set_rate_limit( int queue, uint32_t shift ) {
     if( queue != 1 ) {
-        fprintf( stderr, "Error: only queue 1 (not queue %d) can do rate limiting\n", queue );
+        rc_print("Error: only queue 1 (not queue %d) can do rate limiting", queue);
         exit( 1 );
     }
 
