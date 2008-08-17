@@ -347,14 +347,25 @@ static void event_capture_handler() {
             update[updateInfoOn].sec  = htonl( now.tv_sec  );
             update[updateInfoOn].usec = htonl( now.tv_usec );
 
+            /* print the update info */
+            rc_print_verbose( "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u\n",
+                              updateInfoOn,
+                              update[updateInfoOn].sec,
+                              update[updateInfoOn].usec,
+                              update[updateInfoOn].arrived,
+                              update[updateInfoOn].departed,
+                              update[updateInfoOn].current );
+
             /* on to the next update */
             updateInfoOn += 1;
 
             /* see if the packet is full yet */
             if( updateInfoOn == update_infos_per_update_packet ) {
                 /* send the update to the GUI */
-                if( client_fd >= 0 )
+                if( client_fd >= 0 ) {
                     writen(client_fd, &update, update_infos_per_update_packet * sizeof(update_info_t));
+                    rc_print("update sent to client");
+                }
 
                 /* start again! */
                 updateInfoOn = 0;
