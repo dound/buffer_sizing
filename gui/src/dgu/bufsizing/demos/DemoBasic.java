@@ -28,10 +28,10 @@ public class DemoBasic {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, ratioCanvasW(100), ratioCanvasH(145), Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
+        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, ratioCanvasW(110), ratioCanvasH(155), Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
         demo.addRouter( la );
         
-        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, ratioCanvasW(455), ratioCanvasH(190) );
+        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, ratioCanvasW(430), ratioCanvasH(180) );
         demo.addGenericNode( hou );
         
         EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, ratioCanvasW(515), ratioCanvasH(215) );

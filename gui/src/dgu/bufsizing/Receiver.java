@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Receiver extends Node {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("nf2router.gif");
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/nf2router.gif");
     protected static final int ICON_WIDTH  = 50;
     protected static final int ICON_HEIGHT = 50;
     

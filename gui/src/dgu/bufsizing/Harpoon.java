@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Harpoon extends TrafficGenerator {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("harpoon.png");
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/harpoon.png");
     
     public Harpoon( String dstIP, String name, String nameShort, Importance importance, int x, int y ) {
         super( dstIP, name, nameShort, importance, x, y );

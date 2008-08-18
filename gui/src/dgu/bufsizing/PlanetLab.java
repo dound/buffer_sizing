@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class PlanetLab extends TrafficGenerator {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("planetlab.png");
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/planetlab.png");
     
     public PlanetLab( String dstIP, String name, String nameShort, Importance importance, int x, int y ) {
         super( dstIP, name, nameShort, importance, x, y );

@@ -10,7 +10,7 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class Tomahawk extends TrafficGenerator {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("tomahawk.jpg");
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/tomahawk.jpg");
     private int xput_bps = 0;
     private final TomahawkController controller;
 

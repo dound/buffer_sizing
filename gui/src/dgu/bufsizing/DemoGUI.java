@@ -32,13 +32,13 @@ public class DemoGUI extends javax.swing.JFrame {
         FORCE_1024_X_768,
         FIT_TO_SCREEN
     }
-    private static final DrawType drawType = DrawType.FORCE_1024_X_768;
+    private static final DrawType drawType = DrawType.FORCE_1920_X_1080;
     
     public static final int TIME_BETWEEN_REFRESHES = 250;
     private static final int NUM_IPERF_CONTROLLERS = 1;
     
     public static final String VERSION = "v0.03b";
-    public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("dgu.gif");
+    public static final java.awt.Image icon = java.awt.Toolkit.getDefaultToolkit().getImage("images/dgu.gif");
     private static JFreeChart chartXput, chartOcc, chartResults;
     public static DemoGUI me;
     public final Demo demo;
@@ -125,6 +125,9 @@ public class DemoGUI extends javax.swing.JFrame {
     }
     public static final int ratioH1080( int d ) { 
         return (int)(d * (HEIGHT / 1080.0));
+    }
+    public static final Dimension ratio1080( int width, int height ) { 
+        return new Dimension( ratioW1920(width), ratioH1080(height) );
     }
     
     public java.awt.Dimension SIZEmap = new java.awt.Dimension();

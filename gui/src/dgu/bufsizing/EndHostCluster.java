@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class EndHostCluster extends Node {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("servers.gif");
+    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/servers.gif");
     protected static final int ICON_WIDTH  = 50;
     protected static final int ICON_HEIGHT = 50;
     
