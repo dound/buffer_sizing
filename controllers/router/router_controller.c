@@ -62,7 +62,10 @@ typedef struct {
     uint32_t current;
 } __attribute__ ((packed)) update_info_t;
 
-#define MAX_PAYLOAD 1460 /* Ethernet payload minus IP + TCP overheads */
+#define MAX_FRAME_SIZE 1514
+#define OVERHEAD_SIZE (14 + 20 + 32) /* 14B Ethernet header, 20B IP header, 20B
+                                        TCP header, 12B TCP options seem typical */
+#define MAX_PAYLOAD (MAX_FRAME_SIZE - OVERHEAD_SIZE)
 #define MAX_UPDATE_INFOS (MAX_PAYLOAD / sizeof(update_info_t))
 
 typedef enum {
@@ -212,7 +215,7 @@ int main( int argc, char** argv ) {
     double evcaps_per_sec = 32.508; /* empircal measurement */
     double infos_per_sec = evcaps_per_sec / update_evcaps_per_info;
     double updates_per_sec = infos_per_sec / update_infos_per_update_packet;
-    unsigned overhead_bytes = 2 * (14 + 20 + 20); /* Ethernet + IP + TCP + ACK! */
+    unsigned overhead_bytes = 2 * OVERHEAD_SIZE; /* 2x accounts for ACK too */
     unsigned update_size_bits = 8 * (overhead_bytes + update_infos_per_update_packet * sizeof(update_info_t));
     double rate_bps = updates_per_sec * update_size_bits;
 
