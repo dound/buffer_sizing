@@ -410,10 +410,16 @@ public class DemoGUI extends javax.swing.JFrame {
                 DemoGUI.collXput.addSeries( bl.getDataRateLimit(),  false );
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOcc(),   false );
                 DemoGUI.collOcc.addSeries(  bl.getDataBufSize(),    false );
+                
+                ((XYPlot)chartXput.getPlot()).getRangeAxis().setLabel("Throughput (kbps)");
+                ((XYPlot)chartOcc.getPlot()).getRangeAxis().setLabel("Buffer Utilization (kB)");
             }
             else {
                 DemoGUI.collXput.addSeries( bl.getDataThroughputPer(), false );
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOccPer(),   false );
+                
+                ((XYPlot)chartXput.getPlot()).getRangeAxis().setLabel("Throughput (% Link Utilization)");
+                ((XYPlot)chartOcc.getPlot()).getRangeAxis().setLabel("Buffer Utilization (%)");
             }
             
             DemoGUI.me.refreshCharts();
@@ -465,10 +471,9 @@ public class DemoGUI extends javax.swing.JFrame {
         chartXput = prepareChart(
             "Throughput vs. Time",
             "Time",
-            "Throughput (kbps)",
+            "Throughput (% Link Utilization)",
             collXput
         );
-        
         XYPlot plot = (XYPlot) chartXput.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setSeriesPaint(0, new Color(0,0,128));
@@ -484,7 +489,7 @@ public class DemoGUI extends javax.swing.JFrame {
         chartOcc = prepareChart(
             "Buffer Occupancy and Size vs. Time",
             "Time",
-            "Size (kB)",
+            "Buffer Utilization (kB)",
             collOcc
         );    
          
