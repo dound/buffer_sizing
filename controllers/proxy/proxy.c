@@ -54,8 +54,8 @@ int main( int argc, char** argv ) {
 
     /* parse command-line arguments */
     unsigned i;
-    for( i=1; i<argc; i++ ) {
-        if( str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
+    for( i=1; i<argc || argc<=1; i++ ) {
+        if( argc<=1 || str_matches(argv[i], 5, "-?", "-help", "--help", "help", "?") ) {
             printf( STR_USAGE, STR_VERSION );
             return 0;
         }
