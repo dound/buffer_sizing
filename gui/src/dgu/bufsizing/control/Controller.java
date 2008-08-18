@@ -144,6 +144,14 @@ public abstract class Controller {
     public String getName() { return getTypeString() + " controller (" + serverIP + ":" + serverPort + ")"; }
 
     protected synchronized void sendCommand( byte code, int value ) {
+        sendCommand(code, (byte)0, value, false);
+    }
+    
+    protected synchronized void sendCommand( byte code, byte extra, int value ) {
+        sendCommand(code, extra, value, true);
+    }
+    
+    protected synchronized void sendCommand( byte code, byte extra, int value, boolean usesExtra ) {
         OutputStream myOut = out;
         
         if(tryingToConnect || myOut==null) {
@@ -155,6 +163,10 @@ public abstract class Controller {
         try {
             //write the code (one byte)
             myOut.write( code );
+            
+            //write the extra value if applicable
+            if( usesExtra )
+                myOut.write( extra );
 
             //write each byte in the value
             myOut.write(  value >> 24 );

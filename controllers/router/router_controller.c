@@ -44,13 +44,8 @@ Router Controller Server v%s\n\
 
 /** encapsulates a message to a client's controller */
 typedef struct {
-#ifdef _LITTLE_ENDIAN_
-    byte code:6;
-    byte queue:2;
-#else
-    byte queue:2;
-    byte code:6;
-#endif
+    byte code;
+    byte queue;
     uint32_t val;
 } __attribute__ ((packed)) control_t;
 

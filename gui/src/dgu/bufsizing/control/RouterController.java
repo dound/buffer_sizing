@@ -57,9 +57,7 @@ public class RouterController extends Controller {
      * @return the value returned by the command (0 if the command is a SET command)
      */
     public synchronized int command( RouterCmd cmd, byte queueNum, int value ) {
-        // use last two bits to specifiy which queue this pertains to
-        byte code_plus_queue = (byte)(cmd.code | (queueNum << 6));
-        sendCommand( code_plus_queue, value );
+        sendCommand( cmd.code, queueNum, value );
         return 0;
     }
     
