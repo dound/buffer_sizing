@@ -59,8 +59,8 @@ public class DemoGUI extends javax.swing.JFrame {
             WIDTH = 1920;
             HEIGHT = 1080;
             
-            CANVAS_HEIGHT = WIDTH - 250;
-            CANVAS_WIDTH = 250;
+            CANVAS_WIDTH = WIDTH - 350 - 25;
+            CANVAS_HEIGHT = 350;
         }
         else if( drawType == DrawType.FORCE_1024_X_768 ) {
             WIDTH = 1024;
@@ -93,8 +93,20 @@ public class DemoGUI extends javax.swing.JFrame {
             //HEIGHT = dm.getHeight();
             HEIGHT = (int)(WIDTH / 1.7777777);
             
-            CANVAS_HEIGHT = WIDTH - 250;
-            CANVAS_WIDTH = 250;
+            int controlWidth, rMargin, cHeight;
+            if( WIDTH <= 1024 ) {
+                controlWidth = 250;
+                rMargin = 20;
+                cHeight = 20;
+            }
+            else {
+                controlWidth = 350;
+                rMargin = 25;
+                cHeight = 350;
+            }
+            
+            CANVAS_WIDTH = WIDTH - controlWidth - rMargin;
+            CANVAS_HEIGHT = cHeight;
         }
         
         System.out.println("width=" + WIDTH + "  height=" + HEIGHT);
@@ -122,24 +134,31 @@ public class DemoGUI extends javax.swing.JFrame {
         double ratio = WIDTH / (double)HEIGHT;
         if( ratio <= 1.34 || drawType==DrawType.FORCE_1024_X_768 ) {
             int sepX = ratioW1024(5);
-            int sepY = ratioW1024(5);
-            int bMargin = 40, rMargin = 20;
+            int bMargin = 40;
             
             lblMap.setBounds(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
             SIZEmap.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
             pnlControl.setBounds(CANVAS_WIDTH + sepX, 0, WIDTH - lblMap.getWidth(), CANVAS_HEIGHT);
             
             int row2ChartWidth = WIDTH / 2 - sepX;
-            int row2Height = HEIGHT - CANVAS_HEIGHT - sepY - bMargin;
-            int row2Y = CANVAS_HEIGHT + sepY;
+            int row2Height = HEIGHT - CANVAS_HEIGHT - bMargin;
+            int row2Y = CANVAS_HEIGHT;
             pnlChartXput.setBounds(0, row2Y, row2ChartWidth, row2Height);
             pnlChartRight.setBounds(row2ChartWidth, row2Y, row2ChartWidth, row2Height);
         }
-        else if( ratio >= 1.76 || drawType==DrawType.FORCE_1920_X_1080 ) {
-            
-        }
         else {
+            int sepX = ratioW1920(10);
+            int bMargin = 40;
             
+            lblMap.setBounds(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            SIZEmap.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+            pnlControl.setBounds(CANVAS_WIDTH + sepX, 0, WIDTH - lblMap.getWidth(), CANVAS_HEIGHT);
+            
+            int row2ChartWidth = WIDTH / 2 - sepX;
+            int row2Height = HEIGHT - CANVAS_HEIGHT - bMargin;
+            int row2Y = CANVAS_HEIGHT;
+            pnlChartXput.setBounds(0, row2Y, row2ChartWidth, row2Height);
+            pnlChartRight.setBounds(row2ChartWidth, row2Y, row2ChartWidth, row2Height);
         }
     }
     
@@ -993,7 +1012,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode1.add(btnClearMeasuredPoints);
-        btnClearMeasuredPoints.setBounds(7, 40, 120, 20);
+        btnClearMeasuredPoints.setBounds(7, 45, 120, 20);
 
         btnClearRealTimePoints.setText("Scrolling Data");
         btnClearRealTimePoints.addActionListener(new java.awt.event.ActionListener() {
