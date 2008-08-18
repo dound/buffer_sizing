@@ -32,7 +32,21 @@ public class DemoGUI extends javax.swing.JFrame {
         FORCE_1024_X_768,
         FIT_TO_SCREEN
     }
-    private static final DrawType drawType = DrawType.FORCE_1024_X_768;
+    private static final DrawType drawType;
+    static {
+        int ret = GUIHelper.confirmDialog("Choose Resolution", 
+                    "Click YES to run at 1080p resolution (TV).\n" + 
+                    "Click NO to run at the original 1024x768 resolution.\n" + 
+                    "Click CANCEL to run at the largest resolution which fits on your screen.", 
+                    JOptionPane.YES_NO_CANCEL_OPTION);
+        
+        if( ret == JOptionPane.YES_OPTION )
+            drawType = DrawType.FORCE_1920_X_1080;
+        else if( ret == JOptionPane.NO_OPTION )
+            drawType = DrawType.FORCE_1024_X_768;
+        else
+            drawType = DrawType.FIT_TO_SCREEN;
+    }
     
     public static final int TIME_BETWEEN_REFRESHES = 250;
     private static final int NUM_IPERF_CONTROLLERS = 1;
