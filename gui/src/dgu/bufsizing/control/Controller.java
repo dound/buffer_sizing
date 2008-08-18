@@ -73,10 +73,11 @@ public abstract class Controller {
     /** Continuously tries to connect to the server. */
     private void connect() {
         tryingToConnect = true;
-        close();
         
         int tries = 0;
         while( s==null ) {
+            close();
+            
             if( tries++ > 0 ) {
                 System.err.println(getName() + ": Retrying to establish connection (try #" + tries + ")");
                 close();
