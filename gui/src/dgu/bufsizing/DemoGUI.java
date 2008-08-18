@@ -616,6 +616,11 @@ public class DemoGUI extends javax.swing.JFrame {
         XYPlot plot = (XYPlot) chartResults.getPlot();
         XYLineAndShapeRenderer renderer = resultsRenderer;
         
+        // use a fixed range
+        ValueAxis domain = plot.getDomainAxis();
+        domain.setAutoRange(false);
+        domain.setRange(1.0, BottleneckLink.interestingN[BottleneckLink.interestingN.length-1]);
+        
         // theoretical rule of thumb
         renderer.setSeriesPaint(0, new Color(128,0,0));
         renderer.setSeriesStroke(0, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
