@@ -3,7 +3,7 @@ set -o nounset
 set -o errecho
 
 evcap_per_info=(`echo "1 2 4 8 16 32"`)
-info_per_update=(`echo "1 2 4 8 16 32 64 73"`)
+info_per_update=(`echo "1 2 4 8 16 32 64 72"`)
 
 echo -e "EvCaps/Info\tInfos/Update\tUpdates/sec\tBandwidth_bps"
 
