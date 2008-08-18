@@ -356,7 +356,7 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-        plot.getDomainAxis().setFixedAutoRange(1.0e9 * 100000 / 8); // keep the domain at a constant range of values
+        //plot.getDomainAxis().setFixedAutoRange(1.0e9 * 100000 / 8); // keep the domain at a constant range of values
     }
     
     private void createChartOcc() {
@@ -375,7 +375,7 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-        plot.getDomainAxis().setFixedAutoRange(1.0e9 * 100000 / 8); // keep the domain at a constant range of values
+        //plot.getDomainAxis().setFixedAutoRange(1.0e9 * 100000 / 8); // keep the domain at a constant range of values
     }
     
     public XYLineAndShapeRenderer resultsRenderer = new XYLineAndShapeRenderer(true, false);
