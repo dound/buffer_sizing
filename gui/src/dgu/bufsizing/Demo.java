@@ -65,7 +65,7 @@ public class Demo {
         // draw the background image
         Composite compositeOriginal = gfx.getComposite();
         gfx.setComposite( Drawable.COMPOSITE_HALF );
-        gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, null );
+        gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, DemoGUI.CANVAS_WIDTH, DemoGUI.CANVAS_HEIGHT, null );
         gfx.setComposite( compositeOriginal );
         
         // draw the legend

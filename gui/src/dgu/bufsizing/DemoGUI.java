@@ -27,6 +27,13 @@ import org.jfree.ui.*;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
+    public enum DrawType {
+        FORCE_1920_X_1080,
+        FORCE_1024_X_768,
+        FIT_TO_SCREEN
+    }
+    private static final DrawType drawType = DrawType.FORCE_1024_X_768;
+    
     public static final int TIME_BETWEEN_REFRESHES = 250;
     private static final int NUM_IPERF_CONTROLLERS = 1;
     
@@ -40,12 +47,101 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final XYSeriesCollection collOcc  = new XYSeriesCollection();
     public static final XYSeriesCollection collRes  = new XYSeriesCollection();
     
-    public static final int CANVAS_WIDTH  = 1028;
-    public static final int CANVAS_HEIGHT =  250;
+    public static final int CANVAS_WIDTH;
+    public static final int CANVAS_HEIGHT;
+    
+    public static boolean freezeCharts = false;
+    
+    public static final int WIDTH;
+    public static final int HEIGHT;
+    static {
+        if( drawType == DrawType.FORCE_1920_X_1080 ) {
+            WIDTH = 1920;
+            HEIGHT = 1080;
+            
+            CANVAS_HEIGHT = WIDTH - 250;
+            CANVAS_WIDTH = 250;
+        }
+        else if( drawType == DrawType.FORCE_1024_X_768 ) {
+            WIDTH = 1024;
+            HEIGHT = 768;
+            
+            CANVAS_HEIGHT = ratioH768(250);
+            CANVAS_WIDTH = ratioW1024(774 - 20);
+        }    
+        else {
+            // Attempt to find the smallest monitor on the system
+            GraphicsEnvironment ge = GraphicsEnvironment
+                    .getLocalGraphicsEnvironment();
+            GraphicsDevice[] gs = ge.getScreenDevices();
+
+            // Get size of each screen and identify the smallest screen
+            int minPos = 0;
+            int minSize = Integer.MAX_VALUE;
+            for (int i = 0; i < gs.length; i++) {
+                DisplayMode dm = gs[i].getDisplayMode();
+                int screenWidth = dm.getWidth();
+                int screenHeight = dm.getHeight();
+                int screenSize = screenWidth * screenHeight;
+                if (screenSize < minSize) {
+                    minPos = i;
+                    minSize = screenSize;
+                }
+            }
+            DisplayMode dm = gs[minPos].getDisplayMode();
+            WIDTH = dm.getWidth();
+            //HEIGHT = dm.getHeight();
+            HEIGHT = (int)(WIDTH / 1.7777777);
+            
+            CANVAS_HEIGHT = WIDTH - 250;
+            CANVAS_WIDTH = 250;
+        }
+        
+        System.out.println("width=" + WIDTH + "  height=" + HEIGHT);
+    }
     private BufferedImage img = new BufferedImage( CANVAS_WIDTH, CANVAS_HEIGHT, BufferedImage.TYPE_INT_RGB );
     private final Graphics2D gfx = (Graphics2D)img.getGraphics();   
     
-    public static boolean freezeCharts = false;
+    public static final int ratioW1024( int d ) { 
+        return (int)(d * (WIDTH / 1024.0));
+    }
+    public static final int ratioW1920( int d ) { 
+        return (int)(d * (WIDTH / 1920.0));
+    }
+    public static final int ratioH768( int d ) { 
+        return (int)(d * (HEIGHT / 768.0));
+    }
+    public static final int ratioH1080( int d ) { 
+        return (int)(d * (HEIGHT / 1080.0));
+    }
+    
+    public java.awt.Dimension SIZEmap = new java.awt.Dimension();
+    private void adjustBounds() {
+        this.setBackground(pnlControl.getBackground());
+        
+        double ratio = WIDTH / (double)HEIGHT;
+        if( ratio <= 1.34 || drawType==DrawType.FORCE_1024_X_768 ) {
+            int sepX = ratioW1024(5);
+            int sepY = ratioW1024(5);
+            int bMargin = 40, rMargin = 20;
+            
+            lblMap.setBounds(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            SIZEmap.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+            pnlControl.setBounds(CANVAS_WIDTH + sepX, 0, WIDTH - lblMap.getWidth(), CANVAS_HEIGHT);
+            
+            int row2ChartWidth = WIDTH / 2 - sepX;
+            int row2Height = HEIGHT - CANVAS_HEIGHT - sepY - bMargin;
+            int row2Y = CANVAS_HEIGHT + sepY;
+            pnlChartXput.setBounds(0, row2Y, row2ChartWidth, row2Height);
+            pnlChartRight.setBounds(row2ChartWidth, row2Y, row2ChartWidth, row2Height);
+        }
+        else if( ratio >= 1.76 || drawType==DrawType.FORCE_1920_X_1080 ) {
+            
+        }
+        else {
+            
+        }
+    }
     
     /** Creates new form DemoGUI */
     public DemoGUI( final Demo d ) {
@@ -58,6 +154,7 @@ public class DemoGUI extends javax.swing.JFrame {
         createChartOcc();
         createChartResults();
         initComponents();
+        setBounds(0, 0, WIDTH, HEIGHT);
         pnlTGen.setVisible(false);
         lblNode.setVisible(false);
         cboNode.setVisible(false);
@@ -68,9 +165,8 @@ public class DemoGUI extends javax.swing.JFrame {
         setIconImage( icon );
         setSearchPrecision(1);
         readAutoModeParamsFromFileWrapper();
-        
-        java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds((screenSize.width - 1024) / 2, (screenSize.height - 768) / 2, 1024, 768);
+
+        adjustBounds();
         
         // starts a thread to keep the topology map refreshed
         new Thread() {
@@ -672,9 +768,19 @@ public class DemoGUI extends javax.swing.JFrame {
         optGroupRule = new javax.swing.ButtonGroup();
         optGroupTGen = new javax.swing.ButtonGroup();
         optGroupMode = new javax.swing.ButtonGroup();
-        pnlDetails = new javax.swing.JPanel();
-        slNumFlows = new JSliderBound( "numFlows" );
         pnlChartXput = new ChartPanel(chartXput);
+        pnlChartRight = new ChartPanel(chartResults);
+        pnlDetails = new javax.swing.JPanel();
+        cboNode = new JComboBoxBound( "getRouters", "" );
+        cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
+        lblBottleneck = new javax.swing.JLabel();
+        lblNode = new javax.swing.JLabel();
+        pnlTGen = new javax.swing.JPanel();
+        optIperf = new javax.swing.JRadioButton();
+        optHarpoon = new javax.swing.JRadioButton();
+        optTomahawk = new javax.swing.JRadioButton();
+        optPlanetLab = new javax.swing.JRadioButton();
+        pnlControl = new javax.swing.JPanel();
         pnlSizing = new javax.swing.JPanel();
         optRuleOfThumb = new javax.swing.JRadioButton();
         optCustom = new javax.swing.JRadioButton();
@@ -683,42 +789,111 @@ public class DemoGUI extends javax.swing.JFrame {
         lblCustom = new javax.swing.JLabel();
         lblRuleOfThumb = new javax.swing.JLabel();
         lblGuido = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        cboNode = new JComboBoxBound( "getRouters", "" );
-        cboBottleneck = new JComboBoxBound( "getBottlenecks", "" );
-        lblBottleneck = new javax.swing.JLabel();
-        lblNode = new javax.swing.JLabel();
-        pnlChartRight = new ChartPanel(chartResults);
-        btnClearMeasuredPoints = new javax.swing.JButton();
+        pnlMode2 = new javax.swing.JPanel();
+        slNumFlows = new JSliderBound( "numFlows" );
         lblNumFlows = new javax.swing.JLabel();
-        pnlTGen = new javax.swing.JPanel();
-        optIperf = new javax.swing.JRadioButton();
-        optHarpoon = new javax.swing.JRadioButton();
-        optTomahawk = new javax.swing.JRadioButton();
-        optPlanetLab = new javax.swing.JRadioButton();
+        pnlMode1 = new javax.swing.JPanel();
+        btnClearMeasuredPoints = new javax.swing.JButton();
+        btnClearRealTimePoints = new javax.swing.JButton();
         pnlMode = new javax.swing.JPanel();
         optManual = new javax.swing.JRadioButton();
         optAutoForCurrentN = new javax.swing.JRadioButton();
         optAuto = new javax.swing.JRadioButton();
-        btnClearRealTimePoints = new javax.swing.JButton();
-        pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
 
+        pnlChartXput.setLayout(null);
+        getContentPane().add(pnlChartXput);
+        pnlChartXput.setBounds(10, 670, 509, 397);
+
+        pnlChartRight.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pnlChartRightMouseClicked(evt);
+            }
+        });
+        pnlChartRight.setLayout(null);
+        getContentPane().add(pnlChartRight);
+        pnlChartRight.setBounds(520, 670, 509, 397);
+
         pnlDetails.setLayout(null);
 
-        slNumFlows.setMajorTickSpacing(250);
-        slNumFlows.setMaximum(900);
-        slNumFlows.setMinorTickSpacing(100);
-        slNumFlows.setValue(0);
-        pnlDetails.add(slNumFlows);
-        slNumFlows.setBounds(515, 25, 220, 16);
+        pnlDetails.add(cboNode);
+        cboNode.setBounds(-200, 10, 130, 25);
 
-        pnlChartXput.setLayout(null);
-        pnlDetails.add(pnlChartXput);
-        pnlChartXput.setBounds(0, 93, 509, 397);
+        pnlDetails.add(cboBottleneck);
+        cboBottleneck.setBounds(-200, 40, 130, 25);
+
+        lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblBottleneck.setText("Bottleneck:");
+        pnlDetails.add(lblBottleneck);
+        lblBottleneck.setBounds(-200, 40, 70, 25);
+
+        lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblNode.setText("Node:");
+        pnlDetails.add(lblNode);
+        lblNode.setBounds(-200, 10, 70, 25);
+
+        pnlTGen.setBorder(javax.swing.BorderFactory.createTitledBorder("Traffic Generator"));
+        pnlTGen.setLayout(null);
+
+        optGroupTGen.add(optIperf);
+        optIperf.setFont(new java.awt.Font("Arial", 0, 12));
+        optIperf.setSelected(true);
+        optIperf.setText("Iperf");
+        optIperf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optIperfActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optIperf);
+        optIperf.setBounds(10, 15, 95, 15);
+
+        optGroupTGen.add(optHarpoon);
+        optHarpoon.setFont(new java.awt.Font("Arial", 0, 12));
+        optHarpoon.setText("Harpoon");
+        optHarpoon.setEnabled(false);
+        optHarpoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optHarpoonActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optHarpoon);
+        optHarpoon.setBounds(10, 53, 95, 15);
+
+        optGroupTGen.add(optTomahawk);
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
+        optTomahawk.setText("Tomahawk");
+        optTomahawk.setEnabled(false);
+        optTomahawk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optTomahawkActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optTomahawk);
+        optTomahawk.setBounds(10, 34, 95, 15);
+
+        optGroupTGen.add(optPlanetLab);
+        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12));
+        optPlanetLab.setText("Planet Lab");
+        optPlanetLab.setEnabled(false);
+        optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optPlanetLabActionPerformed(evt);
+            }
+        });
+        pnlTGen.add(optPlanetLab);
+        optPlanetLab.setBounds(10, 72, 95, 15);
+
+        pnlDetails.add(pnlTGen);
+        pnlTGen.setBounds(-200, 5, 115, 90);
+
+        getContentPane().add(pnlDetails);
+        pnlDetails.setBounds(-200, 50, 50, 50);
+
+        pnlControl.setLayout(null);
 
         pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
         pnlSizing.setLayout(null);
@@ -787,110 +962,56 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(lblGuido);
         lblGuido.setBounds(175, 35, 60, 15);
 
-        pnlDetails.add(pnlSizing);
-        pnlSizing.setBounds(240, 5, 245, 90);
-        pnlDetails.add(jSeparator1);
-        jSeparator1.setBounds(0, 0, 1025, 10);
+        pnlControl.add(pnlSizing);
+        pnlSizing.setBounds(0, 0, 245, 90);
 
-        pnlDetails.add(cboNode);
-        cboNode.setBounds(80, 10, 130, 25);
+        pnlMode2.setBorder(javax.swing.BorderFactory.createTitledBorder("Flow Control"));
+        pnlMode2.setLayout(null);
 
-        pnlDetails.add(cboBottleneck);
-        cboBottleneck.setBounds(80, 40, 130, 25);
+        slNumFlows.setMajorTickSpacing(250);
+        slNumFlows.setMaximum(900);
+        slNumFlows.setMinorTickSpacing(100);
+        slNumFlows.setValue(0);
+        pnlMode2.add(slNumFlows);
+        slNumFlows.setBounds(15, 35, 220, 16);
 
-        lblBottleneck.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblBottleneck.setText("Bottleneck:");
-        pnlDetails.add(lblBottleneck);
-        lblBottleneck.setBounds(5, 40, 70, 25);
+        lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblNumFlows.setText("Number of Flows = 0");
+        pnlMode2.add(lblNumFlows);
+        lblNumFlows.setBounds(15, 15, 220, 18);
 
-        lblNode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblNode.setText("Node:");
-        pnlDetails.add(lblNode);
-        lblNode.setBounds(5, 10, 70, 25);
+        pnlControl.add(pnlMode2);
+        pnlMode2.setBounds(0, 96, 245, 60);
 
-        pnlChartRight.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                pnlChartRightMouseClicked(evt);
-            }
-        });
-        pnlChartRight.setLayout(null);
-        pnlDetails.add(pnlChartRight);
-        pnlChartRight.setBounds(508, 93, 509, 397);
+        pnlMode1.setBorder(javax.swing.BorderFactory.createTitledBorder("Clear ..."));
+        pnlMode1.setLayout(null);
 
-        btnClearMeasuredPoints.setText("Clear Util");
+        btnClearMeasuredPoints.setText("Utilization Data");
         btnClearMeasuredPoints.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearMeasuredPointsActionPerformed(evt);
             }
         });
-        pnlDetails.add(btnClearMeasuredPoints);
-        btnClearMeasuredPoints.setBounds(125, 70, 115, 20);
+        pnlMode1.add(btnClearMeasuredPoints);
+        btnClearMeasuredPoints.setBounds(7, 40, 120, 20);
 
-        lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblNumFlows.setText("Number of Flows = 0");
-        lblNumFlows.setOpaque(true);
-        pnlDetails.add(lblNumFlows);
-        lblNumFlows.setBounds(515, 5, 220, 18);
-
-        pnlTGen.setBorder(javax.swing.BorderFactory.createTitledBorder("Traffic Generator"));
-        pnlTGen.setLayout(null);
-
-        optGroupTGen.add(optIperf);
-        optIperf.setFont(new java.awt.Font("Arial", 0, 12));
-        optIperf.setSelected(true);
-        optIperf.setText("Iperf");
-        optIperf.addActionListener(new java.awt.event.ActionListener() {
+        btnClearRealTimePoints.setText("Scrolling Data");
+        btnClearRealTimePoints.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optIperfActionPerformed(evt);
+                btnClearRealTimePointsActionPerformed(evt);
             }
         });
-        pnlTGen.add(optIperf);
-        optIperf.setBounds(10, 15, 95, 15);
+        pnlMode1.add(btnClearRealTimePoints);
+        btnClearRealTimePoints.setBounds(7, 20, 120, 20);
 
-        optGroupTGen.add(optHarpoon);
-        optHarpoon.setFont(new java.awt.Font("Arial", 0, 12));
-        optHarpoon.setText("Harpoon");
-        optHarpoon.setEnabled(false);
-        optHarpoon.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optHarpoonActionPerformed(evt);
-            }
-        });
-        pnlTGen.add(optHarpoon);
-        optHarpoon.setBounds(10, 53, 95, 15);
-
-        optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
-        optTomahawk.setText("Tomahawk");
-        optTomahawk.setEnabled(false);
-        optTomahawk.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optTomahawkActionPerformed(evt);
-            }
-        });
-        pnlTGen.add(optTomahawk);
-        optTomahawk.setBounds(10, 34, 95, 15);
-
-        optGroupTGen.add(optPlanetLab);
-        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12));
-        optPlanetLab.setText("Planet Lab");
-        optPlanetLab.setEnabled(false);
-        optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optPlanetLabActionPerformed(evt);
-            }
-        });
-        pnlTGen.add(optPlanetLab);
-        optPlanetLab.setBounds(10, 72, 95, 15);
-
-        pnlDetails.add(pnlTGen);
-        pnlTGen.setBounds(750, 5, 115, 90);
+        pnlControl.add(pnlMode1);
+        pnlMode1.setBounds(0, 162, 135, 90);
 
         pnlMode.setBorder(javax.swing.BorderFactory.createTitledBorder("Mode"));
         pnlMode.setLayout(null);
 
         optGroupMode.add(optManual);
-        optManual.setFont(new java.awt.Font("Arial", 0, 12));
+        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optManual.setSelected(true);
         optManual.setText("Manual");
         optManual.addActionListener(new java.awt.event.ActionListener() {
@@ -899,7 +1020,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode.add(optManual);
-        optManual.setBounds(10, 15, 100, 15);
+        optManual.setBounds(10, 15, 90, 15);
 
         optGroupMode.add(optAutoForCurrentN);
         optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12));
@@ -910,7 +1031,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode.add(optAutoForCurrentN);
-        optAutoForCurrentN.setBounds(10, 55, 100, 30);
+        optAutoForCurrentN.setBounds(10, 55, 90, 30);
 
         optGroupMode.add(optAuto);
         optAuto.setFont(new java.awt.Font("Arial", 0, 12));
@@ -921,32 +1042,20 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlMode.add(optAuto);
-        optAuto.setBounds(10, 35, 100, 15);
+        optAuto.setBounds(10, 35, 90, 15);
 
-        pnlDetails.add(pnlMode);
-        pnlMode.setBounds(890, 5, 125, 90);
+        pnlControl.add(pnlMode);
+        pnlMode.setBounds(140, 162, 105, 90);
 
-        btnClearRealTimePoints.setText("Clear Xput");
-        btnClearRealTimePoints.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearRealTimePointsActionPerformed(evt);
-            }
-        });
-        pnlDetails.add(btnClearRealTimePoints);
-        btnClearRealTimePoints.setBounds(5, 70, 115, 20);
-
-        getContentPane().add(pnlDetails);
-        pnlDetails.setBounds(0, 249, 1028, 519);
-
-        pnlMap.setLayout(null);
+        getContentPane().add(pnlControl);
+        pnlControl.setBounds(1000, 5, 250, 250);
 
         lblMap.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblMap.setDoubleBuffered(true);
-        pnlMap.add(lblMap);
-        lblMap.setBounds(0, 0, 1018, 250);
-
-        getContentPane().add(pnlMap);
-        pnlMap.setBounds(0, 0, 1028, 250);
+        getContentPane().add(lblMap);
+        lblMap.setBounds(0, 0, 990, 250);
+        getContentPane().add(jSeparator1);
+        jSeparator1.setBounds(0, 270, 1025, 10);
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -1098,9 +1207,11 @@ private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent ev
     private javax.swing.JRadioButton optTomahawk;
     private org.jfree.chart.ChartPanel pnlChartRight;
     private org.jfree.chart.ChartPanel pnlChartXput;
+    private javax.swing.JPanel pnlControl;
     private javax.swing.JPanel pnlDetails;
-    private javax.swing.JPanel pnlMap;
     private javax.swing.JPanel pnlMode;
+    private javax.swing.JPanel pnlMode1;
+    private javax.swing.JPanel pnlMode2;
     private javax.swing.JPanel pnlSizing;
     private javax.swing.JPanel pnlTGen;
     private dgu.util.swing.binding.JSliderBound slCustomBufferSize;

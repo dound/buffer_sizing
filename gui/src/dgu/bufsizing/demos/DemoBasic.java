@@ -21,27 +21,30 @@ public class DemoBasic {
         }
     }
     
+    private static int ratioCanvasW(int x) { return (int)(x * (DemoGUI.CANVAS_WIDTH / 1024.0)); }
+    private static int ratioCanvasH(int y) { return (int)(y * (DemoGUI.CANVAS_HEIGHT / 250.0)); }
+    
     public static Demo createDemo() throws IllegalArgValException {
         Demo demo = new Demo();
         
         // add our routers
-        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, 100, 145, Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
+        Router la  = new Router( "Los Angeles", "LA", Importance.IMPORTANT, ratioCanvasW(100), ratioCanvasH(145), Demo.DEFAULT_ROUTER_CONTROLLER_PORT, EventProcessor.DEFAULT_EVCAP_PORT );
         demo.addRouter( la );
         
-        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, 455, 190 );
+        Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, ratioCanvasW(455), ratioCanvasH(190) );
         demo.addGenericNode( hou );
         
-        EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, 515, 215 );
+        EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, ratioCanvasW(515), ratioCanvasH(215) );
         demo.addGenericNode( rice );
         
-        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, 920, 80 );
+        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, ratioCanvasW(920), ratioCanvasH(80) );
         demo.addGenericNode( ny );
         
-        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, 865, 120 );
+        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, ratioCanvasW(865), ratioCanvasH(120) );
         demo.addGenericNode( dc );
         
         // add our traffic generators
-        TrafficGenerator su = new Iperf( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, 30, 100, true, 100000000 );
+        TrafficGenerator su = new Iperf( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, ratioCanvasW(30), ratioCanvasH(100), true, 100000000 );
         demo.addTrafficGenerator( su );
         
         // add the links between nodes
