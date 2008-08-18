@@ -80,7 +80,7 @@ static void tc_print( const char* format, ... ) {
     va_start( args, format );
 
     tc_print_timestamp();
-    fprintf( stdout, "[Router Controller Server] " );
+    fprintf( stdout, "[Traffic Controller Server] " );
     vfprintf( stdout, format, args );
     fprintf( stdout, "\n" );
 
@@ -96,7 +96,7 @@ static void tc_print_verbose( const char* format, ... ) {
     va_start( args, format );
 
     tc_print_timestamp();
-    fprintf( stdout, "[Router Controller Server] " );
+    fprintf( stdout, "[Traffic Controller Server] " );
     vfprintf( stdout, format, args );
     fprintf( stdout, "\n" );
 
