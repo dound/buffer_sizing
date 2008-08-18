@@ -12,6 +12,7 @@
 #else
 #include <sys/types.h>
 #endif
+#include <stdarg.h>
 #include <sys/param.h> /* __BYTE_ORDER, __BIG_ENDIAN, __LITTLE_ENDIAN */
 #include <stdio.h>     /* FILE */
 
@@ -61,5 +62,10 @@ inline void* malloc_or_die( size_t size );
 
 /** Returns true if any of the var_args match given with strcmp. */
 bool str_matches( const char* given, int num_args, ... );
+
+void print_init( const char* name, int verbosity );
+void print_timestamp();
+void print( const char* format, ... );
+void print_verbose( int level, const char* format, ... );
 
 #endif /* COMMON_H */

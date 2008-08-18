@@ -94,3 +94,55 @@ bool str_matches( const char* given, int num_args, ... ) {
 
     return ret;
 }
+
+static double startTime;
+static const char* printName;
+static int verbose;
+void print_init(const char* name, int verbosity) {
+    struct timeval now;
+
+    /* initialize the start time */
+    gettimeofday(&now, NULL);
+    startTime = now.tv_sec + now.tv_usec / 1000000.0;
+
+    printName = name;
+    verbose = verbosity;
+}
+
+void print_timestamp() {
+    struct timeval now;
+    double t;
+
+    gettimeofday(&now,NULL);
+    t = now.tv_sec + now.tv_usec / 1000000.0 - startTime;
+
+    fprintf( stdout, "%.3f: ", t );
+}
+
+void print( const char* format, ... ) {
+    va_list args;
+    va_start( args, format );
+
+    print_timestamp();
+    fprintf( stdout, "[%s] ", printName );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
+
+    va_end( args );
+}
+
+void print_verbose( int level, const char* format, ... ) {
+    va_list args;
+
+    if( verbose < level )
+        return;
+
+    va_start( args, format );
+
+    print_timestamp();
+    fprintf( stdout, "[%s] ", printName );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
+
+    va_end( args );
+}
