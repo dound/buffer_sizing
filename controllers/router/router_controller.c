@@ -77,6 +77,7 @@ static uint16_t evcap_port;
 static unsigned update_evcaps_per_info;
 static unsigned update_infos_per_update_packet;
 static int verbose = 0;
+static double startTime;
 static int client_fd = -1;
 
 static void* controller_main( void* nil );
@@ -88,7 +89,7 @@ static void rc_print_timestamp() {
     double t;
 
     gettimeofday(&now,NULL);
-    t = now.tv_sec + now.tv_usec / 1000000;
+    t = now.tv_sec + now.tv_usec / 1000000.0;
 
     fprintf( stdout, "%.3f: ", t );
 }
@@ -122,6 +123,13 @@ static void rc_print_verbose( const char* format, ... ) {
 }
 
 int main( int argc, char** argv ) {
+    struct timeval now;
+
+    /* initialize the start time */
+    gettimeofday(&now, NULL);
+    startTime = now.tv_sec + now.tv_usec / 1000000.0;
+
+    /* default values for command-line parameters */
     int printOnly = 0;
     server_port = 10272;
     evcap_port = 27033;
