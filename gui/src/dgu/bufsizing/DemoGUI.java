@@ -59,6 +59,10 @@ public class DemoGUI extends javax.swing.JFrame {
         createChartResults();
         initComponents();
         pnlTGen.setVisible(false);
+        lblNode.setVisible(false);
+        cboNode.setVisible(false);
+        lblBottleneck.setVisible(false);
+        cboBottleneck.setVisible(false);
         initPopup();
         prepareBindings();
         setIconImage( icon );
