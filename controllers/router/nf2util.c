@@ -374,7 +374,7 @@ void hw_init( nf2_device_t* nf2 ) {
     else {
         char about[STR_HW_INFO_MAX_LEN];
         hw_info_to_string( nf2, about, STR_HW_INFO_MAX_LEN );
-        debug_println( "Now connected to the NetFPGA ... %s", about );
+        fprintf( stdout, "Now connected to the NetFPGA ... %s", about );
     }
 }
 
