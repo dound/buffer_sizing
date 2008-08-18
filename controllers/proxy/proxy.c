@@ -190,7 +190,7 @@ static int forwardData(int fdFrom, const char* strFrom, int fdTo, const char* st
     /* watch for EOF */
     if(len == 0) {
         print("EOF received from %s", strFrom);
-        return 1; /* other side may still send data */
+        return 0;
     }
 
     /* pipe the data to the other fd */
