@@ -32,7 +32,8 @@ Router Controller Server v%s\n\
   -c, -coallesce:  number of event capture packets to coallesce per info field\n\
   -n, -num:        number of info fields to (try to) send per packet\n\
   -b, -bw:         compute the estimated bandwidth and update rate and then exit\n\
-  -v, -verbose:    verbosely print information to standard out\n"
+  -v, -verbose:    verbosely print information to standard out\n\
+  -vv, -vverbose:  very verbosely print information to standard out\n"
 
 #define STR_PARAMS "\n\
     Command Listen TCP Port = %u\n\
@@ -104,10 +105,10 @@ static void rc_print( const char* format, ... ) {
     va_end( args );
 }
 
-static void rc_print_verbose( const char* format, ... ) {
+static void rc_print_verbose( int level, const char* format, ... ) {
     va_list args;
 
-    if( !verbose )
+    if( verbose < level )
         return;
 
     va_start( args, format );
@@ -203,6 +204,9 @@ int main( int argc, char** argv ) {
         }
         else if( str_matches(argv[i], 3, "-v", "-verbose", "--verbose") ) {
             verbose = 1;
+        }
+        else if( str_matches(argv[i], 3, "-vv", "-vverbose", "--vverbose") ) {
+            verbose = 2;
         }
     }
 
@@ -387,7 +391,8 @@ static void event_capture_handler() {
             u->usec = now.tv_usec;
 
             /* print the update info */
-            rc_print_verbose( "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u\n",
+            rc_print_verbose( 1,
+                              "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u\n",
                               updateInfoOn,
                               u->sec,
                               u->usec,
@@ -410,7 +415,7 @@ static void event_capture_handler() {
                 /* send the update to the GUI */
                 if( client_fd >= 0 ) {
                     writen(client_fd, &update, update_infos_per_update_packet * sizeof(update_info_t));
-                    rc_print_verbose("update sent to client");
+                    rc_print_verbose(2, "update sent to client");
                 }
 
                 /* start again! */
@@ -460,17 +465,17 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     index += 1;
 
     /* skip the sequence number */
-    rc_print_verbose( "seq = %u", getU32(buf, index) );
+    rc_print_verbose( 2, "seq = %u", getU32(buf, index) );
     index += 4;
 
     /* get the timestamp before the queue data */
     timestamp_8ns = getU64( buf, 70 );
     if( lastTS > timestamp_8ns ) {
-        rc_print_verbose( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
+        rc_print( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
         return; /* old, out-of-order packet */
     }
     else {
-        rc_print_verbose( "got new timestamp %llu", timestamp_8ns );
+        rc_print_verbose( 2, "got new timestamp %llu", timestamp_8ns );
         lastTS = timestamp_8ns;
     }
 
@@ -480,7 +485,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_bytes = 8 * getU32(buf, index);
             u->current = num_bytes;
-            rc_print_verbose( "queue 2 set to %uB", num_bytes );
+            rc_print_verbose( 2, "queue 2 set to %uB", num_bytes );
         }
         index += 4;
 
@@ -488,7 +493,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_packets = getU32(buf, index);
             u->current = num_packets;
-            rc_print_verbose( "queue 2 set to %u packets" + num_packets );
+            rc_print_verbose( 2, "queue 2 set to %u packets" + num_packets );
         }
         index += 4;
     }
@@ -500,14 +505,14 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     timestamp_adjusted_8ns = timestamp_8ns;
     while( index + 4 < len ) {
         type = (getU32(buf, index) & MASK_TYPE) >> 30;
-        rc_print_verbose( "  got type = 0x%0X", type );
+        rc_print_verbose( 2, "  got type = 0x%0X", type );
 
         if( type == TYPE_TS ) {
             if( index + 8 >= len ) break;
 
             timestamp_8ns = getU64( buf, index );
             index += 8;
-            rc_print_verbose( "    got timestamp %llu", timestamp_8ns );
+            rc_print_verbose( 2, "    got timestamp %llu", timestamp_8ns );
         }
         else {
             int val, queue_id, plen_bytes;
@@ -519,7 +524,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
             timestamp_adjusted_8ns = (timestamp_8ns & MASK_TSA1) | ntohl(val & MASK_TSA2);
             index += 4;
 
-            rc_print_verbose( "    %uB %s for queue %u at timestamp %llu",
+            rc_print_verbose( 2, "    %uB %s for queue %u at timestamp %llu",
                            plen_bytes,
                            (type==TYPE_ARRIVE)?"arrived":(type==TYPE_DEPART)?"departed":"dropped",
                            queue_id,
@@ -527,7 +532,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
 
             /* only pay attention to NF2C1 for now */
             if( queue_id != DEFAULT_QUEUE_TO_MONITOR ) {
-                rc_print_verbose( "    ignoring event for queue %u", queue_id );
+                rc_print_verbose( 2, "    ignoring event for queue %u", queue_id );
                 continue;
             }
 
@@ -537,7 +542,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->arrived += plen_bytes;
 
-                rc_print_verbose( "arrival => %u", u->arrived );
+                rc_print_verbose( 2, "arrival => %u", u->arrived );
             }
             else if( type == TYPE_DEPART ) {
                 if( USE_PACKETS )
@@ -545,10 +550,10 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->departed += plen_bytes;
 
-                rc_print_verbose( "departure => %u", u->departed );
+                rc_print_verbose( 2, "departure => %u", u->departed );
             }
             else
-                rc_print_verbose( "    (dropped)" );
+                rc_print_verbose( 2, "    (dropped)" );
         }
     }
 }
