@@ -47,7 +47,7 @@ int main( int argc, char** argv ) {
 
     /* default values for command-line parameters */
     port = 10272;
-    server_ip = htonl(0x40391742); /* 64.57.23.66 */
+    server_ip = 0;
 
     /* ignore the broken pipe signal */
     signal( SIGPIPE, SIG_IGN );
@@ -86,6 +86,11 @@ int main( int argc, char** argv ) {
             }
             port = val;
         }
+    }
+
+    if( server_ip == 0 ) {
+        print("Error: -server must be specified");
+        exit(1);
     }
 
     /* listen for commands from the server */
