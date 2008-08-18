@@ -341,6 +341,8 @@ public class DemoGUI extends javax.swing.JFrame {
         range.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
         range.setAutoRange( true );
         
+        chart.getLegend().setPosition(RectangleEdge.TOP);
+        
         return chart;
     }
     
