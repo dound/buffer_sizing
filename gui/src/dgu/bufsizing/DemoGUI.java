@@ -305,7 +305,7 @@ public class DemoGUI extends javax.swing.JFrame {
         
                 
         // start the iperf controller(s)
-        int baseIPOctet = 84;
+        int baseIPOctet = 81;
         int numIperfControllers = GUIHelper.getIntFromUser("How many traffic controllers are running?", 0, NUM_IPERF_CONTROLLERS, 9);
         for( int i=0; i<numIperfControllers; i++ ) {
             String ip = GUIHelper.getInput("What is the IP or hostname of iperf controller server #" + i + "?", "b" + (baseIPOctet + i));
