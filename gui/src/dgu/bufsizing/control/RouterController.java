@@ -125,7 +125,7 @@ public class RouterController extends Controller {
                     b.arrival( timestamp_8ns, u.arrived );
                     b.departure( timestamp_8ns, u.departed );
                     
-                    System.err.println( "update at " + timestamp_8ns + " => cur=" + u.current + " / arr=" + u.arrived + " / dep=" + u.departed );
+                    //System.err.println( "update at " + timestamp_8ns + " => cur=" + u.current + " / arr=" + u.arrived + " / dep=" + u.departed );
                     
                     // refresh instantaneous readings over the interval from the previous
                     //  update to the time of the last event in this update

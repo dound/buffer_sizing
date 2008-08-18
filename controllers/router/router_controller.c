@@ -392,7 +392,7 @@ static void event_capture_handler() {
 
             /* print the update info */
             rc_print_verbose( 1,
-                              "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u\n",
+                              "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u",
                               updateInfoOn,
                               u->sec,
                               u->usec,
