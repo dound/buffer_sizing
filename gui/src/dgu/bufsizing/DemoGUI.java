@@ -632,7 +632,7 @@ public class DemoGUI extends javax.swing.JFrame {
         // use a fixed range
         ValueAxis domain = plot.getDomainAxis();
         domain.setAutoRange(false);
-        domain.setRange(1.0, BottleneckLink.interestingN[BottleneckLink.interestingN.length-1]);
+        domain.setRange(0.01, BottleneckLink.interestingN[BottleneckLink.interestingN.length-1]+0.99);
         
         // theoretical rule of thumb
         renderer.setSeriesPaint(0, new Color(128,0,0));
