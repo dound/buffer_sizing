@@ -42,7 +42,8 @@ static void forwardAllData(int fdFrom, const char* strFrom, int fdTo, const char
 static int isAlive();
 
 int main( int argc, char** argv ) {
-    print_init("Proxy", 0);
+    print_init("Proxy");
+    print_set_verbosity(0);
 
     /* default values for command-line parameters */
     port = 10272;

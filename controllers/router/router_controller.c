@@ -83,50 +83,8 @@ static void* controller_main( void* nil );
 static void event_capture_handler();
 static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u);
 
-static void rc_print_timestamp() {
-    struct timeval now;
-    double t;
-
-    gettimeofday(&now,NULL);
-    t = now.tv_sec + now.tv_usec / 1000000.0 - startTime;
-
-    fprintf( stdout, "%.3f: ", t );
-}
-
-static void rc_print( const char* format, ... ) {
-    va_list args;
-    va_start( args, format );
-
-    rc_print_timestamp();
-    fprintf( stdout, "[Router Controller Server] " );
-    vfprintf( stdout, format, args );
-    fprintf( stdout, "\n" );
-
-    va_end( args );
-}
-
-static void rc_print_verbose( int level, const char* format, ... ) {
-    va_list args;
-
-    if( verbose < level )
-        return;
-
-    va_start( args, format );
-
-    rc_print_timestamp();
-    fprintf( stdout, "[Router Controller Server] " );
-    vfprintf( stdout, format, args );
-    fprintf( stdout, "\n" );
-
-    va_end( args );
-}
-
 int main( int argc, char** argv ) {
-    struct timeval now;
-
-    /* initialize the start time */
-    gettimeofday(&now, NULL);
-    startTime = now.tv_sec + now.tv_usec / 1000000.0;
+    print_init("Router Controller Server");
 
     /* default values for command-line parameters */
     int printOnly = 0;
@@ -148,12 +106,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-l", "-listen", "--listen") ) {
             i += 1;
             if( i == argc ) {
-                rc_print("Error: -listen requires a port number to be specified");
+                print("Error: -listen requires a port number to be specified");
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
             if( val==0 || val > 65535 ) {
-                rc_print("Error: %u is not a valid port", val);
+                print("Error: %u is not a valid port", val);
                 return -1;
             }
             server_port = val;
@@ -161,12 +119,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-e", "-evcap", "--evcap") ) {
             i += 1;
             if( i == argc ) {
-                rc_print("Error: -evcap requires a port number to be specified");
+                print("Error: -evcap requires a port number to be specified");
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
             if( val==0 || val > 65535 ) {
-                rc_print("Error: %u is not a valid port", val);
+                print("Error: %u is not a valid port", val);
                 return -1;
             }
             evcap_port = val;
@@ -174,28 +132,28 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-c", "-coallesce", "--coallesce") ) {
             i += 1;
             if( i == argc ) {
-                rc_print("Error: -coallesce requires an argument to be specified");
+                print("Error: -coallesce requires an argument to be specified");
                 return -1;
             }
             update_evcaps_per_info = strtoul( argv[i], NULL, 10 );
             if( update_evcaps_per_info == 0 ) {
-                rc_print("Error: -coallesce must be greater than 0");
+                print("Error: -coallesce must be greater than 0");
                 return -1;
             }
         }
         else if( str_matches(argv[i], 3, "-n", "-num", "--num") ) {
             i += 1;
             if( i == argc ) {
-                rc_print("Error: -num requires an argument to be specified");
+                print("Error: -num requires an argument to be specified");
                 return -1;
             }
             update_infos_per_update_packet = strtoul( argv[i], NULL, 10 );
             if( update_infos_per_update_packet == 0 ) {
-                rc_print("Error: -num must be greater than 0");
+                print("Error: -num must be greater than 0");
                 return -1;
             }
             if( update_infos_per_update_packet > MAX_UPDATE_INFOS ) {
-                rc_print("Error: -num must be no greater than %u (this is the most that fit in a single packet)", MAX_UPDATE_INFOS);
+                print("Error: -num must be no greater than %u (this is the most that fit in a single packet)", MAX_UPDATE_INFOS);
                 return -1;
             }
         }
@@ -209,6 +167,7 @@ int main( int argc, char** argv ) {
             verbose = 2;
         }
     }
+    print_set_verbosity(verbose);
 
     /* compute the BW the update thread will consume between here and the gui */
     double evcaps_per_sec = 32.508; /* empircal measurement */
@@ -224,9 +183,9 @@ int main( int argc, char** argv ) {
         return 0;
     }
 
-    rc_print(STR_PARAMS,
-             server_port, evcap_port, update_evcaps_per_info, update_infos_per_update_packet,
-             updates_per_sec, rate_bps / 1000);
+    print(STR_PARAMS,
+          server_port, evcap_port, update_evcaps_per_info, update_infos_per_update_packet,
+          updates_per_sec, rate_bps / 1000);
 
 
     /* connect to the hardware */
@@ -235,7 +194,7 @@ int main( int argc, char** argv ) {
     /* listen for commands from the server */
     pthread_t tid;
     if( 0 != pthread_create( &tid, NULL, controller_main, NULL ) ) {
-        rc_print("Error: unable to start the main controller thread");
+        print("Error: unable to start the main controller thread");
         return -1;
     }
 
@@ -276,7 +235,7 @@ static void* controller_main( void* nil ) {
     }
 
     /* listen for incoming connections */
-    rc_print("listening for an incoming connection request to TCP port %u", server_port);
+    print("listening for an incoming connection request to TCP port %u", server_port);
     if( listen(servfd, 1) < 0 ) {
         perror( "Error: unable to listen" );
         exit( 1 );
@@ -284,19 +243,19 @@ static void* controller_main( void* nil ) {
 
     /* loop forever */
     while( 1 ) {
-        rc_print("waiting for client to connect ...");
+        print("waiting for client to connect ...");
         cliaddr_len = sizeof(cliaddr);
         if( (client_fd=accept(servfd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
             perror( "Error: accept failed" );
             continue;
         }
-        rc_print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
+        print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
 
         /* wait for control packets */
         control_t packet;
         while( (len=readn(client_fd, &packet, sizeof(packet))) ) {
             if( len < 0 ) {
-                rc_print("received EOF from client");
+                print("received EOF from client");
                 break;
             }
 
@@ -306,23 +265,23 @@ static void* controller_main( void* nil ) {
                 set_rate_limit( packet.queue, packet.val );
 
                 if( packet.val )
-                    rc_print("rate limiter has been changed to %u", packet.val);
+                    print("rate limiter has been changed to %u", packet.val);
                 else
-                    rc_print("rate limiter has been disabled");
+                    print("rate limiter has been disabled");
 
                 break;
 
             case CODE_SET_BUF_SIZE:
                 set_buffer_size_packets( packet.queue, packet.val );
-                rc_print("buffer size has been changed to %u packets in size", packet.val);
+                print("buffer size has been changed to %u packets in size", packet.val);
                 break;
 
             default:
-                rc_print("received unexpected packet code %u", packet.code);
+                print("received unexpected packet code %u", packet.code);
             }
         }
 
-        rc_print("connection to client at %s closed", inet_ntoa(cliaddr.sin_addr));
+        print("connection to client at %s closed", inet_ntoa(cliaddr.sin_addr));
         close(client_fd);
         client_fd = -1;
     }
@@ -391,14 +350,14 @@ static void event_capture_handler() {
             u->usec = now.tv_usec;
 
             /* print the update info */
-            rc_print_verbose( 1,
-                              "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u",
-                              updateInfoOn,
-                              u->sec,
-                              u->usec,
-                              u->arrived,
-                              u->departed,
-                              u->current );
+            print_verbose( 1,
+                           "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u",
+                           updateInfoOn,
+                           u->sec,
+                           u->usec,
+                           u->arrived,
+                           u->departed,
+                           u->current );
 
             /* convert the update's fields from host to network order */
             u->sec      = htonl(u->sec);
@@ -415,7 +374,7 @@ static void event_capture_handler() {
                 /* send the update to the GUI */
                 if( client_fd >= 0 ) {
                     writen(client_fd, &update, update_infos_per_update_packet * sizeof(update_info_t));
-                    rc_print_verbose(2, "update sent to client");
+                    print_verbose(2, "update sent to client");
                 }
 
                 /* start again! */
@@ -455,7 +414,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     static uint64_t lastTS = 0;
 
     if( len < 78 ) {
-        rc_print( "Ignoring evcap packet which is too small (%uB)", len );
+        print( "Ignoring evcap packet which is too small (%uB)", len );
         return;
     }
 
@@ -465,17 +424,17 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     index += 1;
 
     /* skip the sequence number */
-    rc_print_verbose( 2, "seq = %u", getU32(buf, index) );
+    print_verbose( 2, "seq = %u", getU32(buf, index) );
     index += 4;
 
     /* get the timestamp before the queue data */
     timestamp_8ns = getU64( buf, 70 );
     if( lastTS > timestamp_8ns ) {
-        rc_print( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
+        print( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
         return; /* old, out-of-order packet */
     }
     else {
-        rc_print_verbose( 2, "got new timestamp %llu", timestamp_8ns );
+        print_verbose( 2, "got new timestamp %llu", timestamp_8ns );
         lastTS = timestamp_8ns;
     }
 
@@ -485,7 +444,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_bytes = 8 * getU32(buf, index);
             u->current = num_bytes;
-            rc_print_verbose( 2, "queue 2 set to %uB", num_bytes );
+            print_verbose( 2, "queue 2 set to %uB", num_bytes );
         }
         index += 4;
 
@@ -493,7 +452,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
         if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { /* only handle NF2C1 for now */
             num_packets = getU32(buf, index);
             u->current = num_packets;
-            rc_print_verbose( 2, "queue 2 set to %u packets" + num_packets );
+            print_verbose( 2, "queue 2 set to %u packets" + num_packets );
         }
         index += 4;
     }
@@ -505,14 +464,14 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     timestamp_adjusted_8ns = timestamp_8ns;
     while( index + 4 < len ) {
         type = (getU32(buf, index) & MASK_TYPE) >> 30;
-        rc_print_verbose( 2, "  got type = 0x%0X", type );
+        print_verbose( 2, "  got type = 0x%0X", type );
 
         if( type == TYPE_TS ) {
             if( index + 8 >= len ) break;
 
             timestamp_8ns = getU64( buf, index );
             index += 8;
-            rc_print_verbose( 2, "    got timestamp %llu", timestamp_8ns );
+            print_verbose( 2, "    got timestamp %llu", timestamp_8ns );
         }
         else {
             int val, queue_id, plen_bytes;
@@ -524,7 +483,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
             timestamp_adjusted_8ns = (timestamp_8ns & MASK_TSA1) | ntohl(val & MASK_TSA2);
             index += 4;
 
-            rc_print_verbose( 2, "    %uB %s for queue %u at timestamp %llu",
+            print_verbose( 2, "    %uB %s for queue %u at timestamp %llu",
                            plen_bytes,
                            (type==TYPE_ARRIVE)?"arrived":(type==TYPE_DEPART)?"departed":"dropped",
                            queue_id,
@@ -532,7 +491,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
 
             /* only pay attention to NF2C1 for now */
             if( queue_id != DEFAULT_QUEUE_TO_MONITOR ) {
-                rc_print_verbose( 2, "    ignoring event for queue %u", queue_id );
+                print_verbose( 2, "    ignoring event for queue %u", queue_id );
                 continue;
             }
 
@@ -542,7 +501,7 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->arrived += plen_bytes;
 
-                rc_print_verbose( 2, "arrival => %u", u->arrived );
+                print_verbose( 2, "arrival => %u", u->arrived );
             }
             else if( type == TYPE_DEPART ) {
                 if( USE_PACKETS )
@@ -550,10 +509,10 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
                 else
                     u->departed += plen_bytes;
 
-                rc_print_verbose( 2, "departure => %u", u->departed );
+                print_verbose( 2, "departure => %u", u->departed );
             }
             else
-                rc_print_verbose( 2, "    (dropped)" );
+                print_verbose( 2, "    (dropped)" );
         }
     }
 }
