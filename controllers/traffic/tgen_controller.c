@@ -1,6 +1,6 @@
 /**
  * Filename: tgen_controller.c
- * Purpose: defines a client which connects to the demo controller and
+ * Purpose: defines a server which listens for a connection from the demo controller and
  *          listens for commands for creating and destroying traffic
  *          generators.
  */
@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -26,17 +27,13 @@
 Traffic Generator Controller v%s\n\
 %s: [-?]\n\
   -?, -help:       displays this help\n\
-  -d, -dst, -ip:   sets the server IP address to connect to\n\
-  -p, -port:       sets the server port to connect to\n\
+  -l, -listen:     the port to listen for connections on\n\
   -s, -server:     target iperf server\n\
   -o, -offset:     sets the offset for what ports to use\n\
   -debug:          run sleep instead of iperf\n\
+  -v, -verbose:    verbosely print information to standard out\n\
 \n\
-Example: ./tgen_controller -dst 127.0.0.1 -port 10273 -server 127.0.0.1 -offset 0 -debug\n"
-
-/** number of seconds between updates */
-#define UPDATE_INTERVAL_SEC 0
-#define UPDATE_INTERVAL_NSEC (1000 * 1000) /* one per millisecond */
+Example: ./tgen_controller -port 10273 -server 127.0.0.1 -offset 0 -debug\n"
 
 /** port to contact the server on */
 #define DEFAULT_PORT 10273
@@ -60,15 +57,60 @@ typedef enum {
     CODE_SET_TGEN=1,
 } code_t;
 
-static uint32_t server_ip;
 static uint16_t server_port;
 static char* iperf_server_ip;
+static int verbose = 0;
+static double startTime;
 
 static void controller_main();
 static void setNumFlows(unsigned n);
 
+static void tc_print_timestamp() {
+    struct timeval now;
+    double t;
+
+    gettimeofday(&now,NULL);
+    t = now.tv_sec + now.tv_usec / 1000000.0;
+
+    fprintf( stdout, "%.3f: ", t );
+}
+
+static void tc_print( const char* format, ... ) {
+    va_list args;
+    va_start( args, format );
+
+    tc_print_timestamp();
+    fprintf( stdout, "[Router Controller Server] " );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
+
+    va_end( args );
+}
+
+static void tc_print_verbose( const char* format, ... ) {
+    va_list args;
+
+    if( !verbose )
+        return;
+
+    va_start( args, format );
+
+    tc_print_timestamp();
+    fprintf( stdout, "[Router Controller Server] " );
+    vfprintf( stdout, format, args );
+    fprintf( stdout, "\n" );
+
+    va_end( args );
+}
+
 int main( int argc, char** argv ) {
-    server_ip = 0;
+    struct timeval now;
+
+    /* initialize the start time */
+    gettimeofday(&now, NULL);
+    startTime = now.tv_sec + now.tv_usec / 1000000.0;
+
+    /* default values for command-line parameters */
     server_port = DEFAULT_PORT;
     iperf_server_ip = NULL;
     portOffset = -1;
@@ -96,19 +138,6 @@ int main( int argc, char** argv ) {
             }
             iperf_server_ip = inet_ntoa(in_ip);
         }
-        else if( str_matches(argv[i], 5, "-d", "-dst", "--dst", "-ip", "--ip") ) {
-            i += 1;
-            if( i == argc ) {
-                fprintf( stderr, "Error: -ip requires an IP address to be specified\n" );
-                return -1;
-            }
-            struct in_addr in_ip;
-            if( inet_aton(argv[i],&in_ip) == 0 ) {
-                fprintf( stderr, "Error: %s is not a valid IP address\n", argv[i] );
-                return -1;
-            }
-            server_ip = in_ip.s_addr;
-        }
         else if( str_matches(argv[i], 1, "-debug") ) {
             debugApp = 1;
         }
@@ -134,57 +163,75 @@ int main( int argc, char** argv ) {
             uint32_t val = strtoul( argv[i], NULL, 10 );
             portOffset = val;
         }
+        else if( str_matches(argv[i], 3, "-v", "-verbose", "--verbose") ) {
+            verbose = 1;
+        }
     }
-    if( server_ip==0 ) {
-        fprintf( stderr, "Error: -dst is a required argument; you must supply a server IP\n" );
-        exit( 1 );
-    }
+
     if( iperf_server_ip==0 ) {
         fprintf( stderr, "Error: -server is a required argument; you must supply an iperf server IP\n" );
         exit( 1 );
     }
+
     if( portOffset==-1 ) {
         fprintf( stderr, "Error: -offset is a required argument; you must supply an iperf port offset\n" );
         exit( 1 );
     }
 
     /* listen for commands from the server */
-    controller_main();
+    while(1)
+        controller_main();
+
     return 0;
 }
 
 /** listens for incoming connections from the master who will send commands */
 static void controller_main() {
-  while(1) {
     struct sockaddr_in servaddr;
-    int fd, len;
+    struct sockaddr_in cliaddr;
+    socklen_t cliaddr_len;
+    int server_fd, client_fd, len, val;
 
     /* initialize the server's info */
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = server_ip;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons( server_port );
 
-    /* make a TCP socket */
-    if( (fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
-        perror( "Error: unable to create TCP socket for tgen controller" );
+    /* make a TCP socket for the new flow */
+    if( (server_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP )) == -1 ) {
+        perror( "Error: unable to create TCP socket for router controller" );
         exit( 1 );
     }
 
-    /* connect to the server */
-    fprintf( stderr, "tgen controller Trying to connect to the demo controller\n" );
-    if( connect( fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
-        perror( "Error: connect for tgen controller failed" );
-        sleep( 5 );
-        close( fd );
-        continue;
+    /* permit the socket to reuse the port even if it is already in use */
+    val = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
+    /* bind to the port */
+    if( bind(server_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
+        perror( "Error: unable to bind TCP socket for router controller" );
+        exit(1);
     }
 
+    /* listen for incoming connections */
+    tc_print("listening for an incoming connection request to TCP port %u", server_port);
+    if( listen(server_fd, 1) < 0 ) {
+        perror( "Error: unable to listen" );
+        exit(1);
+    }
+
+    /* loop forever */
     while( 1 ) {
-        fprintf( stderr, "tgen controller Connected to the master\n" );
+        tc_print("waiting for client to connect ...");
+        if( (client_fd=accept(server_fd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
+            perror( "Error: accept failed" );
+            continue;
+        }
+        tc_print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
 
         /* wait for control packets */
         control_t packet;
-        while( (len=readn(fd, &packet, sizeof(packet))) ) {
+        while( (len=readn(client_fd, &packet, sizeof(packet))) ) {
             if( len < 0 )
                 break;
 
@@ -196,31 +243,31 @@ static void controller_main() {
                 break;
 
             case CODE_SET_TGEN:
-                fprintf(stderr,"warning: tgen controller got set tgen command (unsupported)\n");;
+                tc_print("received set tgen command (unsupported)");
                 break;
 
             default:
-                fprintf( stderr, "tgen controller got unexpected packet code %u\n", packet.code );
+                tc_print("received unexpected packet code %u", packet.code);
             }
             if( ret == -1 ) {
-                fprintf( stderr, "tgen controller failed to write (will terminate)\n" );
+                tc_print("failed to write (terminating this connection)");
                 break;
             }
         }
 
-        close( fd );
-        fprintf( stderr, "master connection closed to tgen controller (goodbye)\n" );
+        close( client_fd );
+        close( server_fd );
+        tc_print("connection closed by peer");
         break;
     }
 
     /* kill all leftover flows */
     setNumFlows(0);
-  }
 }
 
-/** Setsthe number of flows. */
+/** Sets the number of flows. */
 static void setNumFlows(unsigned n) {
-    fprintf(stderr, "N=%u, requested N=%u\n", numFlows, n);
+    tc_print("N=%u, requested N=%u\n", numFlows, n);
 
     /* remove flows if we have too many */
     while( numFlows > n ) {
@@ -230,18 +277,18 @@ static void setNumFlows(unsigned n) {
         /* send SIGKILL to the process */
         snprintf(cmd, 256, "kill -9 %u", pid);
         system(cmd);
-        fprintf(stderr, "killed pid %u\n", pid);
+        tc_print("killed pid %u\n", pid);
 
         /* clean up the process */
         int junk;
         waitpid(pid, &junk, 0);
-        fprintf(stderr, "pid %u has been cleaned up\n", pid);
+        tc_print("pid %u has been cleaned up\n", pid);
     }
 
     /* add flows if we don't have enough */
     while( numFlows < n ) {
         if( n >= MAX_FLOWS ) {
-            fprintf( stderr, "Warning: too many flows requested (max=%u, requested=%u)\n", MAX_FLOWS, n );
+            tc_print("Warning: too many flows requested (max=%u, requested=%u)\n", MAX_FLOWS, n );
             return;
         }
 
@@ -255,14 +302,14 @@ static void setNumFlows(unsigned n) {
                 execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", (char*)0);
             }
 
-            fprintf(stderr, "premature termiation?\n");
+            tc_print("premature termiation?\n");
             exit(0);
         }
         else {
             tgen_pid[numFlows++] = pid;
-            fprintf(stderr, "spawned pid %u\n", pid);
+            tc_print("spawned pid %u\n", pid);
         }
     }
 
-    fprintf(stderr, "tgen controller # of flows = %u\n", numFlows);
+    tc_print("# of flows = %u\n", numFlows);
 }

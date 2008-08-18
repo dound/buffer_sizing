@@ -382,7 +382,7 @@ static void event_capture_handler() {
 
             /* note what time this update finished */
             gettimeofday( &now, NULL );
-            u->sec  = now.tv_sec;
+            u->sec  = now.tv_sec - (int)startTime;
             u->usec = now.tv_usec;
 
             /* print the update info */
