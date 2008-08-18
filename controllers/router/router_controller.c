@@ -81,10 +81,21 @@ static void* controller_main( void* nil );
 static void event_capture_handler();
 static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u);
 
+static void rc_print_timestamp() {
+    struct timeval now;
+    double t;
+
+    gettimeofday(&now,NULL);
+    t = now.tv_sec + now.tv_usec / 1000000;
+
+    fprintf( stdout, "%.3f: ", t );
+}
+
 static void rc_print( const char* format, ... ) {
     va_list args;
     va_start( args, format );
 
+    rc_print_timestamp();
     fprintf( stdout, "[Router Controller Server] " );
     vfprintf( stdout, format, args );
     fprintf( stdout, "\n" );
@@ -97,6 +108,7 @@ static void rc_print_verbose( const char* format, ... ) {
     va_list args;
     va_start( args, format );
 
+    rc_print_timestamp();
     fprintf( stdout, "[Router Controller Server] " );
     vfprintf( stdout, format, args );
     fprintf( stdout, "\n" );
@@ -364,7 +376,7 @@ static void event_capture_handler() {
                 /* send the update to the GUI */
                 if( client_fd >= 0 ) {
                     writen(client_fd, &update, update_infos_per_update_packet * sizeof(update_info_t));
-                    rc_print("update sent to client");
+                    rc_print_verbose("update sent to client");
                 }
 
                 /* start again! */
