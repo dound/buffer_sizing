@@ -168,7 +168,7 @@ int main( int argc, char** argv ) {
         }
     }
 
-    if( iperf_server_ip==0 ) {
+    if( iperf_server_ip==NULL ) {
         tc_print("Error: -server is a required argument; you must supply an iperf server IP" );
         exit( 1 );
     }
@@ -223,6 +223,7 @@ static void controller_main() {
     /* loop forever */
     while( 1 ) {
         tc_print("waiting for client to connect ...");
+        cliaddr_len = sizeof(cliaddr);
         if( (client_fd=accept(server_fd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
             perror( "Error: accept failed" );
             continue;

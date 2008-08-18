@@ -281,6 +281,7 @@ static void* controller_main( void* nil ) {
     /* loop forever */
     while( 1 ) {
         rc_print("waiting for client to connect ...");
+        cliaddr_len = sizeof(cliaddr);
         if( (client_fd=accept(servfd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
             perror( "Error: accept failed" );
             continue;
