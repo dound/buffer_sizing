@@ -361,19 +361,29 @@ static void event_capture_handler() {
 
         /* see if we've aggregated enough evcaps to finish this update info */
         if( evcap_on == update_evcaps_per_info ) {
+            update_info_t *u;
+            u = &update[updateInfoOn];
+
             /* note what time this update finished */
             gettimeofday( &now, NULL );
-            update[updateInfoOn].sec  = htonl( now.tv_sec  );
-            update[updateInfoOn].usec = htonl( now.tv_usec );
+            u->sec  = now.tv_sec;
+            u->usec = now.tv_usec;
 
             /* print the update info */
             rc_print_verbose( "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u\n",
                               updateInfoOn,
-                              update[updateInfoOn].sec,
-                              update[updateInfoOn].usec,
-                              update[updateInfoOn].arrived,
-                              update[updateInfoOn].departed,
-                              update[updateInfoOn].current );
+                              u->sec,
+                              u->usec,
+                              u->arrived,
+                              u->departed,
+                              u->current );
+
+            /* convert the update's fields from host to network order */
+            u->sec      = htonl(u->sec);
+            u->usec     = htonl(u->usec);
+            u->arrived  = htonl(u->arrived);
+            u->departed = htonl(u->departed);
+            u->current  = htonl(u->current);
 
             /* on to the next update */
             updateInfoOn += 1;
