@@ -7,8 +7,8 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public abstract class TrafficGenerator extends Node {
-    protected static final int ICON_WIDTH  = 50;
-    protected static final int ICON_HEIGHT = 50;
+    protected static final int ICON_WIDTH  = DemoGUI.ratioH768(54);
+    protected static final int ICON_HEIGHT = DemoGUI.ratioH768(50);
     protected final String dstIP;
     
     public TrafficGenerator( String dstIP, String name, String nameShort, Importance importance, int x, int y ) {
@@ -18,7 +18,7 @@ public abstract class TrafficGenerator extends Node {
     
     protected void drawNode( Graphics2D gfx ) {
         drawIcon( gfx );
-        drawName( gfx, getX(), getY() - 7 + ICON_HEIGHT / 2 + gfx.getFontMetrics().getHeight() );
+        drawName( gfx, getX(), getY() - DemoGUI.ratioH768(7) + ICON_HEIGHT / 2 + gfx.getFontMetrics().getHeight() );
     }
     
     public abstract void drawIcon( Graphics2D gfx );

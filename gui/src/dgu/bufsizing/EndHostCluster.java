@@ -7,9 +7,9 @@ import java.awt.Graphics2D;
  * @author David Underhill
  */
 public class EndHostCluster extends Node {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/servers.gif");
-    protected static final int ICON_WIDTH  = 50;
-    protected static final int ICON_HEIGHT = 50;
+    private static final java.awt.Image ICON  = DemoGUI.chooseImage("images/servers-lo.png", "images/servers.png");
+    protected static final int ICON_WIDTH  = DemoGUI.ratioH768(50);
+    protected static final int ICON_HEIGHT = DemoGUI.ratioH768(54);
     
     public EndHostCluster( String name, String nameShort, Importance importance, int x, int y ) {
         super( name, nameShort, importance, x, y );

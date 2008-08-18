@@ -127,7 +127,10 @@ public class DemoGUI extends javax.swing.JFrame {
         return (int)(d * (HEIGHT / 1080.0));
     }
     public static final Dimension ratio1080( int width, int height ) { 
-        return new Dimension( ratioW1920(width), ratioH1080(height) );
+        return new Dimension( ratioH1080(width), ratioH1080(height) );
+    }
+    public static final java.awt.Image chooseImage(String x133, String x177) {
+        return java.awt.Toolkit.getDefaultToolkit().getImage((DemoGUI.HEIGHT==768 && DemoGUI.WIDTH==1024) ? x133 : x177);
     }
     
     public java.awt.Dimension SIZEmap = new java.awt.Dimension();

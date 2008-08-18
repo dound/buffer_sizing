@@ -37,10 +37,10 @@ public class DemoBasic {
         EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, ratioCanvasW(515), ratioCanvasH(215) );
         demo.addGenericNode( rice );
         
-        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, ratioCanvasW(920), ratioCanvasH(80) );
+        Receiver ny = new Receiver( "New York", "NY", Importance.NIL, ratioCanvasW(920), ratioCanvasH(70) );
         demo.addGenericNode( ny );
         
-        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, ratioCanvasW(865), ratioCanvasH(120) );
+        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, ratioCanvasW(870), ratioCanvasH(130) );
         demo.addGenericNode( dc );
         
         // add our traffic generators

@@ -9,7 +9,7 @@ import java.util.LinkedList;
  * @author David Underhill
  */
 public class Iperf extends TrafficGenerator {
-    private static final java.awt.Image ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/servers.gif");
+    private static final java.awt.Image ICON  = DemoGUI.chooseImage("images/servers-lo.png", "images/servers.png");
     private static final int INIT_PORT = 5000;
     private static final int MAX_IPERFS = 100;
     

@@ -16,11 +16,11 @@ public class Demo {
     public static final int DEFAULT_RATE_LIMIT_KBPS         = 62500;
     public static final int DEFAULT_DATA_POINTS_TO_KEEP     = 10000;
     
-    public static final java.awt.Image RU_ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/logo-rice.png");
-    public static final java.awt.Dimension RU_SIZE = new java.awt.Dimension(25, 25);
+    public static final java.awt.Image RU_ICON = DemoGUI.chooseImage("images/logo-rice-lo.png", "images/logo-rice.png");
+    public static final java.awt.Dimension RU_SIZE = DemoGUI.ratio1080(41, 50);
     
-    public static final java.awt.Image SU_ICON = java.awt.Toolkit.getDefaultToolkit().getImage("images/logo-stanford.png");
-    public static final java.awt.Dimension SU_SIZE = new java.awt.Dimension(25, 25);
+    public static final java.awt.Image SU_ICON = DemoGUI.chooseImage("images/logo-stanford-lo.png", "images/logo-stanford.png");
+    public static final java.awt.Dimension SU_SIZE = DemoGUI.ratio1080(33, 50);
     
     public LinkedList<Router> routers = new LinkedList<Router>();
     public LinkedList<TrafficGenerator> trafficGenerators = new LinkedList<TrafficGenerator>();
