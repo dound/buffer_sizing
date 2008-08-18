@@ -14,6 +14,7 @@ all:
 # cleanup all the byproducts
 clean:
 	@$(MAKE) --no-print-directory $(CLEAN_PROJECTS)
+	rm -f *.o
 
 # build the project in the specified directory using its default rule
 $(PROJECTS):
