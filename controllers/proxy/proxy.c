@@ -253,8 +253,8 @@ static void forwardAllData(int fdFrom, const char* strFrom, int fdTo, const char
             break;
         }
         else {
-            if( writen(fdTo, buf, len) != 0 ) {
-                print("error when trying to forward data to from %s to %s", strFrom, strTo);
+            if( writen(fdTo, buf, len) != len ) {
+                print("error when trying to forward data from %s to %s", strFrom, strTo);
                 break;
             }
         }
