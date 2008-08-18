@@ -42,16 +42,10 @@ CFLAGS = $(FLAGS_CC_BASE) $(FLAGS_CC_BUILD_TYPE)
 SRCS = $(ROOT_SRC_DIR)common.c $(ROOT_SRC_DIR)debug.c $(ROOT_SRC_DIR)io_wrapper.c $(APP_SRCS)
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
-# include the dependencies once we've built them
-ifdef INCLUDE_DEPS
-include $(DEPS)
-endif
-
-#########################
 ## PHONY TARGETS
 #########################
 # note targets which don't produce a file with the target's name
-.PHONY: $(APP) all clean clean-all clean-deps debug release deps
+.PHONY: $(APP) all clean debug release
 
 # build the program
 all: $(APP)
@@ -64,16 +58,6 @@ clean:
 debug release:
 	@$(MAKE) BUILD_TYPE=$@ all
 
-# build the dependency files
-deps: $(DEPS)
-
 # the real build command
-IR=ir
-$(APP).$(IR): $(OBJS)
+$(APP): $(OBJS)
 	$(CC) -o $(APP) $(OBJS) $(DIR_LIB) $(LIBS)
-
-#########################
-## REAL TARGETS
-#########################
-$(APP): deps
-	@$(MAKE) BUILD_TYPE=$(BUILD_TYPE) INCLUDE_DEPS=1 $@.$(IR)
