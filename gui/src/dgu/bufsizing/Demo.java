@@ -144,9 +144,11 @@ public class Demo {
             GUIHelper.drawCenteredString(s2, gfx, x2, y );
             gfx.setComposite( Drawable.COMPOSITE_OPAQUE );
             
+            gfx.setStroke(Drawable.STROKE_THICK3);
             GUIHelper.drawCenteredStringOutline(s1, gfx, x, y, Color.BLACK );
             GUIHelper.drawCenteredStringOutline(s2, gfx, x2, y, Color.BLACK );
             
+            gfx.setStroke(Drawable.STROKE_DEFAULT);
             gfx.setFont(origFont);
             gfx.setPaint(Drawable.PAINT_DEFAULT);
         }
