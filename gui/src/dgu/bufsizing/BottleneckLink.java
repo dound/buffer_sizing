@@ -196,6 +196,7 @@ public class BottleneckLink extends Link<Router> {
      * @return Color based on the current goodness
      */
     public static Color getCurrentGradientColor( float goodness ) {
+        if( goodness < 0.0f ) goodness = 0.0f; else if ( goodness > 1.0f ) goodness = 1.0f;
         float extra = 2.0f * (0.5f - Math.abs( goodness - 0.5f ));
         return new Color( 1.0f - goodness, goodness, extra );
     }
