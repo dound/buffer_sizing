@@ -420,6 +420,10 @@ public class DemoGUI extends javax.swing.JFrame {
                 // for absolute data graph, use auto range
                 rangeXput.setAutoRange(true);
                 rangeOcc.setAutoRange(true);
+                
+                // integer tick marks only for absolute mode
+                rangeXput.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
+                rangeOcc.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
             }
             else {
                 DemoGUI.collXput.addSeries( bl.getDataThroughputPer(), false );
@@ -436,6 +440,10 @@ public class DemoGUI extends javax.swing.JFrame {
                 rangeXput.setRange(0.0, 1.0);
                 rangeOcc.setAutoRange(false);
                 rangeOcc.setRange(0.0, 1.0);
+                
+                // show decimal tick marks since we're only operating in the range [0, 1]
+                rangeXput.setStandardTickUnits(NumberAxis.createStandardTickUnits());
+                rangeOcc.setStandardTickUnits(NumberAxis.createStandardTickUnits());
             }
             
             DemoGUI.me.refreshCharts();
