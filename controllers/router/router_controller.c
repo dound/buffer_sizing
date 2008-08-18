@@ -87,7 +87,7 @@ static void rc_print_timestamp() {
     double t;
 
     gettimeofday(&now,NULL);
-    t = now.tv_sec + now.tv_usec / 1000000.0;
+    t = now.tv_sec + now.tv_usec / 1000000.0 - startTime;
 
     fprintf( stdout, "%.3f: ", t );
 }
