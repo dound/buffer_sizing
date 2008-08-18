@@ -100,6 +100,10 @@ public class BottleneckLink extends Link<Router> {
     private static final int bytesToSizeRangeUnits( int num_bytes ) {
         return num_bytes / 1024;
     }
+
+    public synchronized void clearMeasuredPoints() {
+        this.dataRToday.clear();
+    }
     
     private void addDataPointToRateData( long time_ns8 ) {
         dataRateLimit.add( time_ns8, bitsToRateRangeUnits(this.rateLimit_kbps*1000), false );

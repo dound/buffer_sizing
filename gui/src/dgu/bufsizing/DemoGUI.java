@@ -683,7 +683,7 @@ public class DemoGUI extends javax.swing.JFrame {
         lblBottleneck = new javax.swing.JLabel();
         lblNode = new javax.swing.JLabel();
         pnlChartRight = new ChartPanel(chartResults);
-        btnClearThisData = new javax.swing.JButton();
+        btnClearMeasuredPoints = new javax.swing.JButton();
         lblNumFlows = new javax.swing.JLabel();
         pnlTGen = new javax.swing.JPanel();
         optIperf = new javax.swing.JRadioButton();
@@ -694,6 +694,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optManual = new javax.swing.JRadioButton();
         optAutoForCurrentN = new javax.swing.JRadioButton();
         optAuto = new javax.swing.JRadioButton();
+        btnClearRealTimePoints = new javax.swing.JButton();
         pnlMap = new javax.swing.JPanel();
         lblMap = new javax.swing.JLabel();
 
@@ -810,14 +811,14 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlDetails.add(pnlChartRight);
         pnlChartRight.setBounds(508, 93, 509, 397);
 
-        btnClearThisData.setText("Clear Data");
-        btnClearThisData.addActionListener(new java.awt.event.ActionListener() {
+        btnClearMeasuredPoints.setText("Clear Util");
+        btnClearMeasuredPoints.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearThisDataActionPerformed(evt);
+                btnClearMeasuredPointsActionPerformed(evt);
             }
         });
-        pnlDetails.add(btnClearThisData);
-        btnClearThisData.setBounds(5, 70, 205, 20);
+        pnlDetails.add(btnClearMeasuredPoints);
+        btnClearMeasuredPoints.setBounds(125, 70, 115, 20);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblNumFlows.setText("Number of Flows = 0");
@@ -853,7 +854,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optHarpoon.setBounds(10, 53, 95, 15);
 
         optGroupTGen.add(optTomahawk);
-        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optTomahawk.setFont(new java.awt.Font("Arial", 0, 12));
         optTomahawk.setText("Tomahawk");
         optTomahawk.setEnabled(false);
         optTomahawk.addActionListener(new java.awt.event.ActionListener() {
@@ -865,7 +866,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optTomahawk.setBounds(10, 34, 95, 15);
 
         optGroupTGen.add(optPlanetLab);
-        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optPlanetLab.setFont(new java.awt.Font("Arial", 0, 12));
         optPlanetLab.setText("Planet Lab");
         optPlanetLab.setEnabled(false);
         optPlanetLab.addActionListener(new java.awt.event.ActionListener() {
@@ -883,7 +884,7 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlMode.setLayout(null);
 
         optGroupMode.add(optManual);
-        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optManual.setFont(new java.awt.Font("Arial", 0, 12));
         optManual.setSelected(true);
         optManual.setText("Manual");
         optManual.addActionListener(new java.awt.event.ActionListener() {
@@ -895,7 +896,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optManual.setBounds(10, 15, 100, 15);
 
         optGroupMode.add(optAutoForCurrentN);
-        optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12));
         optAutoForCurrentN.setText("<html>Auto for<br/>current N</html>");
         optAutoForCurrentN.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -906,7 +907,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optAutoForCurrentN.setBounds(10, 55, 100, 30);
 
         optGroupMode.add(optAuto);
-        optAuto.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optAuto.setFont(new java.awt.Font("Arial", 0, 12));
         optAuto.setText("Automatic");
         optAuto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -918,6 +919,15 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlDetails.add(pnlMode);
         pnlMode.setBounds(890, 5, 125, 90);
+
+        btnClearRealTimePoints.setText("Clear Xput");
+        btnClearRealTimePoints.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearRealTimePointsActionPerformed(evt);
+            }
+        });
+        pnlDetails.add(btnClearRealTimePoints);
+        btnClearRealTimePoints.setBounds(5, 70, 115, 20);
 
         getContentPane().add(pnlDetails);
         pnlDetails.setBounds(0, 249, 1028, 519);
@@ -954,11 +964,11 @@ private void optCustomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     setBufSizeOption( BufferSizeRule.CUSTOM );
 }//GEN-LAST:event_optCustomActionPerformed
 
-private void btnClearThisDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearThisDataActionPerformed
+private void btnClearMeasuredPointsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearMeasuredPointsActionPerformed
     BottleneckLink b = getSelectedBottleneck();
     if( b != null )
-        b.clearData();
-}//GEN-LAST:event_btnClearThisDataActionPerformed
+        b.clearMeasuredPoints();
+}//GEN-LAST:event_btnClearMeasuredPointsActionPerformed
 
 private void pnlChartRightMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlChartRightMouseClicked
     freezeCharts = !freezeCharts;
@@ -1048,8 +1058,15 @@ private void optAutoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     startAutoStatsThread();
 }//GEN-LAST:event_optAutoActionPerformed
 
+private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearRealTimePointsActionPerformed
+    BottleneckLink b = getSelectedBottleneck();
+    if( b != null )
+        b.clearData();
+}//GEN-LAST:event_btnClearRealTimePointsActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnClearThisData;
+    private javax.swing.JButton btnClearMeasuredPoints;
+    private javax.swing.JButton btnClearRealTimePoints;
     private dgu.util.swing.binding.JComboBoxBound cboBottleneck;
     private dgu.util.swing.binding.JComboBoxBound cboNode;
     private javax.swing.JSeparator jSeparator1;
