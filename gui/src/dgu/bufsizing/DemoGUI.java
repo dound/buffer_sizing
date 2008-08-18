@@ -531,7 +531,7 @@ public class DemoGUI extends javax.swing.JFrame {
         );    
         
         chart.setBorderVisible(false);
-        chart.setAntiAlias(false);
+        chart.setAntiAlias(true);
         chart.setTextAntiAlias(true);
         
         XYPlot plot = (XYPlot) chart.getPlot();
