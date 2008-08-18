@@ -15,8 +15,8 @@ public class TomahawkController extends Controller {
         TomahawkCmd( byte code ) { this.code = code; }
     }
     
-    public TomahawkController( int port ) {
-        super( port );
+    public TomahawkController( String ip, int port ) {
+        super( ip, port );
     }
 
     public String getTypeString() {

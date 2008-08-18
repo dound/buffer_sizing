@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.bufsizing.control.TomahawkController;
 import dgu.bufsizing.control.TomahawkController.TomahawkCmd;
+import dgu.util.swing.GUIHelper;
 import java.awt.Graphics2D;
 
 /**
@@ -20,7 +21,9 @@ public class Tomahawk extends TrafficGenerator {
     
     public Tomahawk( String dstIP, String name, String nameShort, Importance importance, int x, int y, int commandPort ) {
         super( dstIP, name, nameShort, importance, x, y );    
-        controller = new TomahawkController( commandPort );
+        
+        String ip = GUIHelper.getInput("What is the IP or hostname of the tomahawk controller server?", "");
+        controller = new TomahawkController( ip, commandPort );
     }
     
     public void drawIcon( Graphics2D gfx ) {

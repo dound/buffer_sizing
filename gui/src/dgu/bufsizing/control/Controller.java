@@ -1,9 +1,9 @@
 package dgu.bufsizing.control;
 
+import dgu.bufsizing.DemoGUI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
@@ -13,125 +13,152 @@ import java.net.Socket;
 public abstract class Controller {
     public static final long TIME_BETWEEN_ERROR_MSGS_MILLIS = 5000;
     
+    protected String serverIP;
+    protected int serverPort;
+    boolean tryingToConnect = false;
+    
     /** the socket which connects this Command to its client */
-    protected final Socket s;
+    protected Socket s;
 
     /** output stream to write to the socket */
-    protected final OutputStream out;
+    protected OutputStream out;
 
     /** input stream to read from the socket */
-    protected final InputStream in;
-    
-    /** converts the four bytes starting at offset into an integer */
-    public static int bytes_to_int( byte[] buf, int offset ) {
-        int ret;
-        ret =   buf[offset] << 24;
-        ret += (buf[offset+1] << 16);
-        ret += (buf[offset+2] << 8);
-        ret +=  buf[offset+3];
-        return ret;
-    }
+    protected InputStream in;
 
     /** 
-     * Connect to the client on the specified port.  If an error occurs, the 
-     * program will terminate.
+     * Connect to the client on the specified port.
      * 
+     * @param ip    the IP of the client to connect to
      * @param port  the TCP port to connect on
      */
-    public Controller( int port ) {
-        this(port, true);
+    public Controller( String ip, int port ) {
+        serverIP = ip;
+        serverPort = port;
+        asynchronousConnect();
     }
     
-    public Controller( int port, boolean askBeforeBlocking ) {    
-        // setup socket for listening for new clients connection requests
-        ServerSocket serverSocket;
-        try {
-            serverSocket = new ServerSocket( port );
-        }
-        catch( IOException e ) {
-          System.err.println( Integer.toString( port ) + ": " + e.getMessage() );
-          System.exit( 1 );
-          serverSocket = null;
+    private void asynchronousConnect() {
+        if( tryingToConnect || (s!=null && out!=null && in!=null) )
+            return;
+        
+        new Thread() { 
+            public void run() {
+                connect();
+            }
+        }.start();
+    }
+    
+    /** Continuously tries to connect to the server. */
+    private void connect() {
+        tryingToConnect = true;
+        close();
+        
+        int tries = 0;
+        while( s==null ) {
+            if( tries++ > 0 ) {
+                System.err.println(getName() + ": Retrying to establish connection (try #" + tries + ")");
+                close();
+            }
+            else
+                System.err.println(getName() + ": Trying to establish connection");
+
+            // setup socket for listening for new clients connection requests
+            try {
+                s = new Socket(serverIP, serverPort);
+            }
+            catch( IOException e ) {
+                System.err.println( getName() + ": " + e.getMessage() );
+                s = null;
+            }
+
+            //try to establish the I/O streams: if we can't establish either, then close the socket
+            try {
+                if( s != null )
+                    out = s.getOutputStream();
+            } catch( IOException e ) {
+                System.err.println( getName() + ": Client Socket Setup Error: " + e.getMessage() );
+                out = null;
+            } 
+            
+            try {
+                if( out != null )
+                    in = s.getInputStream();
+            } catch( IOException e ) {
+                System.err.println( getName() + ": Client Socket Setup Error: " + e.getMessage() );
+                in = null;
+            }
+
+            if( in == null ) {
+                System.err.println( getName() + ": Failed to establish connection! (will retry in 1 second)");
+                DemoGUI.msleep(1000); 
+            }
         }
         
-        // connect to the client
-        Socket clientSocket;
-        try {
-            System.out.println( "Waiting for " + getTypeString() + " to connect" );
-            if(askBeforeBlocking && dgu.util.swing.GUIHelper.confirmDialog("Connect Confirm", "Wait for " + getTypeString() + " controller?", javax.swing.JOptionPane.YES_NO_OPTION)==javax.swing.JOptionPane.NO_OPTION)
-                clientSocket = null;
-            else {
-                clientSocket = serverSocket.accept();
-                System.out.println( "New " + getTypeString() + " client: " + clientSocket.getRemoteSocketAddress().toString() );
-            }
-        } catch(IOException e) {
-            System.err.println( e.getMessage() );
-            System.exit( 1 );
-            clientSocket = null;
+        tryingToConnect = false;
+    }
+     
+    private synchronized void close() {
+        if( s != null ) {
+            try {
+                s.close();
+            } catch(IOException e){}
+            s = null;
         }
-        this.s = clientSocket;
-
-        //try to establish the I/O streams: if we can't establish either, then close the socket
-        OutputStream tmp;
-        try {
-            if(s==null)
-                tmp=null;
-            else
-                tmp = s.getOutputStream();
-        } catch( IOException e ) {
-            System.err.println( "Client Socket Setup Error: " + e.getMessage() );
-            System.exit( 1 );
+        if( out != null ) {
+            try {
+                out.close();
+            } catch(IOException e){}
             out = null;
-            in = null;
-            return;
-        } 
-        out = tmp;
-
-        InputStream tmp2;
-        try {
-            if(s==null)
-                tmp2=null;
-            else
-                tmp2 = s.getInputStream();
-        } catch( IOException e ) {
-            System.err.println( "Client Socket Setup Error: " + e.getMessage() );
-            System.exit( 1 );
-            in = null;
-            return;
         }
-        in = tmp2;
+        if( in != null ) {
+            try {
+                in.close();
+            } catch(IOException e){}
+            in = null;
+        }
     }
     
     public abstract String getTypeString();
+    public String getName() { return getTypeString() + " controller (" + serverIP + ":" + serverPort + ")"; }
 
     protected synchronized void sendCommand( byte code, int value ) {
-        if(out==null) {
-            System.err.println("could not send command " + code + "," + value);
+        OutputStream myOut = out;
+        
+        if(tryingToConnect || myOut==null) {
+            System.err.println(getName() + ": could not send command " + code + "," + value);
+            asynchronousConnect();
             return;
         }
         
         try {
             //write the code (one byte)
-            out.write( code );
+            myOut.write( code );
 
             //write each byte in the value
-            out.write(  value >> 24 );
-            out.write( (value >> 16) & 0x000000FF );
-            out.write( (value >>  8) & 0x000000FF );
-            out.write(  value        &  0x000000FF );
+            myOut.write(  value >> 24 );
+            myOut.write( (value >> 16) & 0x000000FF );
+            myOut.write( (value >>  8) & 0x000000FF );
+            myOut.write(  value        &  0x000000FF );
         } catch( IOException e ) {
-            System.err.println( "command " + code + " / " + value + " => failed: " + e.getMessage() );
-            System.exit( 1 );
+            System.err.println( getName() + ": command " + code + " / " + value + " => failed: " + e.getMessage() );
+            asynchronousConnect();
         }
     }
     
     public int readByteOrDie() throws IOException {
-        if(in==null)
-            throw(new IOException("input socket is not open"));
+        InputStream myIn = in;
         
-        int ret = in.read();
-        if( ret == -1 )
+        if(tryingToConnect || myIn==null) {
+            asynchronousConnect();
+            throw new IOException("input socket is not open");
+        }
+        
+        int ret = myIn.read();
+        if( ret == -1 ) {
+            asynchronousConnect();
             throw new IOException("Socket received EOF");
+        }
         
         return ret;
     }

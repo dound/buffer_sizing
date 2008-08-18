@@ -19,8 +19,8 @@ public class RouterController extends Controller {
     
     UpdateInfoProcessor uip = new UpdateInfoProcessor();
     
-    public RouterController( int port ) {
-        super( port );
+    public RouterController( String ip, int port ) {
+        super( ip, port );
         uip.start();
     }
 

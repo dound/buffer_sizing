@@ -70,8 +70,8 @@ public class IperfController extends Controller {
         }
     }
     
-    public IperfController( int port ) {
-        super( port, false );
+    public IperfController( String ip, int port ) {
+        super( ip, port );
         controllers.add(new ICInfo(this));
     }
 

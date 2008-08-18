@@ -2,6 +2,7 @@ package dgu.bufsizing;
 
 import dgu.bufsizing.control.EventProcessor;
 import dgu.bufsizing.control.RouterController;
+import dgu.util.swing.GUIHelper;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
@@ -29,7 +30,11 @@ public class Router extends Node {
     public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort, int statsPort ) {
         super( name, nameShort, importance, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
-        controller = new RouterController( commandPort );
+        
+        String ip = GUIHelper.getInput("What is the IP or hostname of the router controller server?", "64.57.23.66");
+        System.out.println( "Will connect to router controller at " + ip );
+        
+        controller = new RouterController( ip, commandPort );
         this.statsPort = statsPort;
     }
     
