@@ -31,7 +31,8 @@ Router Controller Server v%s\n\
   -e, -evcap:      the port to listen for event capture packets on\n\
   -c, -coallesce:  number of event capture packets to coallesce per info field\n\
   -n, -num:        number of info fields to (try to) send per packet\n\
-  -b, -bw:         compute the estimated bandwidth and update rate and then exit\n"
+  -b, -bw:         compute the estimated bandwidth and update rate and then exit\n\
+  -v, -verbose:    verbosely print information to standard out\n"
 
 #define STR_PARAMS "\n\
     Command Listen TCP Port = %u\n\
@@ -75,6 +76,7 @@ static uint16_t server_port;
 static uint16_t evcap_port;
 static unsigned update_evcaps_per_info;
 static unsigned update_infos_per_update_packet;
+static int verbose = 0;
 static int client_fd = -1;
 
 static void* controller_main( void* nil );
@@ -104,8 +106,11 @@ static void rc_print( const char* format, ... ) {
 }
 
 static void rc_print_verbose( const char* format, ... ) {
-#ifdef _VERBOSE_
     va_list args;
+
+    if( !verbose )
+        return;
+
     va_start( args, format );
 
     rc_print_timestamp();
@@ -114,7 +119,6 @@ static void rc_print_verbose( const char* format, ... ) {
     fprintf( stdout, "\n" );
 
     va_end( args );
-#endif
 }
 
 int main( int argc, char** argv ) {
@@ -187,9 +191,12 @@ int main( int argc, char** argv ) {
                 rc_print("Error: -num must be no greater than %u (this is the most that fit in a single packet)", MAX_UPDATE_INFOS);
                 return -1;
             }
-       }
+        }
         else if( str_matches(argv[i], 3, "-b", "-bw", "--bw") ) {
             printOnly = 1;
+        }
+        else if( str_matches(argv[i], 3, "-v", "-verbose", "--verbose") ) {
+            verbose = 1;
         }
     }
 
