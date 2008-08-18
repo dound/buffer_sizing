@@ -1050,7 +1050,7 @@ private void optAutoForCurrentNActionPerformed(java.awt.event.ActionEvent evt) {
                 autoStatsState = ThreadState.ON;
                 
                 int res = computeBufferSizeForN(b, slNumFlows.getValue());
-                if( autoStatsState == ThreadState.ON )
+                if( autoStatsState == ThreadState.ON && res!=-1 )
                     b.addMeasuredResult( res );
                 
                 autoStatsState = ThreadState.OFF;
@@ -1157,7 +1157,9 @@ private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent ev
                                 int res = computeBufferSizeForN(b, n);
                                 if( autoStatsState != ThreadState.ON )
                                     break;
-                                b.addMeasuredResult( res );
+                                
+                                if( res != -1 )
+                                    b.addMeasuredResult( res );
                             }
                         }
                     }
@@ -1291,8 +1293,37 @@ private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent ev
         System.err.println(getParamsAsString());
     }
     
-    /** returns the measured buffer size in B needed to achieve maximum link utilization with n flows */
+    /** 
+     * returns the measured buffer size in B needed to achieve maximum link 
+     * utilization with n flows; retries the measurement up to three times if 
+     * the first one is higher than expected 
+     */
     private int computeBufferSizeForN(BottleneckLink b, int n) {
+        int expectedPlus10Percent = b.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE) * 11 / 10;
+        int numTries = 3;
+        
+        // try it once
+        int res = computeBufferSizeForN_once(b, n);
+        
+        // if more than 10% over expected, then try again
+        while( --numTries > 0 && res > expectedPlus10Percent ) {
+            System.err.println("Yuck, res is > 10% bigger than expected ... trying again in case it was noise");
+            res = computeBufferSizeForN_once(b, n);
+        }
+        
+        if( res > expectedPlus10Percent ) {
+            System.err.println("Still no dice -- skipping this data point because we can't get a good reading");
+            return -1;
+        }
+        else
+            return res;
+    }
+    
+    /** 
+     * returns the measured buffer size in B needed to achieve maximum link 
+     * utilization with n flows
+     */
+    private int computeBufferSizeForN_once(BottleneckLink b, int n) {
         long startTime = System.currentTimeMillis();
         
         // convenience ...
