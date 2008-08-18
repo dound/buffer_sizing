@@ -197,15 +197,16 @@ static void proxy_client() {
     }
 
     /* connect to the server */
-    print( "Trying to connect to the remote server at %s\n", str_server_ip );
+    print( "Trying to connect to the remote server at %s", str_server_ip );
     if( connect( remote_server_fd, (struct sockaddr*)&servaddr, sizeof(servaddr) ) != 0 ) {
         perror( "Error: connect to remote server failed" );
         close( remote_server_fd );
         remote_server_fd = -1;
+        sleep( 2 );
         return;
     }
 
-    print( "Connected to the remote server at %s\n", str_server_ip );
+    print( "Connected to the remote server at %s", str_server_ip );
 
     /* wait until the other is ready too */
     pthread_mutex_lock(&lock_rc);
