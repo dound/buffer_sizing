@@ -300,7 +300,7 @@ static void setNumFlows(unsigned n) {
                 execl("/bin/sleep", "sleep",  "86400", (char*)0);
             else {
                 snprintf(cmd, 256, "%u", MIN_PORT+n-1+portOffset);
-                execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", (char*)0);
+                execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", "-i", "5", (char*)0);
             }
 
             tc_print("premature termiation?");
