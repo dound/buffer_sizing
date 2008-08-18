@@ -128,12 +128,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-s", "-server", "--server") ) {
             i += 1;
             if( i == argc ) {
-                fprintf( stderr, "Error: -server requires an IP address to be specified\n" );
+                tc_print"Error: -server requires an IP address to be specified" );
                 return -1;
             }
             struct in_addr in_ip;
             if( inet_aton(argv[i],&in_ip) == 0 ) {
-                fprintf( stderr, "Error: %s is not a valid IP address\n", argv[i] );
+                tc_print"Error: %s is not a valid IP address", argv[i] );
                 return -1;
             }
             iperf_server_ip = inet_ntoa(in_ip);
@@ -144,12 +144,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-p", "-port", "--port") ) {
             i += 1;
             if( i == argc ) {
-                fprintf( stderr, "Error: -port requires a port number to be specified\n" );
+                tc_print"Error: -port requires a port number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
             if( val==0 || val > 65535 ) {
-                fprintf( stderr, "Error: %u is not a valid port\n", val );
+                tc_print"Error: %u is not a valid port", val );
                 return -1;
             }
             server_port = val;
@@ -157,7 +157,7 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-o", "-offset", "--offset") ) {
             i += 1;
             if( i == argc ) {
-                fprintf( stderr, "Error: -offset requires a number to be specified\n" );
+                tc_print"Error: -offset requires a number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
@@ -169,12 +169,12 @@ int main( int argc, char** argv ) {
     }
 
     if( iperf_server_ip==0 ) {
-        fprintf( stderr, "Error: -server is a required argument; you must supply an iperf server IP\n" );
+        tc_print"Error: -server is a required argument; you must supply an iperf server IP" );
         exit( 1 );
     }
 
     if( portOffset==-1 ) {
-        fprintf( stderr, "Error: -offset is a required argument; you must supply an iperf port offset\n" );
+        tc_print"Error: -offset is a required argument; you must supply an iperf port offset" );
         exit( 1 );
     }
 
@@ -267,7 +267,7 @@ static void controller_main() {
 
 /** Sets the number of flows. */
 static void setNumFlows(unsigned n) {
-    tc_print("N=%u, requested N=%u\n", numFlows, n);
+    tc_print("N=%u, requested N=%u", numFlows, n);
 
     /* remove flows if we have too many */
     while( numFlows > n ) {
@@ -277,18 +277,18 @@ static void setNumFlows(unsigned n) {
         /* send SIGKILL to the process */
         snprintf(cmd, 256, "kill -9 %u", pid);
         system(cmd);
-        tc_print("killed pid %u\n", pid);
+        tc_print("killed pid %u", pid);
 
         /* clean up the process */
         int junk;
         waitpid(pid, &junk, 0);
-        tc_print("pid %u has been cleaned up\n", pid);
+        tc_print("pid %u has been cleaned up", pid);
     }
 
     /* add flows if we don't have enough */
     while( numFlows < n ) {
         if( n >= MAX_FLOWS ) {
-            tc_print("Warning: too many flows requested (max=%u, requested=%u)\n", MAX_FLOWS, n );
+            tc_print("Warning: too many flows requested (max=%u, requested=%u)", MAX_FLOWS, n );
             return;
         }
 
@@ -302,14 +302,14 @@ static void setNumFlows(unsigned n) {
                 execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", (char*)0);
             }
 
-            tc_print("premature termiation?\n");
+            tc_print("premature termiation?");
             exit(0);
         }
         else {
             tgen_pid[numFlows++] = pid;
-            tc_print("spawned pid %u\n", pid);
+            tc_print("spawned pid %u", pid);
         }
     }
 
-    tc_print("# of flows = %u\n", numFlows);
+    tc_print("# of flows = %u", numFlows);
 }
