@@ -248,7 +248,7 @@ static void* controller_main( void* nil ) {
     struct sockaddr_in servaddr;
     struct sockaddr_in cliaddr;
     socklen_t cliaddr_len;
-    int servfd, len;
+    int servfd, len, val;
 
     /* initialize the server's info */
     servaddr.sin_family = AF_INET;
@@ -261,6 +261,11 @@ static void* controller_main( void* nil ) {
         exit( 1 );
     }
 
+    /* permit the socket to reuse the port even if it is already in use */
+    val = 1;
+    setsockopt(servfd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
+    /* bind to the port */
     if( bind(servfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
         perror( "Error: unable to bind TCP socket for router controller" );
         exit(1);
@@ -331,7 +336,7 @@ static void event_capture_handler() {
     unsigned updateInfoOn = 0;
     struct timeval now;
     struct sockaddr_in si_me, si_other;
-    int evcap_fd, len;
+    int evcap_fd, len, val;
     unsigned slen=sizeof(si_other), evcap_on;
     uint8_t buf[1500];
 
@@ -344,6 +349,11 @@ static void event_capture_handler() {
     si_me.sin_family = AF_INET;
     si_me.sin_port = htons(EVENT_CAP_PORT);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    /* permit the socket to reuse the port even if it is already in use */
+    val = 1;
+    setsockopt(evcap_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
     if( bind(evcap_fd, (struct sockaddr*)&si_me, sizeof(si_me)) == -1 ) {
         perror( "Error: unable to bind to UDP socket" );
         exit( 1 );
