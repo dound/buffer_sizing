@@ -31,7 +31,7 @@ public class Router extends Node {
         super( name, nameShort, importance, x, y );
         objForDrawing = new Ellipse2D.Float( x-ROUTER_DIAMETER/2, y-ROUTER_DIAMETER/2, ROUTER_DIAMETER, ROUTER_DIAMETER );
         
-        String ip = GUIHelper.getInput("What is the IP or hostname of the router controller server?", "64.57.23.66");
+        String ip = GUIHelper.getInput("What is the IP or hostname of the router controller server?", "LA1");
         System.out.println( "Will connect to router controller at " + ip );
         
         controller = new RouterController( ip, commandPort );

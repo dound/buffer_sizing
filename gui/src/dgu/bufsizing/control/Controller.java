@@ -5,12 +5,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 
 /**
  * Skeleton controller for receiving and sending commands to a client.
  * @author David Underhill
  */
 public abstract class Controller {
+    private static final HashMap<String, String> nameToIP = new HashMap<String, String>();
+    static {
+        // names <-> ip mapping (lower case!)
+        nameToIP.put("la1", "64.57.23.66");
+        nameToIP.put("la2", "64.57.23.67");
+        nameToIP.put("b81", "171.64.74.81");
+        nameToIP.put("b82", "171.64.74.82");
+        nameToIP.put("b83", "171.64.74.83");
+        nameToIP.put("b84", "171.64.74.84");
+    }
+    private static final String getIPFromNameOrIP(String ip) {
+        String name = ip.toLowerCase();
+        String mappedIP = nameToIP.get(name);
+        if( mappedIP == null )
+            return ip;
+        else
+            return mappedIP;
+    }
+    
     public static final long TIME_BETWEEN_ERROR_MSGS_MILLIS = 5000;
     
     protected String serverIP;
@@ -33,7 +53,7 @@ public abstract class Controller {
      * @param port  the TCP port to connect on
      */
     public Controller( String ip, int port ) {
-        serverIP = ip;
+        serverIP = getIPFromNameOrIP(ip);
         serverPort = port;
         asynchronousConnect();
     }
