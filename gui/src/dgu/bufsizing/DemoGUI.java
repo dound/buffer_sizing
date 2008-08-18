@@ -100,8 +100,9 @@ public class DemoGUI extends javax.swing.JFrame {
         //startDummyStatsThread();
         
         // start the stats listener threads (! no longer use event cap directly ...)
-        //for( Router r : demo.getRouters() )
-        //    r.startStatsListener();
+        for( Router r : demo.getRouters() )
+            r.startStatsListener();
+        
                 
         // start the iperf controller(s)
         int baseIPOctet = 84;

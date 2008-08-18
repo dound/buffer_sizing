@@ -21,9 +21,12 @@ public class RouterController extends Controller {
     
     public RouterController( String ip, int port ) {
         super( ip, port );
-        uip.start();
     }
 
+    public void startUpdateInfoProcessorThread() {
+        uip.start();
+    }
+    
     public String getTypeString() {
         return "Router";
     }

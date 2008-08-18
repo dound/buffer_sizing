@@ -39,8 +39,10 @@ public class Router extends Node {
     }
     
     public void startStatsListener() {
-        if( statsPort != 0 )
-            new EventProcessor( statsPort ).start();
+        controller.startUpdateInfoProcessorThread();
+        
+        //if( statsPort != 0 )
+        //    new EventProcessor( statsPort ).start();
     }
     
     protected void drawNode( Graphics2D gfx ) {

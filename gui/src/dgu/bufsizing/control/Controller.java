@@ -115,6 +115,7 @@ public abstract class Controller {
             }
         }
         
+        System.err.println(getName() + ": now connected");
         tryingToConnect = false;
     }
      
