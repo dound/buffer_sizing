@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
