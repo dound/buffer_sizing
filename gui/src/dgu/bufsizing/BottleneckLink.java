@@ -69,10 +69,10 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRateLimit = new XYSeries("Max Link Rate",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private boolean forceSet;
     
-    private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb (RTT*C)",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
-    private final XYSeries dataRTheGuido = new XYSeries("RTT * C / sqrt(N)", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
-    private final XYSeries dataRMea = new XYSeries("Measured", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
-    private final XYSeries dataRToday = new XYSeries("Today", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheROT = new XYSeries("Rule Of Thumb (RTT*C)  ",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataRTheGuido = new XYSeries("RTT * C / sqrt(N)  ", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRMea = new XYSeries("Measured  ", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
+    private final XYSeries dataRToday = new XYSeries("Today  ", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRCur = new XYSeries("Now", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRCurRange = new XYSeries("Now Range", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     
