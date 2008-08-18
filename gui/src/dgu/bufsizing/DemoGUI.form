@@ -242,13 +242,13 @@
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Buffer Sizing Formula"/>
+                <TitledBorder title=" Buffer Sizing Formula "/>
               </Border>
             </Property>
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="0" y="0" width="245" height="90"/>
+              <AbsoluteConstraints x="0" y="0" width="245" height="91"/>
             </Constraint>
           </Constraints>
 
@@ -274,7 +274,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="15" width="170" height="15"/>
+                  <AbsoluteConstraints x="60" y="15" width="180" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -293,7 +293,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="55" width="170" height="15"/>
+                  <AbsoluteConstraints x="60" y="55" width="180" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -309,7 +309,7 @@
               </AuxValues>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="30" y="70" width="165" height="17"/>
+                  <AbsoluteConstraints x="80" y="70" width="160" height="17"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -328,7 +328,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="10" y="35" width="170" height="15"/>
+                  <AbsoluteConstraints x="60" y="35" width="180" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -345,7 +345,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="175" y="55" width="60" height="15"/>
+                  <AbsoluteConstraints x="5" y="55" width="50" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -359,7 +359,7 @@
               </Properties>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="175" y="15" width="60" height="15"/>
+                  <AbsoluteConstraints x="5" y="15" width="50" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -373,17 +373,17 @@
               </Properties>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="175" y="35" width="60" height="15"/>
+                  <AbsoluteConstraints x="5" y="35" width="50" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="pnlMode2">
+        <Container class="javax.swing.JPanel" name="pnlFlowControl">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Flow Control"/>
+                <TitledBorder title=" Flow Control "/>
               </Border>
             </Property>
           </Properties>
@@ -418,6 +418,9 @@
                 <Property name="horizontalAlignment" type="int" value="0"/>
                 <Property name="text" type="java.lang.String" value="Number of Flows = 0"/>
               </Properties>
+              <Events>
+                <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblNumFlowsMouseClicked"/>
+              </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
                   <AbsoluteConstraints x="15" y="15" width="220" height="18"/>
@@ -426,11 +429,11 @@
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="pnlMode1">
+        <Container class="javax.swing.JPanel" name="pnlClear">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Clear ..."/>
+                <TitledBorder title=" Clear ... "/>
               </Border>
             </Property>
           </Properties>
@@ -459,7 +462,7 @@
             </Component>
             <Component class="javax.swing.JButton" name="btnClearRealTimePoints">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Scrolling Data"/>
+                <Property name="text" type="java.lang.String" value="Streaming Data"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnClearRealTimePointsActionPerformed"/>
@@ -476,7 +479,7 @@
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Mode"/>
+                <TitledBorder title=" Mode "/>
               </Border>
             </Property>
           </Properties>

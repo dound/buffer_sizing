@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
@@ -137,6 +138,11 @@ public class DemoGUI extends javax.swing.JFrame {
     private void adjustBounds() {
         this.setBackground(pnlControl.getBackground());
         
+        // panel to cover up the differing bg color of the JFrame
+        JPanel bg = new JPanel();
+        this.add(bg);
+        bg.setBounds(0, 0, WIDTH, HEIGHT);
+        
         double ratio = WIDTH / (double)HEIGHT;
         if( ratio <= 1.34 || drawType==DrawType.FORCE_1024_X_768 ) {
             int sepX = ratioW1024(5);
@@ -160,12 +166,68 @@ public class DemoGUI extends javax.swing.JFrame {
             SIZEmap.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
             pnlControl.setBounds(CANVAS_WIDTH + sepX, 0, WIDTH - lblMap.getWidth(), CANVAS_HEIGHT);
             
-            int row2ChartWidth = WIDTH / 2 - sepX;
+            int row2ChartWidth = WIDTH / 2 - sepX + 3;
             int row2Height = HEIGHT - CANVAS_HEIGHT - bMargin;
             int row2Y = CANVAS_HEIGHT;
             pnlChartXput.setBounds(0, row2Y, row2ChartWidth, row2Height);
-            pnlChartRight.setBounds(row2ChartWidth, row2Y, row2ChartWidth, row2Height);
+            pnlChartRight.setBounds(row2ChartWidth+1, row2Y, row2ChartWidth, row2Height);
+            
+            int w = WIDTH - CANVAS_WIDTH - 35;
+            int wInner = w - 20;
+            setComponW(pnlSizing, w);
+            addComponY(lblRuleOfThumb, 5);
+            addComponY(optRuleOfThumb, 5);
+            addComponY(lblGuido, 5);
+            addComponY(optGuido, 5);
+            addComponY(lblCustom, 5);
+            addComponY(optCustom, 5);
+            setComponXW(slCustomBufferSize, slCustomBufferSize.getX(), wInner - slCustomBufferSize.getX() + 13);
+            addComponY(slCustomBufferSize, 8);
+            addComponH(pnlSizing, 8);
+            
+            setComponW(pnlFlowControl, w);
+            addComponY(pnlFlowControl, 15);
+            setComponXW(lblNumFlows, lblNumFlows.getX() - 2, wInner);
+            addComponY(lblNumFlows, -1);
+            setComponXW(slNumFlows, slNumFlows.getX() - 2, wInner);
+            addComponY(slNumFlows, -1);
+            addComponH(pnlFlowControl, -5);
+            
+            pnlMode.setBounds(pnlClear.getX(), pnlMode.getY() + 10, w, pnlMode.getHeight());
+            setComponW(optManual, wInner);
+            addComponY(optManual, 3);
+            setComponW(optAuto, wInner);
+            addComponY(optAuto, 5);
+            setComponW(optAutoForCurrentN, wInner);
+            addComponY(optAutoForCurrentN, -1);
+            optAutoForCurrentN.setText("Auto for current N");
+            addComponH(pnlMode, -3);
+            addComponY(pnlMode, 6);
+            
+            pnlClear.setBounds(pnlClear.getX(), pnlMode.getY() + pnlMode.getHeight() + 9, w, 75);
+            setComponXW(btnClearRealTimePoints, 10, wInner);
+            btnClearRealTimePoints.setText("Clear Streaming Data");
+            addComponY(btnClearRealTimePoints, -1);
+            setComponXW(btnClearMeasuredPoints, 10, wInner);
+            btnClearMeasuredPoints.setText("Clear Today's Measured Results");
+            addComponY(btnClearMeasuredPoints, -1);
+            addComponY(pnlClear, 3);
         }
+    }
+    
+    public static Font FONT_LG = new Font("Tahoma", Font.BOLD, 16);
+    
+    public static final void setComponXW(Component c, int x, int w) {
+        c.setBounds(x, c.getY(), w, c.getHeight());
+    }
+    public static final void setComponW(Component c, int w) {
+        c.setBounds(c.getX(), c.getY(), w, c.getHeight());
+    }
+    public static final void addComponY(Component c, int yToAdd) {
+        c.setBounds(c.getX(), c.getY() + yToAdd, c.getWidth(), c.getHeight());
+    }
+    public static final void addComponH(Component c, int hToAdd) {
+        c.setBounds(c.getX(), c.getY(), c.getWidth(), c.getHeight() + hToAdd);
     }
     
     /** Creates new form DemoGUI */
@@ -851,10 +913,10 @@ public class DemoGUI extends javax.swing.JFrame {
         lblCustom = new javax.swing.JLabel();
         lblRuleOfThumb = new javax.swing.JLabel();
         lblGuido = new javax.swing.JLabel();
-        pnlMode2 = new javax.swing.JPanel();
+        pnlFlowControl = new javax.swing.JPanel();
         slNumFlows = new JSliderBound( "numFlows" );
         lblNumFlows = new javax.swing.JLabel();
-        pnlMode1 = new javax.swing.JPanel();
+        pnlClear = new javax.swing.JPanel();
         btnClearMeasuredPoints = new javax.swing.JButton();
         btnClearRealTimePoints = new javax.swing.JButton();
         pnlMode = new javax.swing.JPanel();
@@ -957,11 +1019,11 @@ public class DemoGUI extends javax.swing.JFrame {
 
         pnlControl.setLayout(null);
 
-        pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder("Buffer Sizing Formula"));
+        pnlSizing.setBorder(javax.swing.BorderFactory.createTitledBorder(" Buffer Sizing Formula "));
         pnlSizing.setLayout(null);
 
         optGroupRule.add(optRuleOfThumb);
-        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12));
+        optRuleOfThumb.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optRuleOfThumb.setText("<html>Rule of Thumb: RTT &#183; C</html>");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -969,7 +1031,7 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(10, 15, 170, 15);
+        optRuleOfThumb.setBounds(60, 15, 180, 15);
         optRuleOfThumb.getAccessibleContext().setAccessibleName("Rule of Thumb (RTT * C)");
 
         optGroupRule.add(optCustom);
@@ -981,17 +1043,17 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optCustom);
-        optCustom.setBounds(10, 55, 170, 15);
+        optCustom.setBounds(60, 55, 180, 15);
 
         slCustomBufferSize.setMajorTickSpacing(65536);
         slCustomBufferSize.setMaximum(524288);
         slCustomBufferSize.setMinorTickSpacing(5242880);
         slCustomBufferSize.setValue(0);
         pnlSizing.add(slCustomBufferSize);
-        slCustomBufferSize.setBounds(30, 70, 165, 17);
+        slCustomBufferSize.setBounds(80, 70, 160, 17);
 
         optGroupRule.add(optGuido);
-        optGuido.setFont(new java.awt.Font("Arial", 0, 12));
+        optGuido.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optGuido.setText("<html>RTT &#183; C / &#8730;N</html>");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -999,9 +1061,9 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(10, 35, 170, 15);
+        optGuido.setBounds(60, 35, 180, 15);
 
-        lblCustom.setFont(new java.awt.Font("Courier", 0, 12));
+        lblCustom.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
         lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCustom.setText("1000kB");
         lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1010,43 +1072,48 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         pnlSizing.add(lblCustom);
-        lblCustom.setBounds(175, 55, 60, 15);
+        lblCustom.setBounds(5, 55, 50, 15);
 
-        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12));
+        lblRuleOfThumb.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
         lblRuleOfThumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblRuleOfThumb.setText("10kB");
         pnlSizing.add(lblRuleOfThumb);
-        lblRuleOfThumb.setBounds(175, 15, 60, 15);
+        lblRuleOfThumb.setBounds(5, 15, 50, 15);
 
-        lblGuido.setFont(new java.awt.Font("Courier", 0, 12));
+        lblGuido.setFont(new java.awt.Font("Courier", 0, 12)); // NOI18N
         lblGuido.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblGuido.setText("100MB");
         pnlSizing.add(lblGuido);
-        lblGuido.setBounds(175, 35, 60, 15);
+        lblGuido.setBounds(5, 35, 50, 15);
 
         pnlControl.add(pnlSizing);
-        pnlSizing.setBounds(0, 0, 245, 90);
+        pnlSizing.setBounds(0, 0, 245, 91);
 
-        pnlMode2.setBorder(javax.swing.BorderFactory.createTitledBorder("Flow Control"));
-        pnlMode2.setLayout(null);
+        pnlFlowControl.setBorder(javax.swing.BorderFactory.createTitledBorder(" Flow Control "));
+        pnlFlowControl.setLayout(null);
 
         slNumFlows.setMajorTickSpacing(250);
         slNumFlows.setMaximum(900);
         slNumFlows.setMinorTickSpacing(100);
         slNumFlows.setValue(0);
-        pnlMode2.add(slNumFlows);
+        pnlFlowControl.add(slNumFlows);
         slNumFlows.setBounds(15, 35, 220, 16);
 
         lblNumFlows.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblNumFlows.setText("Number of Flows = 0");
-        pnlMode2.add(lblNumFlows);
+        lblNumFlows.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblNumFlowsMouseClicked(evt);
+            }
+        });
+        pnlFlowControl.add(lblNumFlows);
         lblNumFlows.setBounds(15, 15, 220, 18);
 
-        pnlControl.add(pnlMode2);
-        pnlMode2.setBounds(0, 96, 245, 60);
+        pnlControl.add(pnlFlowControl);
+        pnlFlowControl.setBounds(0, 96, 245, 60);
 
-        pnlMode1.setBorder(javax.swing.BorderFactory.createTitledBorder("Clear ..."));
-        pnlMode1.setLayout(null);
+        pnlClear.setBorder(javax.swing.BorderFactory.createTitledBorder(" Clear ... "));
+        pnlClear.setLayout(null);
 
         btnClearMeasuredPoints.setText("Utilization Data");
         btnClearMeasuredPoints.addActionListener(new java.awt.event.ActionListener() {
@@ -1054,26 +1121,26 @@ public class DemoGUI extends javax.swing.JFrame {
                 btnClearMeasuredPointsActionPerformed(evt);
             }
         });
-        pnlMode1.add(btnClearMeasuredPoints);
+        pnlClear.add(btnClearMeasuredPoints);
         btnClearMeasuredPoints.setBounds(7, 45, 120, 20);
 
-        btnClearRealTimePoints.setText("Scrolling Data");
+        btnClearRealTimePoints.setText("Streaming Data");
         btnClearRealTimePoints.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearRealTimePointsActionPerformed(evt);
             }
         });
-        pnlMode1.add(btnClearRealTimePoints);
+        pnlClear.add(btnClearRealTimePoints);
         btnClearRealTimePoints.setBounds(7, 20, 120, 20);
 
-        pnlControl.add(pnlMode1);
-        pnlMode1.setBounds(0, 162, 135, 90);
+        pnlControl.add(pnlClear);
+        pnlClear.setBounds(0, 162, 135, 90);
 
-        pnlMode.setBorder(javax.swing.BorderFactory.createTitledBorder("Mode"));
+        pnlMode.setBorder(javax.swing.BorderFactory.createTitledBorder(" Mode "));
         pnlMode.setLayout(null);
 
         optGroupMode.add(optManual);
-        optManual.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        optManual.setFont(new java.awt.Font("Arial", 0, 12));
         optManual.setSelected(true);
         optManual.setText("Manual");
         optManual.addActionListener(new java.awt.event.ActionListener() {
@@ -1085,7 +1152,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optManual.setBounds(10, 15, 90, 15);
 
         optGroupMode.add(optAutoForCurrentN);
-        optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12));
+        optAutoForCurrentN.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         optAutoForCurrentN.setText("<html>Auto for<br/>current N</html>");
         optAutoForCurrentN.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1241,6 +1308,20 @@ private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent ev
         b.clearData();
 }//GEN-LAST:event_btnClearRealTimePointsActionPerformed
 
+private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblNumFlowsMouseClicked
+    String input = GUIHelper.getInput("How many flows do you want?", 
+                                      Integer.toString(slNumFlows.getValue()));
+    if( input == null )
+        return;
+
+    try {
+        int n = Integer.valueOf(input);
+        if( n >= 0 && n <= slNumFlows.getMaximum() )
+            slNumFlows.setValue(n);
+    }
+    catch( NumberFormatException e ) {}
+}//GEN-LAST:event_lblNumFlowsMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearMeasuredPoints;
     private javax.swing.JButton btnClearRealTimePoints;
@@ -1269,11 +1350,11 @@ private void btnClearRealTimePointsActionPerformed(java.awt.event.ActionEvent ev
     private javax.swing.JRadioButton optTomahawk;
     private org.jfree.chart.ChartPanel pnlChartRight;
     private org.jfree.chart.ChartPanel pnlChartXput;
+    private javax.swing.JPanel pnlClear;
     private javax.swing.JPanel pnlControl;
     private javax.swing.JPanel pnlDetails;
+    private javax.swing.JPanel pnlFlowControl;
     private javax.swing.JPanel pnlMode;
-    private javax.swing.JPanel pnlMode1;
-    private javax.swing.JPanel pnlMode2;
     private javax.swing.JPanel pnlSizing;
     private javax.swing.JPanel pnlTGen;
     private dgu.util.swing.binding.JSliderBound slCustomBufferSize;
