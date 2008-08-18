@@ -11,7 +11,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
@@ -33,7 +32,7 @@ public class DemoGUI extends javax.swing.JFrame {
         FORCE_1024_X_768,
         FIT_TO_SCREEN
     }
-    private static final DrawType drawType = DrawType.FORCE_1920_X_1080;
+    private static final DrawType drawType = DrawType.FORCE_1024_X_768;
     
     public static final int TIME_BETWEEN_REFRESHES = 250;
     private static final int NUM_IPERF_CONTROLLERS = 1;
@@ -811,9 +810,10 @@ public class DemoGUI extends javax.swing.JFrame {
         return ret;
     }
     
+    private String curBufferSizeText = "512 kB";
+    public synchronized String getCurBufferSizeText() { return curBufferSizeText; }
     public synchronized void setBufferSizeText( BottleneckLink l ) {
         synchronized( l ) {
-            int size_msec        = l.getRTT_ms();
             int sizeROT_bytes    = l.getActualBufSize(BufferSizeRule.RULE_OF_THUMB);
             int sizeFS_bytes     = l.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE);
             int sizeCustom_bytes = l.getActualBufSize(BufferSizeRule.CUSTOM);
@@ -826,6 +826,12 @@ public class DemoGUI extends javax.swing.JFrame {
             this.lblGuido.setText( strFS );
             this.lblCustom.setText( strCustom );
             this.slCustomBufferSize.repaint(); // redraw it so the markers for buf size are adjusted correctly
+            
+            switch(l.getBufSizeRule()) {
+                case RULE_OF_THUMB:  curBufferSizeText = strROT;    break;
+                case FLOW_SENSITIVE: curBufferSizeText = strFS;     break;
+                case CUSTOM:         curBufferSizeText = strCustom; break;
+            }
         }
     }
     

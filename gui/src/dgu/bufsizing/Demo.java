@@ -1,6 +1,9 @@
 package dgu.bufsizing;
 
+import dgu.util.swing.GUIHelper;
+import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 
@@ -122,5 +125,32 @@ public class Demo {
         
         for( Router r : routers )
             r.draw( gfx );
+        
+        BottleneckLink b = DemoGUI.me.getSelectedBottleneck();
+        if( b != null ) {
+            Font origFont = gfx.getFont();
+            gfx.setFont(FONT_CBS);
+            
+            String s1 = "Buffer Size = ";
+            String s2 = DemoGUI.me.getCurBufferSizeText();
+            
+            int x = DemoGUI.ratioW1920(400), y = DemoGUI.ratioH1080(100);
+            int x2 = x + gfx.getFontMetrics().stringWidth(s1) / 2 + gfx.getFontMetrics().stringWidth(s2) / 2;
+            
+            gfx.setComposite( Drawable.COMPOSITE_HALF );
+            gfx.setPaint(Color.ORANGE);
+            GUIHelper.drawCenteredString(s1, gfx, x, y );
+            gfx.setPaint(Color.BLUE);
+            GUIHelper.drawCenteredString(s2, gfx, x2, y );
+            gfx.setComposite( Drawable.COMPOSITE_OPAQUE );
+            
+            GUIHelper.drawCenteredStringOutline(s1, gfx, x, y, Color.BLACK );
+            GUIHelper.drawCenteredStringOutline(s2, gfx, x2, y, Color.BLACK );
+            
+            gfx.setFont(origFont);
+            gfx.setPaint(Drawable.PAINT_DEFAULT);
+        }
     }
+    
+    private static final Font FONT_CBS = new Font("Tahoma", Font.BOLD, DemoGUI.ratioH1080(60));
 }

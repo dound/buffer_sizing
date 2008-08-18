@@ -78,7 +78,7 @@ public abstract class Node implements Drawable {
     }
     
     protected final void drawName( Graphics2D gfx, int x, int y ) {
-        GUIHelper.drawCeneteredString( name, gfx, x, y );
+        GUIHelper.drawCenteredString( name, gfx, x, y );
     }
 
     protected abstract void drawNode( Graphics2D gfx );

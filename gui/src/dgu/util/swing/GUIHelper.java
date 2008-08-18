@@ -4,6 +4,10 @@ import dgu.util.StringOps;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.util.Enumeration;
 import javax.swing.UIManager;
 
@@ -217,7 +221,54 @@ public abstract class GUIHelper {
         }
     }
 
-    public static final void drawCeneteredString( String s, Graphics2D gfx, int x, int y ) {
+    public static final void drawCenteredStringOutlined( String s, Graphics2D gfx, int x, int y, Paint outlinePaint ) {
+        // center the string horizontally
+        x -= gfx.getFontMetrics().stringWidth( s ) / 2;
+        
+        // draw the string itself
+        gfx.drawString( s, x, y );
+        
+        // set the paint color for the outline
+        Paint origPaint = gfx.getPaint();
+        gfx.setPaint(outlinePaint);
+        
+        // draw the outline
+        TextLayout textTl = new TextLayout(s, gfx.getFont(), gfx.getFontRenderContext());
+        Shape outline = textTl.getOutline(null);
+        AffineTransform txOld = gfx.getTransform();
+        AffineTransform txNew = new AffineTransform();
+        txNew.translate(x, y);
+        gfx.setTransform(txNew);
+        gfx.draw(outline);
+        gfx.setTransform(txOld);
+        
+        // restore the original paint color
+        gfx.setPaint(origPaint);
+    }
+
+    public static final void drawCenteredStringOutline( String s, Graphics2D gfx, int x, int y, Paint outlinePaint ) {
+        // center the string horizontally
+        x -= gfx.getFontMetrics().stringWidth( s ) / 2;
+
+        // set the paint color for the outline
+        Paint origPaint = gfx.getPaint();
+        gfx.setPaint(outlinePaint);
+        
+        // draw the outline
+        TextLayout textTl = new TextLayout(s, gfx.getFont(), gfx.getFontRenderContext());
+        Shape outline = textTl.getOutline(null);
+        AffineTransform txOld = gfx.getTransform();
+        AffineTransform txNew = new AffineTransform();
+        txNew.translate(x, y);
+        gfx.setTransform(txNew);
+        gfx.draw(outline);
+        gfx.setTransform(txOld);
+        
+        // restore the original paint color
+        gfx.setPaint(origPaint);
+    }
+    
+    public static final void drawCenteredString( String s, Graphics2D gfx, int x, int y ) {
         // center the string horizontally
         x -= gfx.getFontMetrics().stringWidth( s ) / 2;
         gfx.drawString( s, x, y );
