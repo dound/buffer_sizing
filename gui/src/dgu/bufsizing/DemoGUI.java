@@ -1635,9 +1635,8 @@ private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
         int currentThroughput_bps = maxThroughput_bps;
         int bfszLo = 1;
         int bfszHi = bfszMax;
+        b.noteCurrentMeasuredResultRange(bfszLo, bfszHi);
         do {
-            b.noteCurrentMeasuredResultRange(bfszLo, bfszHi);
-            
             if( autoStatsState != ThreadState.ON )
                 return -1;
             
@@ -1685,6 +1684,7 @@ private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
 
             // set the new buffer size
             bfsz.setValue( newBfSz );
+            b.noteCurrentMeasuredResultRange(bfszLo, bfszHi);
 
             // give the new buffer size a chance to stabalize
             msleep(bufszStabilizeTime_msec);
