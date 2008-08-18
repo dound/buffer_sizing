@@ -430,8 +430,8 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
     /* get the timestamp before the queue data */
     timestamp_8ns = getU64( buf, 70 );
     if( lastTS > timestamp_8ns ) {
-        print( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
-        return; /* old, out-of-order packet */
+        //print( "old timestamp (ignoring) (received %llu, latest is %llu)", timestamp_8ns, lastTS );
+        //return; /* old, out-of-order packet */
     }
     else {
         print_verbose( 2, "got new timestamp %llu", timestamp_8ns );
