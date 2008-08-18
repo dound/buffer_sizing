@@ -58,7 +58,7 @@ typedef enum {
 } code_t;
 
 static uint16_t server_port;
-static char* iperf_server_ip;
+static char iperf_server_ip[32];
 static int verbose = 0;
 static double startTime;
 
@@ -112,7 +112,7 @@ int main( int argc, char** argv ) {
 
     /* default values for command-line parameters */
     server_port = DEFAULT_PORT;
-    iperf_server_ip = NULL;
+    iperf_server_ip[0] = '\0';
     portOffset = -1;
 
     /* ignore the broken pipe signal */
@@ -136,7 +136,8 @@ int main( int argc, char** argv ) {
                 tc_print("Error: %s is not a valid IP address", argv[i] );
                 return -1;
             }
-            iperf_server_ip = inet_ntoa(in_ip);
+            char* strTmp = inet_ntoa(in_ip);
+            strncpy(iperf_server_ip, strTmp, 32);
         }
         else if( str_matches(argv[i], 1, "-debug") ) {
             debugApp = 1;
@@ -168,7 +169,7 @@ int main( int argc, char** argv ) {
         }
     }
 
-    if( iperf_server_ip==NULL ) {
+    if( iperf_server_ip[0] == '\0' ) {
         tc_print("Error: -server is a required argument; you must supply an iperf server IP" );
         exit( 1 );
     }
