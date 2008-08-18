@@ -98,7 +98,7 @@ bool str_matches( const char* given, int num_args, ... ) {
 static double startTime;
 static const char* printName;
 static int verbose;
-void print_init(const char* name) {
+double print_init(const char* name) {
     struct timeval now;
 
     /* initialize the start time */
@@ -106,6 +106,8 @@ void print_init(const char* name) {
     startTime = now.tv_sec + now.tv_usec / 1000000.0;
 
     printName = name;
+
+    return startTime;
 }
 
 void print_set_verbosity(int verbosity) {

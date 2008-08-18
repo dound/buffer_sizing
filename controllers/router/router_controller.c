@@ -75,7 +75,6 @@ static uint16_t server_port;
 static uint16_t evcap_port;
 static unsigned update_evcaps_per_info;
 static unsigned update_infos_per_update_packet;
-static int verbose = 0;
 static double startTime;
 static int client_fd = -1;
 
@@ -84,7 +83,8 @@ static void event_capture_handler();
 static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u);
 
 int main( int argc, char** argv ) {
-    print_init("Router Controller Server");
+    int verbose = 0;
+    startTime = print_init("Router Controller Server");
 
     /* default values for command-line parameters */
     int printOnly = 0;

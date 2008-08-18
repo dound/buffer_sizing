@@ -63,7 +63,7 @@ inline void* malloc_or_die( size_t size );
 /** Returns true if any of the var_args match given with strcmp. */
 bool str_matches( const char* given, int num_args, ... );
 
-void print_init( const char* name );
+double print_init( const char* name );
 void print_set_verbosity( int verbosity );
 void print_timestamp();
 void print( const char* format, ... );

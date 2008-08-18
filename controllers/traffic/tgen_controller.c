@@ -60,56 +60,13 @@ typedef enum {
 
 static uint16_t server_port;
 static char iperf_server_ip[32];
-static int verbose = 0;
-static double startTime;
 
 static void controller_main();
 static void setNumFlows(unsigned n);
 
-static void tc_print_timestamp() {
-    struct timeval now;
-    double t;
-
-    gettimeofday(&now,NULL);
-    t = now.tv_sec + now.tv_usec / 1000000.0 - startTime;
-
-    fprintf( stdout, "%.3f: ", t );
-}
-
-static void tc_print( const char* format, ... ) {
-    va_list args;
-    va_start( args, format );
-
-    tc_print_timestamp();
-    fprintf( stdout, "[Traffic Controller Server] " );
-    vfprintf( stdout, format, args );
-    fprintf( stdout, "\n" );
-
-    va_end( args );
-}
-
-static void tc_print_verbose( const char* format, ... ) {
-    va_list args;
-
-    if( !verbose )
-        return;
-
-    va_start( args, format );
-
-    tc_print_timestamp();
-    fprintf( stdout, "[Traffic Controller Server] " );
-    vfprintf( stdout, format, args );
-    fprintf( stdout, "\n" );
-
-    va_end( args );
-}
-
 int main( int argc, char** argv ) {
-    struct timeval now;
-
-    /* initialize the start time */
-    gettimeofday(&now, NULL);
-    startTime = now.tv_sec + now.tv_usec / 1000000.0;
+    int verbose;
+    print_init("Traffic Controller Server");
 
     /* default values for command-line parameters */
     server_port = DEFAULT_PORT;
@@ -129,12 +86,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-s", "-server", "--server") ) {
             i += 1;
             if( i == argc ) {
-                tc_print("Error: -server requires an IP address to be specified" );
+                print("Error: -server requires an IP address to be specified" );
                 return -1;
             }
             struct in_addr in_ip;
             if( inet_aton(argv[i],&in_ip) == 0 ) {
-                tc_print("Error: %s is not a valid IP address", argv[i] );
+                print("Error: %s is not a valid IP address", argv[i] );
                 return -1;
             }
             char* strTmp = inet_ntoa(in_ip);
@@ -146,12 +103,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-p", "-port", "--port") ) {
             i += 1;
             if( i == argc ) {
-                tc_print("Error: -port requires a port number to be specified" );
+                print("Error: -port requires a port number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
             if( val==0 || val > 65535 ) {
-                tc_print("Error: %u is not a valid port", val );
+                print("Error: %u is not a valid port", val );
                 return -1;
             }
             server_port = val;
@@ -159,7 +116,7 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-o", "-offset", "--offset") ) {
             i += 1;
             if( i == argc ) {
-                tc_print("Error: -offset requires a number to be specified" );
+                print("Error: -offset requires a number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
@@ -169,14 +126,15 @@ int main( int argc, char** argv ) {
             verbose = 1;
         }
     }
+    print_set_verbosity(verbose);
 
     if( iperf_server_ip[0] == '\0' ) {
-        tc_print("Error: -server is a required argument; you must supply an iperf server IP" );
+        print("Error: -server is a required argument; you must supply an iperf server IP" );
         exit( 1 );
     }
 
     if( portOffset==-1 ) {
-        tc_print("Error: -offset is a required argument; you must supply an iperf port offset" );
+        print("Error: -offset is a required argument; you must supply an iperf port offset" );
         exit( 1 );
     }
 
@@ -216,7 +174,7 @@ static void controller_main() {
     }
 
     /* listen for incoming connections */
-    tc_print("listening for an incoming connection request to TCP port %u", server_port);
+    print("listening for an incoming connection request to TCP port %u", server_port);
     if( listen(server_fd, 1) < 0 ) {
         perror( "Error: unable to listen" );
         exit(1);
@@ -224,13 +182,13 @@ static void controller_main() {
 
     /* loop forever */
     while( 1 ) {
-        tc_print("waiting for client to connect ...");
+        print("waiting for client to connect ...");
         cliaddr_len = sizeof(cliaddr);
         if( (client_fd=accept(server_fd, (struct sockaddr*)&cliaddr, &cliaddr_len)) < 0 ) {
             perror( "Error: accept failed" );
             continue;
         }
-        tc_print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
+        print("now connected to client at %s", inet_ntoa(cliaddr.sin_addr));
 
         /* wait for control packets */
         control_t packet;
@@ -246,21 +204,21 @@ static void controller_main() {
                 break;
 
             case CODE_SET_TGEN:
-                tc_print("received set tgen command (unsupported)");
+                print("received set tgen command (unsupported)");
                 break;
 
             default:
-                tc_print("received unexpected packet code %u", packet.code);
+                print("received unexpected packet code %u", packet.code);
             }
             if( ret == -1 ) {
-                tc_print("failed to write (terminating this connection)");
+                print("failed to write (terminating this connection)");
                 break;
             }
         }
 
         close( client_fd );
         close( server_fd );
-        tc_print("connection closed by peer");
+        print("connection closed by peer");
         break;
     }
 
@@ -270,7 +228,7 @@ static void controller_main() {
 
 /** Sets the number of flows. */
 static void setNumFlows(unsigned n) {
-    tc_print("N=%u, requested N=%u", numFlows, n);
+    print("N=%u, requested N=%u", numFlows, n);
 
     /* remove flows if we have too many */
     while( numFlows > n ) {
@@ -280,18 +238,18 @@ static void setNumFlows(unsigned n) {
         /* send SIGKILL to the process */
         snprintf(cmd, 256, "kill -9 %u", pid);
         system(cmd);
-        tc_print("killed pid %u", pid);
+        print("killed pid %u", pid);
 
         /* clean up the process */
         int junk;
         waitpid(pid, &junk, 0);
-        tc_print("pid %u has been cleaned up", pid);
+        print("pid %u has been cleaned up", pid);
     }
 
     /* add flows if we don't have enough */
     while( numFlows < n ) {
         if( n >= MAX_FLOWS ) {
-            tc_print("Warning: too many flows requested (max=%u, requested=%u)", MAX_FLOWS, n );
+            print("Warning: too many flows requested (max=%u, requested=%u)", MAX_FLOWS, n );
             return;
         }
 
@@ -305,14 +263,14 @@ static void setNumFlows(unsigned n) {
                 execl("/usr/local/bin/iperf", "iperf", "-c", iperf_server_ip, "-p", cmd, "-t", "86400", "-i", "5", (char*)0);
             }
 
-            tc_print("premature termiation?");
+            print("premature termiation?");
             exit(0);
         }
         else {
             tgen_pid[numFlows++] = pid;
-            tc_print("spawned pid %u", pid);
+            print("spawned pid %u", pid);
         }
     }
 
-    tc_print("# of flows = %u", numFlows);
+    print("# of flows = %u", numFlows);
 }
