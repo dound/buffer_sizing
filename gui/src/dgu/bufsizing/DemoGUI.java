@@ -411,15 +411,31 @@ public class DemoGUI extends javax.swing.JFrame {
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOcc(),   false );
                 DemoGUI.collOcc.addSeries(  bl.getDataBufSize(),    false );
                 
-                ((XYPlot)chartXput.getPlot()).getRangeAxis().setLabel("Throughput (kbps)");
-                ((XYPlot)chartOcc.getPlot()).getRangeAxis().setLabel("Buffer Utilization (kB)");
+                ValueAxis rangeXput = ((XYPlot)chartXput.getPlot()).getRangeAxis();
+                ValueAxis rangeOcc = ((XYPlot)chartOcc.getPlot()).getRangeAxis();
+                
+                rangeXput.setLabel("Throughput (kbps)");
+                rangeOcc.setLabel("Buffer Utilization (kB)");
+                
+                // for absolute data graph, use auto range
+                rangeXput.setAutoRange(true);
+                rangeOcc.setAutoRange(true);
             }
             else {
                 DemoGUI.collXput.addSeries( bl.getDataThroughputPer(), false );
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOccPer(),   false );
                 
-                ((XYPlot)chartXput.getPlot()).getRangeAxis().setLabel("Throughput (% Link Utilization)");
-                ((XYPlot)chartOcc.getPlot()).getRangeAxis().setLabel("Buffer Utilization (%)");
+                ValueAxis rangeXput = ((XYPlot)chartXput.getPlot()).getRangeAxis();
+                ValueAxis rangeOcc = ((XYPlot)chartOcc.getPlot()).getRangeAxis();
+                
+                rangeXput.setLabel("Throughput (% Link Utilization)");
+                rangeOcc.setLabel("Buffer Utilization (%)");
+                
+                // for % graph, always show the full range from 0 to 1
+                rangeXput.setAutoRange(false);
+                rangeXput.setRange(0.0, 1.0);
+                rangeOcc.setAutoRange(false);
+                rangeOcc.setRange(0.0, 1.0);
             }
             
             DemoGUI.me.refreshCharts();
@@ -483,13 +499,17 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         plot.getDomainAxis().setFixedAutoRange(1.0e9); // keep the domain at a constant range of values
+        
+        // for % graph, always show the full range from 0 to 1
+        plot.getRangeAxis().setAutoRange(false);
+        plot.getRangeAxis().setRange(0.0, 1.0);
     }
     
     private void createChartOcc() {
         chartOcc = prepareChart(
             "Buffer Occupancy and Size vs. Time",
             "Time",
-            "Buffer Utilization (kB)",
+            "Buffer Utilization (%)",
             collOcc
         );    
          
@@ -502,6 +522,10 @@ public class DemoGUI extends javax.swing.JFrame {
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         plot.getDomainAxis().setFixedAutoRange(1.0e9); // keep the domain at a constant range of values
+        
+        // for % graph, always show the full range from 0 to 1
+        plot.getRangeAxis().setAutoRange(false);
+        plot.getRangeAxis().setRange(0.0, 1.0);
     }
     
     public XYLineAndShapeRenderer resultsRenderer = new XYLineAndShapeRenderer(true, false);
