@@ -128,12 +128,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-s", "-server", "--server") ) {
             i += 1;
             if( i == argc ) {
-                tc_print"Error: -server requires an IP address to be specified" );
+                tc_print("Error: -server requires an IP address to be specified" );
                 return -1;
             }
             struct in_addr in_ip;
             if( inet_aton(argv[i],&in_ip) == 0 ) {
-                tc_print"Error: %s is not a valid IP address", argv[i] );
+                tc_print("Error: %s is not a valid IP address", argv[i] );
                 return -1;
             }
             iperf_server_ip = inet_ntoa(in_ip);
@@ -144,12 +144,12 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-p", "-port", "--port") ) {
             i += 1;
             if( i == argc ) {
-                tc_print"Error: -port requires a port number to be specified" );
+                tc_print("Error: -port requires a port number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
             if( val==0 || val > 65535 ) {
-                tc_print"Error: %u is not a valid port", val );
+                tc_print("Error: %u is not a valid port", val );
                 return -1;
             }
             server_port = val;
@@ -157,7 +157,7 @@ int main( int argc, char** argv ) {
         else if( str_matches(argv[i], 3, "-o", "-offset", "--offset") ) {
             i += 1;
             if( i == argc ) {
-                tc_print"Error: -offset requires a number to be specified" );
+                tc_print("Error: -offset requires a number to be specified" );
                 return -1;
             }
             uint32_t val = strtoul( argv[i], NULL, 10 );
@@ -169,12 +169,12 @@ int main( int argc, char** argv ) {
     }
 
     if( iperf_server_ip==0 ) {
-        tc_print"Error: -server is a required argument; you must supply an iperf server IP" );
+        tc_print("Error: -server is a required argument; you must supply an iperf server IP" );
         exit( 1 );
     }
 
     if( portOffset==-1 ) {
-        tc_print"Error: -offset is a required argument; you must supply an iperf port offset" );
+        tc_print("Error: -offset is a required argument; you must supply an iperf port offset" );
         exit( 1 );
     }
 
