@@ -17,10 +17,11 @@ public abstract class Controller {
         // names <-> ip mapping (lower case!)
         nameToIP.put("la1", "64.57.23.66");
         nameToIP.put("la2", "64.57.23.67");
-        nameToIP.put("b81", "171.64.74.81");
-        nameToIP.put("b82", "171.64.74.82");
-        nameToIP.put("b83", "171.64.74.83");
         nameToIP.put("b84", "171.64.74.84");
+        nameToIP.put("b85", "171.64.74.85");
+        nameToIP.put("b86", "171.64.74.86");
+        nameToIP.put("b87", "171.64.74.87");
+        nameToIP.put("b88", "171.64.74.88");
     }
     private static final String getIPFromNameOrIP(String ip) {
         String name = ip.toLowerCase();
