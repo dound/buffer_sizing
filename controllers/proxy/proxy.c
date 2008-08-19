@@ -22,7 +22,8 @@ Bidirectional Proxy v%s\n\
   -p, -port:     the port to listen for connections on and to connect to the server on\n\
   -s, -server:   IP address of the server\n"
 
-static void proxyLoop(uint32_t server_ip, uint16_t port);
+static void proxyStart(uint32_t server_ip, uint16_t port);
+static void proxyLoop(int remote_client_fd, int remote_server_fd);
 
 int main( int argc, char** argv ) {
     uint32_t server_ip;
@@ -80,7 +81,7 @@ int main( int argc, char** argv ) {
 
     /* pipe bi-directional data between a client and server */
     while(1) {
-        proxyLoop(server_ip, port);
+        proxyStart(server_ip, port);
 
         print("pausing for 5 seconds before trying to connect again");
         sleep(5);
@@ -202,10 +203,8 @@ static int forwardData(int fdFrom, const char* strFrom, int fdTo, const char* st
     return 1;
 }
 
-static void proxyLoop(uint32_t server_ip, uint16_t port) {
+static void proxyStart(uint32_t server_ip, uint16_t port) {
     int remote_client_fd, remote_server_fd;
-    fd_set rdset, errset;
-    int max_fd = -1, ret;
 
     /* get connected to the server first */
     remote_server_fd = connectToServer(server_ip, port);
@@ -214,8 +213,20 @@ static void proxyLoop(uint32_t server_ip, uint16_t port) {
 
     /* now wait for the client */
     remote_client_fd = waitForClient(port);
-    if( remote_client_fd < 0 )
+    if( remote_client_fd < 0 ) {
+        close(remote_server_fd);
         return;
+    }
+
+    proxyLoop(remote_client_fd, remote_server_fd);
+
+    close(remote_client_fd);
+    close(remote_server_fd);
+}
+
+static void proxyLoop(int remote_client_fd, int remote_server_fd) {
+    fd_set rdset, errset;
+    int max_fd, ret;
 
     /* determine the max file descriptor value */
     max_fd = (remote_client_fd > remote_server_fd) ? remote_client_fd : remote_server_fd;
@@ -233,6 +244,13 @@ static void proxyLoop(uint32_t server_ip, uint16_t port) {
 
         /* wait for a read or error to occur */
         ret = select(max_fd+1, &rdset, NULL, &errset, NULL);
+        if( ret < 0 ) {
+            if( errno == EINTR )
+                continue;
+
+            perror("select failed");
+            return;
+        }
 
         /* handle the event */
         if( FD_ISSET(remote_client_fd, &errset) ) {
