@@ -21,7 +21,7 @@ public class Router extends Node {
     public Router( String name, String nameShort, Importance importance, int x, int y, int commandPort, int statsPort ) {
         super( name, nameShort, importance, x, y );
         
-        String ip = GUIHelper.getInput("What is the IP or hostname of the router controller server?", "LA1");
+        String ip = GUIHelper.getInput("What is the IP or hostname of the router controller server? (default=proxy at b88)", "b88");
         System.out.println( "Will connect to router controller at " + ip );
         
         controller = new RouterController( ip, commandPort );
