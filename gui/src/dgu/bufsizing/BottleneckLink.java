@@ -258,10 +258,10 @@ public class BottleneckLink extends Link<Router> {
         gfx.drawLine( fillX, fillY, fillX + width, fillY );
         
         // draw marker near bottom of queue to finish the queue symbol
-        gfx.setColor( Color.BLACK );
-        gfx.setStroke( Drawable.STROKE_THICK );
-        x += QUEUE_WIDTH * 4 / 5;
-        gfx.drawLine( x, y + QUEUE_HEIGHT / 5, x, y + QUEUE_HEIGHT * 4 / 5 );
+        //gfx.setColor( Color.BLACK );
+        //gfx.setStroke( Drawable.STROKE_THICK );
+        //x += QUEUE_WIDTH * 4 / 5;
+        //gfx.drawLine( x, y + QUEUE_HEIGHT / 5, x, y + QUEUE_HEIGHT * 4 / 5 );
         
         // restore defaultsAndBufferSize
         gfx.setPaint( Drawable.PAINT_DEFAULT );
