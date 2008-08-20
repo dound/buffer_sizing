@@ -1182,7 +1182,7 @@ public class DemoGUI extends javax.swing.JFrame {
         optAuto.setBounds(10, 66, 130, 15);
 
         pnlControl.add(pnlMode);
-        pnlMode.setBounds(0, 207, 150, 145);
+        pnlMode.setBounds(190, 207, 150, 145);
 
         pnlClear.setBorder(javax.swing.BorderFactory.createTitledBorder(null, " Clear", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 3, 18), new java.awt.Color(0, 0, 128))); // NOI18N
         pnlClear.setLayout(null);
@@ -1210,7 +1210,7 @@ public class DemoGUI extends javax.swing.JFrame {
         btnClearRealTimePoints.setBounds(9, 30, 173, 50);
 
         pnlControl.add(pnlClear);
-        pnlClear.setBounds(150, 207, 190, 145);
+        pnlClear.setBounds(0, 207, 190, 145);
 
         getContentPane().add(pnlControl);
         pnlControl.setBounds(1000, 5, 340, 353);
