@@ -1582,7 +1582,7 @@ private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
      * the first one is higher than expected 
      */
     private int computeBufferSizeForN(BottleneckLink b, int n) {
-        int expectedPlus10Percent = b.getActualBufSize(BufferSizeRule.FLOW_SENSITIVE) * 11 / 10;
+        int expectedPlus10Percent = b.computeBufSize(BufferSizeRule.FLOW_SENSITIVE,b.getRTT_ms(),b.getRateLimit_kbps(),n) * 11 / 10;
         int numTries = 3;
         
         // try it once
