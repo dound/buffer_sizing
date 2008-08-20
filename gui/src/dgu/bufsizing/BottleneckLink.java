@@ -6,6 +6,7 @@ import dgu.util.IllegalArgValException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Vector;
@@ -547,19 +548,37 @@ public class BottleneckLink extends Link<Router> {
         int r = (confidence <  0.5) ? 128 + (int)(128*(0.5 - confidence)) : 0;
         int g = (confidence >= 0.5) ? 128 + (int)(128*(confidence - 0.5)) : 0;
         DemoGUI.me.resultsRenderer.setSeriesPaint(4, new java.awt.Color(r,g,0));
-        
-        theta += (5 * Math.PI / 180.0);
-        for( int i=0; i<starXRot.length; i++ ) {
-            starXRot[i] = (int)(starX[i]*Math.cos(theta) - starY[i]*Math.sin(theta));
-            starYRot[i] = (int)(starX[i]*Math.sin(theta) + starY[i]*Math.cos(theta));
-        }
-        DemoGUI.me.resultsRenderer.setSeriesShape(4, new java.awt.Polygon(starXRot, starYRot, starXRot.length), false);
     }
-    private double theta = 0;
+    private static double theta = 0;
     private static final int starX[] = { -7, -2, 2, 7, 3, 3, 7, 2, -2, -7, -3, -3, -7 };
     private static final int starY[] = { -7, -3, -3, -7, -2, 2, 7, 3, 3, 7, 2, -2, -7 };
     private static final int starXRot[] = new int[starX.length];
     private static final int starYRot[] = new int[starY.length];
+    static {
+        // rotate the star at a constant rate
+        new Thread() {
+            public void run() {
+                while(true) {
+                    DemoGUI.msleep(25);
+                    starRotate();
+                }
+            }
+        }.start();
+    }
+    private static final void starRotate() {
+        if( DemoGUI.me == null )
+            return;
+        
+        // rotate the star
+        theta += (5.0 * Math.PI / 180.0);
+        for( int i=0; i<starXRot.length; i++ ) {
+            starXRot[i] = (int)(starX[i]*Math.cos(theta) - starY[i]*Math.sin(theta));
+            starYRot[i] = (int)(starX[i]*Math.sin(theta) + starY[i]*Math.cos(theta));
+        }
+        
+        // set the marker for the current result to be the newly rotated star
+        DemoGUI.me.resultsRenderer.setSeriesShape(4, new Polygon(starXRot, starYRot, starXRot.length), true);
+    }
     
     public synchronized void populateTheoreticalResults() {
         // recompute the theoretical
