@@ -1055,26 +1055,26 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule.add(optRuleOfThumb);
         optRuleOfThumb.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        optRuleOfThumb.setText("<html>Rule of Thumb: RTT&#183;C</html>");
+        optRuleOfThumb.setText("<html>&nbsp;Rule of Thumb: RTT&#183;C</html>");
         optRuleOfThumb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optRuleOfThumbActionPerformed(evt);
             }
         });
         pnlSizing.add(optRuleOfThumb);
-        optRuleOfThumb.setBounds(82, 30, 250, 15);
+        optRuleOfThumb.setBounds(85, 30, 245, 15);
         optRuleOfThumb.getAccessibleContext().setAccessibleName("Rule of Thumb (RTT * C)");
 
         optGroupRule.add(optCustom);
         optCustom.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        optCustom.setText("Custom");
+        optCustom.setText(" Custom");
         optCustom.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optCustomActionPerformed(evt);
             }
         });
         pnlSizing.add(optCustom);
-        optCustom.setBounds(82, 76, 250, 15);
+        optCustom.setBounds(85, 76, 245, 15);
 
         slCustomBufferSize.setMajorTickSpacing(65536);
         slCustomBufferSize.setMaximum(524288);
@@ -1085,16 +1085,16 @@ public class DemoGUI extends javax.swing.JFrame {
 
         optGroupRule.add(optGuido);
         optGuido.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        optGuido.setText("<html>RTT &#183; C / &#8730;N</html>");
+        optGuido.setText("<html>&nbsp;RTT &#183; C / &#8730;N</html>");
         optGuido.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 optGuidoActionPerformed(evt);
             }
         });
         pnlSizing.add(optGuido);
-        optGuido.setBounds(82, 53, 250, 15);
+        optGuido.setBounds(85, 53, 245, 15);
 
-        lblCustom.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        lblCustom.setFont(new java.awt.Font("Courier New", 1, 18)); // NOI18N
         lblCustom.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCustom.setText("1000kB");
         lblCustom.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1105,13 +1105,13 @@ public class DemoGUI extends javax.swing.JFrame {
         pnlSizing.add(lblCustom);
         lblCustom.setBounds(10, 76, 70, 15);
 
-        lblRuleOfThumb.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        lblRuleOfThumb.setFont(new java.awt.Font("Courier New", 1, 18)); // NOI18N
         lblRuleOfThumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblRuleOfThumb.setText("10kB");
         pnlSizing.add(lblRuleOfThumb);
         lblRuleOfThumb.setBounds(10, 30, 70, 15);
 
-        lblGuido.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        lblGuido.setFont(new java.awt.Font("Courier New", 1, 18)); // NOI18N
         lblGuido.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblGuido.setText("100MB");
         pnlSizing.add(lblGuido);

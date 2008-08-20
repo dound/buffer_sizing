@@ -267,7 +267,7 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Arial" size="18" style="1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;Rule of Thumb: RTT&amp;#183;C&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&amp;nbsp;Rule of Thumb: RTT&amp;#183;C&lt;/html&gt;"/>
               </Properties>
               <AccessibilityProperties>
                 <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Rule of Thumb (RTT * C)"/>
@@ -277,7 +277,7 @@
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="82" y="30" width="250" height="15"/>
+                  <AbsoluteConstraints x="85" y="30" width="245" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -289,14 +289,14 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Arial" size="18" style="1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Custom"/>
+                <Property name="text" type="java.lang.String" value=" Custom"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optCustomActionPerformed"/>
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="82" y="76" width="250" height="15"/>
+                  <AbsoluteConstraints x="85" y="76" width="245" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
@@ -324,21 +324,21 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Arial" size="18" style="1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;RTT &amp;#183; C / &amp;#8730;N&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&amp;nbsp;RTT &amp;#183; C / &amp;#8730;N&lt;/html&gt;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="optGuidoActionPerformed"/>
               </Events>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="82" y="53" width="250" height="15"/>
+                  <AbsoluteConstraints x="85" y="53" width="245" height="15"/>
                 </Constraint>
               </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="lblCustom">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Arial" size="18" style="1"/>
+                  <Font name="Courier New" size="18" style="1"/>
                 </Property>
                 <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="1000kB"/>
@@ -355,7 +355,7 @@
             <Component class="javax.swing.JLabel" name="lblRuleOfThumb">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Arial" size="18" style="1"/>
+                  <Font name="Courier New" size="18" style="1"/>
                 </Property>
                 <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="10kB"/>
@@ -369,7 +369,7 @@
             <Component class="javax.swing.JLabel" name="lblGuido">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Arial" size="18" style="1"/>
+                  <Font name="Courier New" size="18" style="1"/>
                 </Property>
                 <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="100MB"/>
