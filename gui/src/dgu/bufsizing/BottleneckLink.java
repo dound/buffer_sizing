@@ -125,14 +125,14 @@ public class BottleneckLink extends Link<Router> {
             if( this.getQueueOcc_bytes() == 0 )
                 dataQueueOccPer.add( time_ns8, 0 );
             else
-                dataQueueOccPer.add( time_ns8, queueOcc_bytes / this.getQueueOcc_bytes() );
+                dataQueueOccPer.add( time_ns8, queueOcc_bytes / (double)this.getQueueOcc_bytes() );
         }
         else {
             dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
             if( this.getActualBufSize() == 0 )
                 dataQueueOccPer.add( time_ns8, 0 );
             else
-                dataQueueOccPer.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes / this.getActualBufSize()) );
+                dataQueueOccPer.add( time_ns8, queueOcc_bytes / (double)this.getActualBufSize() );
         }
     }
     
@@ -276,27 +276,38 @@ public class BottleneckLink extends Link<Router> {
         return prev_time_offset_end_ns8 <= rtr_time_ns8;
     }
     
-    public synchronized void setOccupancy( long rtr_time_ns8, int num_bytes ) {
-        // add the old data point
+    int lastPlottedQueueOcc_bytes = -1;
+    public synchronized void setOccupancy( long rtr_time_ns8, int num_bytes, boolean silent ) {
+        if( silent ) {
+            queueOcc_bytes = num_bytes;
+            return;
+        }
+        
+        // add the old data point (the last one plotted)
+        queueOcc_bytes = lastPlottedQueueOcc_bytes;
         addDataPointToQueueOccData( routerTimeToLocalTime8ns(rtr_time_ns8) );
         
         //add the new data point
-        queueOcc_bytes = num_bytes;
+        lastPlottedQueueOcc_bytes = queueOcc_bytes = num_bytes;
         addDataPointToQueueOccData( routerTimeToLocalTime8ns(rtr_time_ns8) );
     }
     
-    public synchronized void arrival( long rtr_time_ns8, int num_bytes ) {
-        setOccupancy( rtr_time_ns8, queueOcc_bytes + num_bytes );
+    public synchronized void arrival( long rtr_time_ns8, int num_bytes, boolean silent ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes + num_bytes, silent );
     }
     
-    public synchronized void departure( long rtr_time_ns8, int num_bytes ) {
-        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
+    public synchronized void departure( long rtr_time_ns8, int num_bytes, boolean silent ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes, silent );
         bytes_sent_since_last_update += num_bytes;
         //c_bytes += num_bytes;
     }
     
-    public synchronized void dropped( long rtr_time_ns8, int num_bytes ) {
-        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes );
+    public synchronized void dropped( long rtr_time_ns8, int num_bytes, boolean silent ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes, silent );
+    }
+    
+    public synchronized void plotCurrentOccupancy( long rtr_time_ns8 ) {
+        setOccupancy( rtr_time_ns8, queueOcc_bytes, false );
     }
     
     public int getQueueOcc_bytes() {

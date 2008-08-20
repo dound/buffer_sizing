@@ -155,7 +155,7 @@ public class EventProcessor extends Thread {
             // update the queue with its new absolute value
             if( !USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { // only handle NF2C1 for now
                 int num_bytes = 8 * extractInt(buf, index);
-                b.setOccupancy( timestamp_8ns, num_bytes );
+                b.setOccupancy( timestamp_8ns, num_bytes, false );
                 debug_println( "queue 2 set to " + num_bytes + "B" );
             }
             index += 4;
@@ -163,7 +163,7 @@ public class EventProcessor extends Thread {
             // size in packets
             if( USE_PACKETS && i == DEFAULT_QUEUE_TO_MONITOR ) { // only handle NF2C1 for now
                 int num_packets = extractInt(buf, index);
-                b.setOccupancy( timestamp_8ns, num_packets );
+                b.setOccupancy( timestamp_8ns, num_packets, false );
                 debug_println( "queue 2 set to " + num_packets + " packets" );
             }
             index += 4;
@@ -203,23 +203,23 @@ public class EventProcessor extends Thread {
                 
                 if( type == EventType.TYPE_ARRIVE.type ) {
                     if( USE_PACKETS )
-                        b.arrival( timestamp_adjusted_8ns, 1 );
+                        b.arrival( timestamp_adjusted_8ns, 1, false );
                     else
-                        b.arrival( timestamp_adjusted_8ns, plen_bytes );
+                        b.arrival( timestamp_adjusted_8ns, plen_bytes, false );
                     
                     debug_println( "arrival => " + b.getQueueOcc_bytes() );
                 }
                 else if( type == EventType.TYPE_DEPART.type ) {
                     if( USE_PACKETS )
-                        b.departure( timestamp_adjusted_8ns, 1 );
+                        b.departure( timestamp_adjusted_8ns, 1, false );
                     else
-                        b.departure( timestamp_adjusted_8ns, plen_bytes );
+                        b.departure( timestamp_adjusted_8ns, plen_bytes, false );
                     
                     debug_println( "departure => " + b.getQueueOcc_bytes() );
                 }
                 else {
                     //System.err.println( "dropped " + plen_bytes );
-                //    b.dropped( timestamp_adjusted_8ns, plen_bytes );
+                //    b.dropped( timestamp_adjusted_8ns, plen_bytes, false );
                 }
             }
         }

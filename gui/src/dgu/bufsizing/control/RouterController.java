@@ -121,9 +121,18 @@ public class RouterController extends Controller {
                 if( gotUpdate ) {
                     long timestamp_usec = ((u.sec * 1000L * 1000L) + u.usec);
                     long timestamp_8ns = timestamp_usec * 1000L / 8L;
-                    b.setOccupancy( timestamp_8ns, u.current );
-                    b.arrival( timestamp_8ns, u.arrived );
-                    b.departure( timestamp_8ns, u.departed );
+                    
+                    // set the occupancy at the start of this packet
+                    b.setOccupancy( timestamp_8ns, u.current, false );
+                    
+                    // don't plot the occupancy for these yet because we're doing all arrivals,
+                    // then all departures, which isn't the right order, which means the max can
+                    // be larger than reality (and in fact probably would be, and often larger than max buffer size!)
+                    b.arrival( timestamp_8ns, u.arrived, true );
+                    b.departure( timestamp_8ns, u.departed, true );
+                    
+                    // now that we have the end value, plot that value (would be even better if we knew the end timestamp
+                    b.plotCurrentOccupancy(timestamp_8ns);
                     
                     //System.err.println( "update at " + timestamp_8ns + " => cur=" + u.current + " / arr=" + u.arrived + " / dep=" + u.departed );
                     
