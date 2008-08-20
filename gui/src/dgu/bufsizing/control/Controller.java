@@ -74,7 +74,7 @@ public abstract class Controller {
     }
     
     /** Continuously tries to connect to the server. */
-    private void connect() {
+    private synchronized void connect() {
         tryingToConnect = true;
         
         int tries = 0;
@@ -124,7 +124,11 @@ public abstract class Controller {
         tryingToConnect = false;
     }
      
-    private synchronized void close() {
+    private void close() {
+        if( tryingToConnect )
+            return;
+        
+        synchronized(this) {
         if( s != null ) {
             try {
                 s.close();
@@ -143,6 +147,7 @@ public abstract class Controller {
             } catch(IOException e){}
             in = null;
         }
+        } // synchronized(this)
     }
     
     public abstract String getTypeString();
