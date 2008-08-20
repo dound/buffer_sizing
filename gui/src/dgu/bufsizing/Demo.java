@@ -17,7 +17,7 @@ public class Demo {
     public static final int DEFAULT_TRAFFIC_CONTROLLER_PORT = 10752;
     public static final int DEFAULT_RTT                     = 50;
     public static final int DEFAULT_RATE_LIMIT_KBPS         = 62500;
-    public static final int DEFAULT_DATA_POINTS_TO_KEEP     = 10000;
+    public static final int DEFAULT_DATA_POINTS_TO_KEEP     = 2000;
     
     public static final java.awt.Image RU_ICON = DemoGUI.chooseImage("images/logo-rice-lo.png", "images/logo-rice.png");
     public static final java.awt.Dimension RU_SIZE = DemoGUI.ratio1080(41, 50);
