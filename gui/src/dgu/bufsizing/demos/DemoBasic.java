@@ -44,7 +44,7 @@ public class DemoBasic {
         demo.addGenericNode( dc );
         
         // add our traffic generators
-        TrafficGenerator su = new Iperf( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, ratioCanvasW(40), ratioCanvasH(100), true, 100000000 );
+        TrafficGenerator su = new Iperf( Demo.DEFAULT_DST_IP, "Stanford", "SU", Importance.IMPORTANT, ratioCanvasW(40), ratioCanvasH(110), true, 100000000 );
         demo.addTrafficGenerator( su );
         
         // add the links between nodes
