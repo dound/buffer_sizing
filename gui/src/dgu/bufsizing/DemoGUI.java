@@ -143,6 +143,9 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final Dimension ratio1080( int width, int height ) { 
         return new Dimension( ratioH1080(width), ratioH1080(height) );
     }
+    public static final Dimension ratio1920( int width, int height ) { 
+        return new Dimension( ratioW1920(width), ratioW1920(height) );
+    }
     public static final java.awt.Image chooseImage(String x133, String x177) {
         return java.awt.Toolkit.getDefaultToolkit().getImage((DemoGUI.HEIGHT==768 && DemoGUI.WIDTH==1024) ? x133 : x177);
     }

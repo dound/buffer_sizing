@@ -25,6 +25,9 @@ public class Demo {
     public static final java.awt.Image SU_ICON = DemoGUI.chooseImage("images/logo-stanford-lo.png", "images/logo-stanford.png");
     public static final java.awt.Dimension SU_SIZE = DemoGUI.ratio1080(33, 50);
     
+    public static final java.awt.Image NETFPGA_ICON = DemoGUI.chooseImage("images/logo-netfpga-lo.png", "images/logo-netfpga.png");
+    public static final java.awt.Dimension NETFPGA_SIZE = DemoGUI.ratio1920(473, 125);
+    static { System.err.println(NETFPGA_SIZE.width + " " + NETFPGA_SIZE.height); }
     public LinkedList<Router> routers = new LinkedList<Router>();
     public LinkedList<TrafficGenerator> trafficGenerators = new LinkedList<TrafficGenerator>();
     public LinkedList<Node> genericNodes = new LinkedList<Node>();
@@ -76,6 +79,9 @@ public class Demo {
         gfx.setComposite( Drawable.COMPOSITE_HALF );
         gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, DemoGUI.CANVAS_WIDTH, DemoGUI.CANVAS_HEIGHT, null );
         gfx.setComposite( compositeOriginal );
+        
+        // draw the netfpga logo
+        gfx.drawImage(NETFPGA_ICON, DemoGUI.ratioW1920(50), DemoGUI.ratioH1080(8), NETFPGA_SIZE.width, NETFPGA_SIZE.height, null);
         
         // draw the legend
         String legendLbl = "Increasing Utilization -->";
@@ -131,22 +137,22 @@ public class Demo {
             Font origFont = gfx.getFont();
             gfx.setFont(FONT_CBS);
             
-            String s1 = "Buffer Size = ";
+            String s1 = "Buffer Size";
             String s2 = DemoGUI.me.getCurBufferSizeText();
             
-            int x = DemoGUI.ratioW1920(400), y = DemoGUI.ratioH1080(100);
-            int x2 = x + gfx.getFontMetrics().stringWidth(s1) / 2 + gfx.getFontMetrics().stringWidth(s2) / 2;
+            int x = DemoGUI.ratioW1920(775), y = DemoGUI.ratioH1080(85);
+            int y2 = y + gfx.getFontMetrics().getHeight() - DemoGUI.ratioH1080(15);
             
             gfx.setComposite( Drawable.COMPOSITE_HALF );
             gfx.setPaint(Color.ORANGE);
             GUIHelper.drawCenteredString(s1, gfx, x, y );
             gfx.setPaint(Color.BLUE);
-            GUIHelper.drawCenteredString(s2, gfx, x2, y );
+            GUIHelper.drawCenteredString(s2, gfx, x, y2 );
             gfx.setComposite( Drawable.COMPOSITE_OPAQUE );
             
             gfx.setStroke(Drawable.STROKE_THICK3);
             GUIHelper.drawCenteredStringOutline(s1, gfx, x, y, Color.BLACK );
-            GUIHelper.drawCenteredStringOutline(s2, gfx, x2, y, Color.BLACK );
+            GUIHelper.drawCenteredStringOutline(s2, gfx, x, y2, Color.BLACK );
             
             gfx.setStroke(Drawable.STROKE_DEFAULT);
             gfx.setFont(origFont);
