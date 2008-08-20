@@ -503,7 +503,8 @@ public class DemoGUI extends javax.swing.JFrame {
                 
                 // for absolute data graph, use auto range
                 rangeXput.setAutoRange(true);
-                rangeOcc.setAutoRange(true);
+                rangeOcc.setAutoRange(false);
+                rangeOcc.setRange(0.0, 512.0);
                 
                 // integer tick marks only for absolute mode
                 rangeXput.setStandardTickUnits( NumberAxis.createIntegerTickUnits() );
