@@ -121,24 +121,31 @@ public class BottleneckLink extends Link<Router> {
     }
     
     private void addDataPointToQueueOccData( long time_ns8 ) {
+        int actual = getActualBufSize();
+        int queueOcc = queueOcc_bytes;
+        
+        // clamp actual to the max (e.g. don't plot anything above the thresh line)
+        if( queueOcc > actual )
+            queueOcc = actual;
+        
         if( dgu.bufsizing.control.EventProcessor.USE_PACKETS ) {
-            dataQueueOcc.add( time_ns8, queueOcc_bytes );
+            dataQueueOcc.add( time_ns8, queueOcc );
             
             if( this.getQueueOcc_bytes() == 0 )
                 dataQueueOccPer.add( time_ns8, 0 );
             else
-                dataQueueOccPer.add( time_ns8, queueOcc_bytes / (double)this.getQueueOcc_bytes() );
+                dataQueueOccPer.add( time_ns8, queueOcc / (double)actual );
         }
         else {
-            dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc_bytes) );
+            dataQueueOcc.add( time_ns8, bytesToSizeRangeUnits(queueOcc) );
             if( this.getActualBufSize() == 0 )
                 dataQueueOccPer.add( time_ns8, 0 );
             else
-                dataQueueOccPer.add( time_ns8, queueOcc_bytes / (double)this.getActualBufSize() );
+                dataQueueOccPer.add( time_ns8, queueOcc / (double)actual );
         }
         
         if( !autoThreshLines )
-            addDataPointToBufferSizeData(time_ns8, this.getActualBufSize());
+            addDataPointToBufferSizeData(time_ns8, actual);
     }
     
     private void addDataPointToXputData( long time_ns8, int xput_bps ) {
