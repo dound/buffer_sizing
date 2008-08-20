@@ -27,7 +27,7 @@ public class Demo {
     
     public static final java.awt.Image NETFPGA_ICON = DemoGUI.chooseImage("images/logo-netfpga-lo.png", "images/logo-netfpga.png");
     public static final java.awt.Dimension NETFPGA_SIZE = DemoGUI.ratio1920(473, 125);
-    static { System.err.println(NETFPGA_SIZE.width + " " + NETFPGA_SIZE.height); }
+    
     public LinkedList<Router> routers = new LinkedList<Router>();
     public LinkedList<TrafficGenerator> trafficGenerators = new LinkedList<TrafficGenerator>();
     public LinkedList<Node> genericNodes = new LinkedList<Node>();
