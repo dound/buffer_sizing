@@ -34,13 +34,13 @@ public class DemoBasic {
         Receiver hou = new Receiver( "Houston", "HOU", Importance.IMPORTANT, ratioCanvasW(430), ratioCanvasH(180) );
         demo.addGenericNode( hou );
         
-        EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, ratioCanvasW(515), ratioCanvasH(215) );
+        EndHostCluster rice = new EndHostCluster( "Rice", "Rice", Importance.IMPORTANT, ratioCanvasW(515), ratioCanvasH(210) );
         demo.addGenericNode( rice );
         
         Receiver ny = new Receiver( "New York", "NY", Importance.NIL, ratioCanvasW(920), ratioCanvasH(70) );
         demo.addGenericNode( ny );
         
-        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, ratioCanvasW(870), ratioCanvasH(130) );
+        Receiver dc = new Receiver( "Washington, D.C.", "DC", Importance.NIL, ratioCanvasW(870), ratioCanvasH(135) );
         demo.addGenericNode( dc );
         
         // add our traffic generators

@@ -52,6 +52,7 @@ public abstract class Node implements Drawable {
             gfx.setComposite( Drawable.COMPOSITE_HALF );
         }
         
+        gfx.setFont(FONT_DEFAULT);
         drawNode( gfx );
         
         // restore the original compositing object if we changed it

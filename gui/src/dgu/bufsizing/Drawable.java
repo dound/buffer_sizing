@@ -4,6 +4,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Paint;
@@ -23,6 +24,7 @@ public interface Drawable {
     public static final Paint       PAINT_DEFAULT  = COLOR_DEFAULT;
     public static final Composite   COMPOSITE_OPAQUE = AlphaComposite.getInstance( AlphaComposite.SRC_OVER, 1.0f );
     public static final Composite   COMPOSITE_HALF = AlphaComposite.getInstance( AlphaComposite.SRC_OVER, 0.5f );
+    public static final Font        FONT_DEFAULT   = new Font("Arial", Font.BOLD, DemoGUI.ratioH1080(18));
     
     public abstract void draw( Graphics2D gfx );
 }
