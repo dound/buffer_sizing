@@ -93,12 +93,12 @@ public class BottleneckLink extends Link<Router> {
     }
     
     
-    private static final int bitsToRateRangeUnits( int num_bits ) {
-        return num_bits / 1000;
+    private static final double bitsToRateRangeUnits( int num_bits ) {
+        return num_bits / 1000000.0;
     }
     
-    private static final int bytesToSizeRangeUnits( int num_bytes ) {
-        return num_bytes / 1024;
+    private static final double bytesToSizeRangeUnits( int num_bytes ) {
+        return num_bytes / 1024.0;
     }
 
     public synchronized void clearMeasuredPoints() {

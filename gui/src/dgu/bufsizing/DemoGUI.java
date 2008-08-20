@@ -498,7 +498,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 ValueAxis rangeXput = ((XYPlot)chartXput.getPlot()).getRangeAxis();
                 ValueAxis rangeOcc = ((XYPlot)chartOcc.getPlot()).getRangeAxis();
                 
-                rangeXput.setLabel("Throughput (kbps)");
+                rangeXput.setLabel("Throughput (Mbps)");
                 rangeOcc.setLabel("Buffer Utilization (kB)");
                 
                 // for absolute data graph, use auto range
