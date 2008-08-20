@@ -99,6 +99,10 @@ public class RouterController extends Controller {
             // always assume first bottleneck on the first router for now
             BottleneckLink b = DemoGUI.me.demo.getRouters().get(0).getBottleneckLinkAt(0);
             
+            // auto-extend timing is weird, so just plot line with updates ...
+            // updates are infrequent in this mode anyway
+            b.setAutoThreshLines(false);
+            
             /* listen for updates until the end of time */
             while (true) {
                 // try to get the next update

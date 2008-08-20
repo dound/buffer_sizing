@@ -76,6 +76,8 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataRCur = new XYSeries("Now", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     private final XYSeries dataRCurRange = new XYSeries("Now Range", AUTOSORT_SETTING, ALLOW_DUPS_SETTING);
     
+    private boolean autoThreshLines = false;
+    
     /** Returns the current time in units of 8ns (with millisecond resolution) */
     public static final long currentTime8ns() {
         return System.currentTimeMillis() * MSEC_DIV_8NS;
@@ -399,6 +401,14 @@ public class BottleneckLink extends Link<Router> {
     public XYSeries getDataRCurRange() {
         return dataRCurRange;
     }
+
+    public boolean isAutoThreshLines() {
+        return autoThreshLines;
+    }
+
+    public void setAutoThreshLines(boolean autoThreshLines) {
+        this.autoThreshLines = autoThreshLines;
+    }
     
     public class Result {
         public static final int BASE_RTT = 250;
@@ -563,14 +573,19 @@ public class BottleneckLink extends Link<Router> {
         dataBufSize.clear(    false );
         dataRateLimit.clear(  false );
         
-        // re-start the graphs with the thresholds
-        long time_ns8 = currentTime8ns();
-        int curBufSize = getActualBufSize();
-        addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
-        addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
+        if( autoThreshLines ) {
+            // re-start the graphs with the thresholds
+            long time_ns8 = currentTime8ns();
+            int curBufSize = getActualBufSize();
+            addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
+            addDataPointToRateAndBufferSizeData(time_ns8, curBufSize);
+        }
     }
     
     public synchronized void extendUserDataPoints( long time_ns ) {
+        if( !autoThreshLines )
+            return;
+        
         // remove the old temporary endpoints of user-controlled values
         if( dataBufSize.getItemCount() > 0 ) {
             dataBufSize.remove( dataBufSize.getItemCount() - 1, false );
@@ -656,12 +671,15 @@ public class BottleneckLink extends Link<Router> {
             return; /* no change */
         
         // add endpoint if last has a meaningful value
-        if( lastBufSize_bytes >= 0 )
-            addDataPointToBufferSizeData(t, lastBufSize_bytes);
+        if( autoThreshLines ) {
+            if( lastBufSize_bytes >= 0 )
+                addDataPointToBufferSizeData(t, lastBufSize_bytes);
+
+            // and start point for new buffer size
+            addDataPointToBufferSizeData(t, curBufSize_bytes);
+            addDataPointToBufferSizeData(t, curBufSize_bytes);
+        }
         
-        // and start point for new buffer size
-        addDataPointToBufferSizeData(t, curBufSize_bytes);
-        addDataPointToBufferSizeData(t, curBufSize_bytes);
         lastBufSize_bytes = curBufSize_bytes;
         
         // tell the router about the new buffer size in terms of packets
@@ -754,7 +772,8 @@ public class BottleneckLink extends Link<Router> {
         
         // add the end point of the old rate
         long t = currentTime8ns();
-        addDataPointToRateData(t);
+        if( autoThreshLines )
+            addDataPointToRateData(t);
         
         // set the new buffer size
         rateLimit_kbps = new_rateLimit_kbps;
@@ -765,8 +784,10 @@ public class BottleneckLink extends Link<Router> {
         src.getController().command( RouterCmd.CMD_SET_RATE, queueID, regValue );
         
         // add the start point of the new rate and buffer size
-        addDataPointToRateData(t);
-        addDataPointToRateData(t);
+        if( autoThreshLines ) {
+            addDataPointToRateData(t);
+            addDataPointToRateData(t);
+        }
         
         // refresh the measured results data being displayed (displays for the specified capacity)
         populateTheoreticalResults();
