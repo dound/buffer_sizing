@@ -136,11 +136,17 @@ public class BottleneckLink extends Link<Router> {
             else
                 dataQueueOccPer.add( time_ns8, queueOcc_bytes / (double)this.getActualBufSize() );
         }
+        
+        if( !autoThreshLines )
+            addDataPointToBufferSizeData(time_ns8, this.getActualBufSize());
     }
     
     private void addDataPointToXputData( long time_ns8, int xput_bps ) {
         dataThroughput.add( time_ns8, bitsToRateRangeUnits(xput_bps), false );
         dataThroughputPer.add( time_ns8, xput_bps / (double)(this.getRateLimit_kbps() * 1000), false );
+        
+        if( !autoThreshLines )
+            addDataPointToRateData(time_ns8);
     }
     
     public synchronized void clearInProgressPoint() {
