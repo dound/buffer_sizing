@@ -15,7 +15,7 @@ public class Demo {
     public static final String DEFAULT_DST_IP = "64.57.23.37";
     public static final int DEFAULT_ROUTER_CONTROLLER_PORT  = 10272;
     public static final int DEFAULT_TRAFFIC_CONTROLLER_PORT = 10752;
-    public static final int DEFAULT_RTT                     = 50;
+    public static final int DEFAULT_RTT                     = 100;
     public static final int DEFAULT_RATE_LIMIT_KBPS         = 62500;
     public static final int DEFAULT_DATA_POINTS_TO_KEEP     = 2000;
     
