@@ -27,6 +27,8 @@ import org.jfree.ui.*;
  * @author  David Underhill
  */
 public class DemoGUI extends javax.swing.JFrame {
+    private static boolean SHOW_PREV_MEASURED_RESULTS = true;
+    
     public enum DrawType {
         FORCE_1920_X_1080,
         FORCE_1024_X_768,
@@ -649,10 +651,12 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         
         // measured
-        renderer.setSeriesPaint(2, new Color(0,128,255));
-        renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
-        renderer.setSeriesLinesVisible(2, true);
-        renderer.setSeriesShapesVisible(2, true);
+        if(SHOW_PREV_MEASURED_RESULTS) {
+            renderer.setSeriesPaint(2, new Color(0,128,255));
+            renderer.setSeriesStroke(2, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+            renderer.setSeriesLinesVisible(2, true);
+            renderer.setSeriesShapesVisible(2, true);
+        }
         
         // measured (today's results)
         renderer.setSeriesPaint(3, new Color(255,0,255));
