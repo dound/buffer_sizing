@@ -182,7 +182,7 @@ public class DemoGUI extends javax.swing.JFrame {
             optRuleOfThumb.setBounds(60, 15, 180, 15);
             optCustom.setFont(FONT_SM);
             optCustom.setBounds(60, 55, 180, 15);
-            slCustomBufferSize.setBounds(102, 96, 230, 17);
+            slCustomBufferSize.setBounds(5, 70, 230, 17);
             optGuido.setFont(FONT_SM);
             optGuido.setBounds(60, 35, 180, 15);
             lblCustom.setFont(FONT_SMC);
