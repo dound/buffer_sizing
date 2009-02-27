@@ -48,6 +48,7 @@ public class BottleneckLink extends Link<Router> {
     private long prev_time_offset_end_ns8 = 0;
     private long bytes_sent_since_last_update = 0;
     private int  queueOcc_bytes = -1;
+    private int  numDropped_bytes = -1;
     private static final int SEC_DIV_8NS  = 125000000;
     private static final int MSEC_DIV_8NS = 125000;
     
@@ -60,6 +61,8 @@ public class BottleneckLink extends Link<Router> {
     private final XYSeries dataThroughputPer = new XYSeries("Link Utilization",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataQueueOcc      = new XYSeries("Queue Occupancy",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     private final XYSeries dataQueueOccPer   = new XYSeries("Queue Utilization",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataNumDropped = new XYSeries("Num Dropped",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
+    private final XYSeries dataNumDroppedPer = new XYSeries("Num Dropped : Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
     
     // last throughput data point (replicated to avoid critical section / locking) (float => one word ~=> atomic)
     private float instantaneousUtilization = 0.0f;
@@ -148,7 +151,28 @@ public class BottleneckLink extends Link<Router> {
         if( !autoThreshLines )
             addDataPointToBufferSizeData(time_ns8, actual);
     }
-    
+
+    private void addDataPointToNumDroppedData( long time_ns8 ) {
+        int actual = getActualBufSize();
+        int numDropped = numDropped_bytes;
+
+        if( dgu.bufsizing.control.EventProcessor.USE_PACKETS ) {
+            dataNumDropped.add( time_ns8, numDropped );
+
+            if( this.getQueueOcc_bytes() == 0 )
+                dataNumDroppedPer.add( time_ns8, 0 );
+            else
+                dataNumDroppedPer.add( time_ns8, numDropped / (double)actual );
+        }
+        else {
+            dataNumDropped.add( time_ns8, bytesToSizeRangeUnits(numDropped) );
+            if( this.getActualBufSize() == 0 )
+                dataNumDroppedPer.add( time_ns8, 0 );
+            else
+                dataNumDroppedPer.add( time_ns8, numDropped / (double)actual );
+        }
+    }
+
     private void addDataPointToXputData( long time_ns8, int xput_bps ) {
         dataThroughput.add( time_ns8, bitsToRateRangeUnits(xput_bps), false );
         dataThroughputPer.add( time_ns8, xput_bps / (double)(this.getRateLimit_kbps() * 1000), false );
@@ -181,7 +205,9 @@ public class BottleneckLink extends Link<Router> {
         prepareXYSeries( dataThroughputPer, dataPointsToKeep );
         prepareXYSeries( dataQueueOcc,      dataPointsToKeep );
         prepareXYSeries( dataQueueOccPer,   dataPointsToKeep );
-        
+        prepareXYSeries( dataNumDropped,    dataPointsToKeep );
+        prepareXYSeries( dataNumDropped,    dataPointsToKeep );
+
         prepareXYSeries( dataBufSize,   dataPointsToKeep );
         prepareXYSeries( dataRateLimit, dataPointsToKeep );
         
@@ -307,6 +333,22 @@ public class BottleneckLink extends Link<Router> {
         lastPlottedQueueOcc_bytes = queueOcc_bytes = num_bytes;
         addDataPointToQueueOccData( routerTimeToLocalTime8ns(rtr_time_ns8) );
     }
+
+    int lastPlottedDropped_bytes = -1;
+    public synchronized void setDropped( long rtr_time_ns8, int num_bytes, boolean silent ) {
+        if( silent ) {
+            numDropped_bytes = num_bytes;
+            return;
+        }
+
+        // add the old data point (the last one plotted)
+        numDropped_bytes = lastPlottedDropped_bytes;
+        addDataPointToNumDroppedData( routerTimeToLocalTime8ns(rtr_time_ns8) );
+
+        //add the new data point
+        lastPlottedDropped_bytes = numDropped_bytes = num_bytes;
+        addDataPointToNumDroppedData( routerTimeToLocalTime8ns(rtr_time_ns8) );
+    }
     
     public synchronized void arrival( long rtr_time_ns8, int num_bytes, boolean silent ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes + num_bytes, silent );
@@ -319,7 +361,7 @@ public class BottleneckLink extends Link<Router> {
     }
     
     public synchronized void dropped( long rtr_time_ns8, int num_bytes, boolean silent ) {
-        setOccupancy( rtr_time_ns8, queueOcc_bytes - num_bytes, silent );
+        setDropped( rtr_time_ns8, num_bytes, silent );
     }
     
     public synchronized void plotCurrentOccupancy( long rtr_time_ns8 ) {
@@ -602,6 +644,8 @@ public class BottleneckLink extends Link<Router> {
         dataThroughputPer.clear( false );
         dataQueueOcc.clear(   false );
         dataQueueOccPer.clear(   false );
+        dataNumDropped.clear(   false );
+        dataNumDroppedPer.clear(   false );
         dataBufSize.clear(    false );
         dataRateLimit.clear(  false );
         
@@ -857,7 +901,15 @@ public class BottleneckLink extends Link<Router> {
     public XYSeries getDataQueueOccPer() {
         return dataQueueOccPer;
     }
-    
+
+    public XYSeries getDataNumDropped() {
+        return dataNumDropped;
+    }
+
+    public XYSeries getDataNumDroppedPer() {
+        return dataNumDroppedPer;
+    }
+
     public XYSeries getDataBufSize() {
         return dataBufSize;
     }

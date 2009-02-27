@@ -55,6 +55,7 @@ typedef struct {
     uint32_t usec;
     uint32_t arrived;
     uint32_t departed;
+    uint32_t dropped;
     uint32_t current;
 } __attribute__ ((packed)) update_info_t;
 
@@ -351,12 +352,13 @@ static void event_capture_handler() {
 
             /* print the update info */
             print_verbose( 1,
-                           "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    current: %u",
+                           "update info %u ready:\n    when: %usec:%uusec\n    arrived: %u\n    departed: %u\n    dropped: %u\n    current: %u",
                            updateInfoOn,
                            u->sec,
                            u->usec,
                            u->arrived,
                            u->departed,
+                           u->dropped,
                            u->current );
 
             /* convert the update's fields from host to network order */
@@ -364,6 +366,7 @@ static void event_capture_handler() {
             u->usec     = htonl(u->usec);
             u->arrived  = htonl(u->arrived);
             u->departed = htonl(u->departed);
+            u->dropped  = htonl(u->dropped);
             u->current  = htonl(u->current);
 
             /* on to the next update */
@@ -511,8 +514,14 @@ static void parseEvCap(uint8_t* buf, unsigned len, update_info_t* u) {
 
                 print_verbose( 2, "departure => %u", u->departed );
             }
-            else
+            else {
+                if( USE_PACKETS )
+                    u->dropped += 1;
+                else
+                    u->dropped += plen_bytes;
+
                 print_verbose( 2, "    (dropped)" );
+            }
         }
     }
 }

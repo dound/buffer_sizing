@@ -66,6 +66,7 @@ public class RouterController extends Controller {
         public int usec;
         public int arrived;
         public int departed;
+        public int dropped;
         public int current; 
     }
     
@@ -77,6 +78,7 @@ public class RouterController extends Controller {
         u.usec     = readInt();
         u.arrived  = readInt();
         u.departed = readInt();
+        u.dropped  = readInt();
         u.current  = readInt();
     }
     
@@ -134,11 +136,12 @@ public class RouterController extends Controller {
                     // be larger than reality (and in fact probably would be, and often larger than max buffer size!)
                     b.arrival( timestamp_8ns, u.arrived, true );
                     b.departure( timestamp_8ns, u.departed, true );
+                    b.dropped( timestamp_8ns, u.dropped, true );
                     
                     // now that we have the end value, plot that value (would be even better if we knew the end timestamp
                     b.plotCurrentOccupancy(timestamp_8ns);
                     
-                    //System.err.println( "update at " + timestamp_8ns + " => cur=" + u.current + " / arr=" + u.arrived + " / dep=" + u.departed );
+                    //System.err.println( "update at " + timestamp_8ns + " => cur=" + u.current + " / arr=" + u.arrived + " / dep=" + u.departed + " / drop=" + u.dropped );
                     
                     // refresh instantaneous readings over the interval from the previous
                     //  update to the time of the last event in this update

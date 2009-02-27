@@ -218,8 +218,8 @@ public class EventProcessor extends Thread {
                     debug_println( "departure => " + b.getQueueOcc_bytes() );
                 }
                 else {
-                    //System.err.println( "dropped " + plen_bytes );
-                //    b.dropped( timestamp_adjusted_8ns, plen_bytes, false );
+                    System.err.println( "dropped " + plen_bytes );
+                    b.dropped( timestamp_adjusted_8ns, plen_bytes, false );
                 }
             }
         }

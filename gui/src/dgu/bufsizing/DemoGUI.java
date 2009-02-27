@@ -498,6 +498,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 DemoGUI.collXput.addSeries( bl.getDataRateLimit(),  false );
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOcc(),   false );
                 DemoGUI.collOcc.addSeries(  bl.getDataBufSize(),    false );
+                DemoGUI.collOcc.addSeries(  bl.getDataNumDropped(), false );
                 
                 ValueAxis rangeXput = ((XYPlot)chartXput.getPlot()).getRangeAxis();
                 ValueAxis rangeOcc = ((XYPlot)chartOcc.getPlot()).getRangeAxis();
@@ -517,6 +518,7 @@ public class DemoGUI extends javax.swing.JFrame {
             else {
                 DemoGUI.collXput.addSeries( bl.getDataThroughputPer(), false );
                 DemoGUI.collOcc.addSeries(  bl.getDataQueueOccPer(),   false );
+                DemoGUI.collOcc.addSeries(  bl.getDataNumDroppedPer(),   false );
                 
                 ValueAxis rangeXput = ((XYPlot)chartXput.getPlot()).getRangeAxis();
                 ValueAxis rangeOcc = ((XYPlot)chartOcc.getPlot()).getRangeAxis();
@@ -616,6 +618,8 @@ public class DemoGUI extends javax.swing.JFrame {
         renderer.setSeriesStroke(0, new BasicStroke(1f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         renderer.setSeriesPaint(1, new Color(128,0,0));
         renderer.setSeriesStroke(1, new BasicStroke(4f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
+        renderer.setSeriesPaint(2, new Color(255,196,0));
+        renderer.setSeriesStroke(2, new BasicStroke(2f, BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL));
         plot.setRenderer(0, renderer);
         plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
         plot.getDomainAxis().setFixedAutoRange(1.0e9); // keep the domain at a constant range of values
