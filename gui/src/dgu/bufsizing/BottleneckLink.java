@@ -366,6 +366,7 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void plotCurrentOccupancy( long rtr_time_ns8 ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes, false );
+        setDropped( rtr_time_ns8, numDropped_bytes, false );
     }
     
     public int getQueueOcc_bytes() {
