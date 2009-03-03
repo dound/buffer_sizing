@@ -46,6 +46,7 @@ public class BottleneckLink extends Link<Router> {
     // recently collected data
     private long time_offset_ns8 = 0;
     private long prev_time_offset_end_ns8 = 0;
+    private long bytes_arrived_since_last_update = 0;
     private long bytes_sent_since_last_update = 0;
     private int  queueOcc_bytes = -1;
     private int  numDropped_bytes = -1;
@@ -67,6 +68,7 @@ public class BottleneckLink extends Link<Router> {
     // last throughput data point (replicated to avoid critical section / locking) (float => one word ~=> atomic)
     private float instantaneousUtilization = 0.0f;
     private float instantaneousQueueOcc    = 0.0f;
+    private float instantaneousDropPer     = 0.0f;
     
     // settings for buffer size and rate limit as set by the user
     private final XYSeries dataBufSize = new XYSeries("Buffer Size",AUTOSORT_SETTING,ALLOW_DUPS_SETTING);
@@ -153,8 +155,16 @@ public class BottleneckLink extends Link<Router> {
     }
 
     private void addDataPointToNumDroppedData( long time_ns8 ) {
-        int actual = getActualBufSize();
         int numDropped = numDropped_bytes;
+
+        if(bytes_arrived_since_last_update <= 0) {
+            if(numDropped_bytes > 0)
+                instantaneousDropPer = 1.0f;
+            else
+                instantaneousDropPer = 0.0f;
+        }
+        else
+            instantaneousDropPer = numDropped_bytes / (float)bytes_arrived_since_last_update;
 
         if( dgu.bufsizing.control.EventProcessor.USE_PACKETS ) {
             dataNumDropped.add( time_ns8, numDropped );
@@ -162,14 +172,14 @@ public class BottleneckLink extends Link<Router> {
             if( this.getQueueOcc_bytes() == 0 )
                 dataNumDroppedPer.add( time_ns8, 0 );
             else
-                dataNumDroppedPer.add( time_ns8, numDropped / (double)actual );
+                dataNumDroppedPer.add( time_ns8, instantaneousDropPer );
         }
         else {
             dataNumDropped.add( time_ns8, bytesToSizeRangeUnits(numDropped) );
             if( this.getActualBufSize() == 0 )
                 dataNumDroppedPer.add( time_ns8, 0 );
             else
-                dataNumDroppedPer.add( time_ns8, numDropped / (double)actual );
+                dataNumDroppedPer.add( time_ns8, instantaneousDropPer );
         }
     }
 
@@ -352,6 +362,7 @@ public class BottleneckLink extends Link<Router> {
     
     public synchronized void arrival( long rtr_time_ns8, int num_bytes, boolean silent ) {
         setOccupancy( rtr_time_ns8, queueOcc_bytes + num_bytes, silent );
+        bytes_arrived_since_last_update += num_bytes;
     }
     
     public synchronized void departure( long rtr_time_ns8, int num_bytes, boolean silent ) {
@@ -392,6 +403,7 @@ public class BottleneckLink extends Link<Router> {
         if( prev_time_offset_end_ns8 == 0 ) {
             prev_time_offset_end_ns8 = rtr_time_ns8;
             bytes_sent_since_last_update = 0;
+            bytes_arrived_since_last_update =  0;
             return;
         }
         
@@ -405,6 +417,7 @@ public class BottleneckLink extends Link<Router> {
         
         throughput_bps = cont_throughput_bps = cont_throughput_bps*0.5f + throughput_bps*0.5f;
         bytes_sent_since_last_update = 0;
+        bytes_arrived_since_last_update = 0;
         prev_time_offset_end_ns8 = rtr_time_ns8;
         
         // set new instantaneous utilizatoin value
