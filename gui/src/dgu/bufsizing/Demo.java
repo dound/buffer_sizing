@@ -77,11 +77,11 @@ public class Demo {
         // draw the background image
         Composite compositeOriginal = gfx.getComposite();
         gfx.setComposite( Drawable.COMPOSITE_HALF );
-        gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, DemoGUI.CANVAS_WIDTH, DemoGUI.CANVAS_HEIGHT, null );
+        //gfx.drawImage( Drawable.BACKGROUND_IMG, 0, 0, DemoGUI.CANVAS_WIDTH, DemoGUI.CANVAS_HEIGHT, null );
         gfx.setComposite( compositeOriginal );
         
         // draw the netfpga logo
-        gfx.drawImage(NETFPGA_ICON, DemoGUI.ratioW1920(50), DemoGUI.ratioH1080(8), NETFPGA_SIZE.width, NETFPGA_SIZE.height, null);
+        //gfx.drawImage(NETFPGA_ICON, DemoGUI.ratioW1920(50), DemoGUI.ratioH1080(8), NETFPGA_SIZE.width, NETFPGA_SIZE.height, null);
         
         // draw the legend
         String legendLbl = "Increasing Utilization -->";
@@ -139,7 +139,7 @@ public class Demo {
             
             //String s1 = "Buffer Size";
             //String s2 = DemoGUI.me.getCurBufferSizeText();
-            String s1 = "Fairness StdDev";
+            String s1 = "Fairness Stats";
             String s2 = DemoGUI.me.getStdDevString();
             
             int x = DemoGUI.ratioW1920(775), y = DemoGUI.ratioH1080(85);

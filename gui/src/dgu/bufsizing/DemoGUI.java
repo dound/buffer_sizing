@@ -260,7 +260,7 @@ public class DemoGUI extends javax.swing.JFrame {
         me = this;
         demo = d;
         
-        setTitle( "Experimenting with Programmable Routers in Real Networks " + VERSION );
+        setTitle( "Experimenting with RED" );
         GUIHelper.setGUIDefaults();
         createChartXput();
         createChartOcc();
