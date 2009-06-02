@@ -1,6 +1,8 @@
 package dgu.bufsizing;
 
 import dgu.bufsizing.control.IperfController;
+import dgu.bufsizing.control.RedController;
+import dgu.bufsizing.control.RedInfoReceiver;
 import dgu.util.StringOps;
 import dgu.util.swing.GUIHelper;
 import dgu.util.swing.binding.JComboBoxBound;
@@ -249,6 +251,9 @@ public class DemoGUI extends javax.swing.JFrame {
     public static final void addComponH(Component c, int hToAdd) {
         c.setBounds(c.getX(), c.getY(), c.getWidth(), c.getHeight() + hToAdd);
     }
+
+    private final RedController redController;
+    public final RedInfoReceiver redInfoReceiver;
     
     /** Creates new form DemoGUI */
     public DemoGUI( final Demo d ) {
@@ -274,7 +279,17 @@ public class DemoGUI extends javax.swing.JFrame {
         readAutoModeParamsFromFileWrapper();
 
         adjustBounds();
-        
+
+        // start the red controller
+        String ipRed = GUIHelper.getInput("What is the RED controller (e.g., sr router)?", "172.24.89.26");
+        redController = new RedController(ipRed);
+        msleep(500);
+        redController.updateRedParameters(redK, redA, redMaxp, redMint);
+
+        // start the red info receiver
+        String ipRedRcvr = GUIHelper.getInput("What is the RED info receiver?", ipRed);
+        redInfoReceiver = new RedInfoReceiver(ipRedRcvr);
+
         // starts a thread to keep the topology map refreshed
         new Thread() {
             public void run() {
@@ -305,7 +320,7 @@ public class DemoGUI extends javax.swing.JFrame {
         }.start();
         
         //startDummyStatsThread();
-        
+
         // start the stats listener threads (! no longer use event cap directly ...)
         for( Router r : demo.getRouters() )
             r.startStatsListener();
@@ -473,6 +488,53 @@ public class DemoGUI extends javax.swing.JFrame {
             }
         });
         mnuAutoModeConfig.add(mnuAMCSaveToFile);
+
+
+        // red controller
+        final JMenuItem mnuRedK = new JMenuItem("Set Red K (" + redK + ")");
+        mnuRedK.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redK = GUIHelper.getDoubleFromUser("What should k be? [1.0, +inf)", 1.0, redK, 1028.0);
+                redController.updateRedParameters(redK, redA, redMaxp, redMint);
+                mnuRedK.setText("Set Red K (" + redK + ")");
+                redInfoReceiver.resetSdevAvg();
+            }
+        });
+        mnuPopup.add(mnuRedK);
+
+        final JMenuItem mnuRedA = new JMenuItem("Set Red Alpha (" + redA + ")");
+        mnuRedA.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redA = GUIHelper.getDoubleFromUser("What should alpa be? [0.0001, 1.0]", 0.0001, redA, 1.0);
+                redController.updateRedParameters(redK, redA, redMaxp, redMint);
+                mnuRedA.setText("Set Red Alpha (" + redA + ")");
+                redInfoReceiver.resetSdevAvg();
+            }
+        });
+        mnuPopup.add(mnuRedA);
+
+        final JMenuItem mnuRedMaxp = new JMenuItem("Set Red Max Drop Rate (" + redMaxp + ")");
+        mnuRedMaxp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redMaxp = GUIHelper.getDoubleFromUser("What should max drop rate be? [0.0, 1.0]", 0.0, redMaxp, 1.0);
+                redController.updateRedParameters(redK, redA, redMaxp, redMint);
+                mnuRedMaxp.setText("Set Red Max Drop Rate (" + redMaxp + ")");
+                redInfoReceiver.resetSdevAvg();
+            }
+        });
+        mnuPopup.add(mnuRedMaxp);
+
+        final JMenuItem mnuRedMint = new JMenuItem("Set Red min drop threshold (" + redMint + ")");
+        mnuRedMint.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redMint = GUIHelper.getDoubleFromUser("What should the min drop threshold be? [0.0, 1.0]", 0.0, redMint, 1.0);
+                redController.updateRedParameters(redK, redA, redMaxp, redMint);
+                mnuRedMint.setText("Set Red min drop threshold (" + redMint + ")");
+                redInfoReceiver.resetSdevAvg();
+            }
+        });
+        mnuPopup.add(mnuRedMint);
+
         
         // attach the popup to other components
         final MouseAdapter pl = new MouseAdapter() {
@@ -487,6 +549,8 @@ public class DemoGUI extends javax.swing.JFrame {
         };
         lblMap.addMouseListener( pl );
     }
+
+    private double redK=1.0, redA=0.02, redMaxp=1.0, redMint=0.65;
     
     private void populateCollXputAndOcc() {
         DemoGUI.collXput.removeAllSeries(false);
@@ -807,7 +871,17 @@ public class DemoGUI extends javax.swing.JFrame {
         TIME_MILLIS,
         TIME_SEC
     }
-    
+
+    public String getStdDevString() {
+        long bps = (long)(1000 * 1000 * redInfoReceiver.getSdevAvg());
+        StringPair p = formatBits(bps, false, UnitTime.TIME_SEC);
+
+        long bpsM = (long)(1000 * 1000 * redInfoReceiver.getMeanAvg());
+        StringPair p2 = formatBits(bpsM, false, UnitTime.TIME_SEC);
+        
+        return p.a + " / " + p2.a + " (" + p2.b + ")";
+    }
+
     public StringPair formatBits( long b, boolean toBytes, UnitTime timeUnits ) {
         long bytes = b / (toBytes ? 8 : 1);
         int units = 0;

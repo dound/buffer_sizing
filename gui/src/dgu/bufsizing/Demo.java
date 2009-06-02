@@ -137,8 +137,10 @@ public class Demo {
             Font origFont = gfx.getFont();
             gfx.setFont(FONT_CBS);
             
-            String s1 = "Buffer Size";
-            String s2 = DemoGUI.me.getCurBufferSizeText();
+            //String s1 = "Buffer Size";
+            //String s2 = DemoGUI.me.getCurBufferSizeText();
+            String s1 = "Fairness StdDev";
+            String s2 = DemoGUI.me.getStdDevString();
             
             int x = DemoGUI.ratioW1920(775), y = DemoGUI.ratioH1080(85);
             int y2 = y + gfx.getFontMetrics().getHeight() - DemoGUI.ratioH1080(15);
