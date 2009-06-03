@@ -253,7 +253,7 @@ public class DemoGUI extends javax.swing.JFrame {
     }
 
     private final RedController redController;
-    public final RedInfoReceiver redInfoReceiver;
+    //public final RedInfoReceiver redInfoReceiver;
     
     /** Creates new form DemoGUI */
     public DemoGUI( final Demo d ) {
@@ -287,8 +287,8 @@ public class DemoGUI extends javax.swing.JFrame {
         redController.updateRedParameters(redK, redA, redMaxp, redMint);
 
         // start the red info receiver
-        String ipRedRcvr = GUIHelper.getInput("What is the RED info receiver?", ipRed);
-        redInfoReceiver = new RedInfoReceiver(ipRedRcvr);
+        //String ipRedRcvr = GUIHelper.getInput("What is the RED info receiver?", ipRed);
+        //redInfoReceiver = new RedInfoReceiver(ipRedRcvr);
 
         // starts a thread to keep the topology map refreshed
         new Thread() {
@@ -497,7 +497,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 redK = GUIHelper.getDoubleFromUser("What should k be? [1.0, +inf)", 1.0, redK, 1028.0);
                 redController.updateRedParameters(redK, redA, redMaxp, redMint);
                 mnuRedK.setText("Set Red K (" + redK + ")");
-                redInfoReceiver.resetSdevAvg();
+                //redInfoReceiver.resetSdevAvg();
             }
         });
         mnuPopup.add(mnuRedK);
@@ -508,7 +508,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 redA = GUIHelper.getDoubleFromUser("What should alpa be? [0.0001, 1.0]", 0.0001, redA, 1.0);
                 redController.updateRedParameters(redK, redA, redMaxp, redMint);
                 mnuRedA.setText("Set Red Alpha (" + redA + ")");
-                redInfoReceiver.resetSdevAvg();
+                //redInfoReceiver.resetSdevAvg();
             }
         });
         mnuPopup.add(mnuRedA);
@@ -519,7 +519,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 redMaxp = GUIHelper.getDoubleFromUser("What should max drop rate be? [0.0, 1.0]", 0.0, redMaxp, 1.0);
                 redController.updateRedParameters(redK, redA, redMaxp, redMint);
                 mnuRedMaxp.setText("Set Red Max Drop Rate (" + redMaxp + ")");
-                redInfoReceiver.resetSdevAvg();
+                //redInfoReceiver.resetSdevAvg();
             }
         });
         mnuPopup.add(mnuRedMaxp);
@@ -530,7 +530,7 @@ public class DemoGUI extends javax.swing.JFrame {
                 redMint = GUIHelper.getDoubleFromUser("What should the min drop threshold be? [0.0, 1.0]", 0.0, redMint, 1.0);
                 redController.updateRedParameters(redK, redA, redMaxp, redMint);
                 mnuRedMint.setText("Set Red min drop threshold (" + redMint + ")");
-                redInfoReceiver.resetSdevAvg();
+                //redInfoReceiver.resetSdevAvg();
             }
         });
         mnuPopup.add(mnuRedMint);
@@ -872,6 +872,7 @@ public class DemoGUI extends javax.swing.JFrame {
         TIME_SEC
     }
 
+    /*
     public String getStdDevString() {
         long bps = (long)(1000 * 1000 * redInfoReceiver.getSdevAvg());
         StringPair p = formatBits(bps, false, UnitTime.TIME_SEC);
@@ -881,6 +882,7 @@ public class DemoGUI extends javax.swing.JFrame {
         
         return p.a + " / " + p2.a + " (" + p2.b + ")";
     }
+    */
 
     public StringPair formatBits( long b, boolean toBytes, UnitTime timeUnits ) {
         long bytes = b / (toBytes ? 8 : 1);
