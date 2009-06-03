@@ -549,6 +549,10 @@ public class BottleneckLink extends Link<Router> {
     private void populateMeasuredResults() {
         dataRMea.clear();
         
+        // turn off the blue line
+        if(true)
+            return;
+
         int rtt = rtt_ms;
         Vector<Integer> nVals = new Vector<Integer>(resultsMea.keySet());
         java.util.Collections.sort(nVals);
