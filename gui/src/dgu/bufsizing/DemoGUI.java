@@ -1666,7 +1666,9 @@ private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
         System.err.println("Successfully saved auto mode paramters from " + AUTO_MODE_PARAMS_FILE);
         System.err.println(getParamsAsString());
     }
-    
+
+    public static final boolean REVERIFY_OVEREXPECTED = false;
+
     /** 
      * returns the measured buffer size in B needed to achieve maximum link 
      * utilization with n flows; retries the measurement up to three times if 
@@ -1680,14 +1682,18 @@ private void lblNumFlowsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST
         int res = computeBufferSizeForN_once(b, n);
         
         // if more than 10% over expected, then try again
-        while( --numTries > 0 && res > expectedPlus10Percent ) {
-            System.err.println("Yuck, res is > 10% bigger than expected ... trying again in case it was noise");
-            res = computeBufferSizeForN_once(b, n);
-        }
-        
-        if( res > expectedPlus10Percent ) {
-            System.err.println("Still no dice -- skipping this data point because we can't get a good reading");
-            return -1;
+        if(REVERIFY_OVEREXPECTED) {
+            while( --numTries > 0 && res > expectedPlus10Percent ) {
+                System.err.println("Yuck, res is > 10% bigger than expected ... trying again in case it was noise");
+                res = computeBufferSizeForN_once(b, n);
+            }
+
+            if( res > expectedPlus10Percent ) {
+                System.err.println("Still no dice -- skipping this data point because we can't get a good reading");
+                return -1;
+            }
+            else
+                return res;
         }
         else
             return res;
